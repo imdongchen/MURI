@@ -1,0 +1,48 @@
+{% load staticfiles %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+        <title>{% block title %}EventViewer{% endblock %}</title>
+
+        <!-- jquery & jquery UI -->
+        <script type="text/javascript" src="{% static 'eventviewer/lib/jquery-1.9.1.js' %}"></script>
+        <script type="text/javascript" src="{% static 'eventviewer/lib/jquery-ui-1.10.3/ui/jquery-ui.js' %}"></script>
+        <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/lib/jquery-ui-1.10.3/themes/base/jquery.ui.all.css' %}">
+        <!-- end jquery & jquery UI -->
+        <!-- jquery layout -->
+        <script type="text/javascript" src="{% static 'eventviewer/lib/jquery-layout/jquery-layout-1.3.0.js' %}"></script>
+        <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/lib/jquery-layout/layout-default-1.3.0.css' %}">
+        <!-- end jquery layout -->
+        {% block extralib %}{% endblock %}
+    </head>
+    <body>
+        <div class="ui-layout-north">
+            {% block page-header %} 
+            <div class='page-header'>
+                <h1>EventViewer</h1>
+            </div>
+            {% endblock %}
+        </div>
+        <div class="ui-layout-south">Contact, Terms, etc.</div>
+        <div class="outer-west">
+            {% block outer-west %}{% endblock %}
+        </div>
+        <div class="outer-east">
+            {% block outer-east %}{% endblock %}
+        </div>
+        <div class="outer-center">
+            <div class="middle-center">
+                {% block middle-center %}
+                <div class="inner-center">
+                    {% block inner-center %}{% endblock %}
+                </div>
+                <div class="ui-layout-south">
+                    {% block inner-south %}{% endblock %}
+                </div>
+                {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>

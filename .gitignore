@@ -1,0 +1,20 @@
+settings.py
+# Compiled source #
+*.pyc
+
+# runtime file #
+*.sock
+*.pid
+
+# OS generated file
+.DS_Store?
+.DS_Store
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# swp file by vim
+*.swp
+
+CACHE/
+data/

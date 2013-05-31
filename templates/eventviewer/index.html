@@ -1,0 +1,15 @@
+{% extends 'eventviewer/base.html' %}
+{% load staticfiles %}
+
+{% block extralib %}
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/layout.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/theme.css' %}">
+<script type="text/javascript" src="{% static 'eventviewer/js/layout.js' %}"></script>
+{% endblock %}
+
+{% block outer-west %}
+    {% include 'eventviewer/event_table.html' %}
+{% endblock %}
+{% block inner-center %}
+    {% include 'eventviewer/map.html' %}
+{% endblock %}
