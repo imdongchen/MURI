@@ -1,0 +1,11 @@
+{% load static %}
+{% load compress %}
+{% block extralib %}
+{% compress js %}
+<script type="text/javascript" language="javascript" src="{% static 'eventviewer/js/network.js' %}"></script>
+{% endcompress %}
+{% endblock %}
+{% block outer-east %}
+<div id="network">
+</div>
+{% endblock %}

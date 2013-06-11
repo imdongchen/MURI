@@ -1,15 +1,30 @@
 {% extends 'eventviewer/base.html' %}
 {% load staticfiles %}
+{% load compress %}
 
 {% block extralib %}
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/layout.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/theme.css' %}">
 <script type="text/javascript" src="{% static 'eventviewer/js/layout.js' %}"></script>
+<!-- crossfilter for coordinated view -->
+<script type="text/javascript" src="{% static 'eventviewer/lib/d3-3.1.10/d3.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventviewer/lib/crossfilter-1.2.0/crossfilter.js' %}"></script>
+
+{% compress js %}
+<script type="text/javascript" src="{% static 'eventviewer/js/linkedview.js' %}"></script>
+{% endcompress %}
 {% endblock %}
 
 {% block outer-west %}
     {% include 'eventviewer/event_table.html' %}
 {% endblock %}
+{% block outer-east %}
+    {% include 'eventviewer/network.html' %}
+{% endblock %}
 {% block inner-center %}
     {% include 'eventviewer/map.html' %}
 {% endblock %}
+{% block inner-south %}
+    {% include 'eventviewer/timeline.html' %}
+{% endblock %}
+

@@ -1,0 +1,18 @@
+{% load static %}
+{% load compress %}
+{% block extralib %}
+{% compress js %}
+<script type="text/javascript" language="javascript" src="{% static 'eventviewer/js/timeline.js' %}"></script>
+{% endcompress %}
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/timeline.css' %}">
+{% endblock %}
+{% block outer-west %}
+<div id="timeline">
+</div>
+<div class='list'>
+</div>
+<div id='total'>
+</div>
+<div id='active'>
+</div>
+{% endblock %}
