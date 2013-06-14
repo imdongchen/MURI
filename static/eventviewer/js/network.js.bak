@@ -1,0 +1,110 @@
+function initSN() {
+    if (dDate == null) {
+        return null;
+    }
+    // prepare social network data
+    // {
+    //     "nodes": [{...}, {...}]
+    //     "links": [
+    //               {"source": ..., "target": ...},
+    //               {"source": ..., "target": ...}
+    //              ]
+    //  }
+    var nodes = {}, links = [];
+    dDate.top(Infinity).forEach(function(p, i) {
+        p.persons.forEach(function(person) {
+            var link = {};
+            link.source = person.name;
+            link.source = nodes[link.source] || 
+                (nodes[link.source] = {
+                    name: link.source
+                  , living: person.living
+                  , alias:  person.alias
+                  , birth:  person.birth
+                  , prof:   person.birth
+                  , type:   'person'
+                  , photo:  person.photo
+                });
+            person.groups.forEach(function(group) {
+                link.target = group.name;
+                link.target = nodes[link.target] || 
+                    (nodes[link.target] = {
+                        name: link.target
+                      , desc: group.desc
+                      , category: group.category
+                      , type: 'group'
+                    });
+                links.push({"source":1, "target":2});
+            });
+        });
+    });
+
+    var width = 900
+      , height = 900
+    ;
+
+    d3.json("network?node=group&node=person", function(error, json) {
+    var nodes = json.nodes;
+    var links = json.links;
+    var network = d3.select("#network").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+    ;
+
+    var force = d3.layout.force()
+        .gravity(.05)
+        .distance(250)
+        .charge(-320)
+        .size([width, height]);
+
+    force
+      .nodes(d3.values(nodes))
+      .links(links)
+      .start();
+
+    var link = network.selectAll(".link")
+      .data(force.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke", "#00FFDD");
+
+
+    var node = network.selectAll(".node")
+      .data(force.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .call(force.drag);
+
+    node.append("image")
+      .attr("xlink:href", function(d) {
+          if (d.type == 'group') {
+              return "{{STATIC_URL}}eventviewer/img/group.png";
+          } 
+          else if (d.type = 'person') {
+              return "{{STATIC_URL}}eventviewer/img/head.jpg";
+          }
+      })
+      .attr("x", -8)
+      .attr("y", -8)
+      .attr("width", 36)
+      .attr("height", 36);
+
+    node.append("text")
+      .attr("dx", "-1.95em")
+      .attr("dy", "-.95em")
+      .text(function(d) { return d.name });
+
+    force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    });
+
+    });
+}
+
+function updateSN() {
+}

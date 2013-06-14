@@ -1,13 +1,23 @@
-var date, dates, all, data, datafilter;
+var dDate   // date dimension
+  , gDate   // group by date
+  , gAll    // group for all
+  ;
+var timeline    = null   // instance of timeline
+  , eventTable  = null   // instance of event table
+  , facilityTable  = null // instance of facility table
+  , groupTable   = null  // instance of group table
+  , sn          = null   // instance of social network
+  ;
+
+var formatNumber = d3.format(",d"),
+  formatChange = d3.format("+,d"),
+  formatDate = d3.time.format("%B %d, %Y"),
+  formatTime = d3.time.format("%I:%M %p");
 
 $(document).ready(function() {
     d3.json("data", function(error, result) {
         // Various formatters.
         data = result.events;
-        var formatNumber = d3.format(",d"),
-          formatChange = d3.format("+,d"),
-          formatDate = d3.time.format("%B %d, %Y"),
-          formatTime = d3.time.format("%I:%M %p");
         
         data.forEach(function(d, i) {
             d.date  = new Date(d.date);
@@ -26,11 +36,31 @@ $(document).ready(function() {
 
         // Create the crossfilter for the relevant dimensions and groups.
         datafilter = crossfilter(data);
-        all = datafilter.groupAll();
-        date = datafilter.dimension(function(d) { return d.date; });
-        dates = date.group(d3.time.day);
+        gAll = datafilter.groupAll();
+        dDate = datafilter.dimension(function(d) { return d.date; });
+        gDate = dDate.group(d3.time.day);
         
-        loadTimeline();
-        loadDataTable();
+        timeline    = initTimeline();
+        eventTable  = initDataTable();
+//        sn          = initSN();
+        initSN();
+
+        renderAll();
     });
 });
+//
+//
+// Renders the specified chart or list.
+function render(method) {
+    d3.select(this).call(method);
+}
+
+// Whenever the brush moves, re-render everything.
+function renderAll() {
+    if(timeline) {
+        timeline.each(render);
+    }
+    d3.select("#active").text(gAll.value());
+    updateDataTable();
+//    updateSN();
+}

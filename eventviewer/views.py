@@ -53,8 +53,28 @@ def getData(request):
         e_info['persons'] = []
         for person in event.persons.all():
             p_info = {}
-            pass
+            p_info['id']        = 'p' + str(person.id)
+            p_info['name']      = person.name
+            p_info['alias']     = person.alias
+            p_info['sect']      = person.sect
+            p_info['region']    = person.region
+            p_info['role']      = person.role
+            p_info['prof']      = person.prof
+            p_info['living']    = person.living
+            p_info['birth']     = person.birth
+            p_info['groups']    = []
+            for group in person.groupinfo_set.all():
+                g_info = {}
+                g_info['id']        = 'g' + str(group.id)
+                g_info['name']      = group.name
+                g_info['category']  = group.category
+                g_info['desc']      = group.desc
+                p_info['groups'].append(g_info)
+
+            e_info['persons'].append(p_info)
+
         response['events'].append(e_info)
+
     return HttpResponse(json.dumps(response), mimetype='application/json')
 
 def prepareNetwork(request):

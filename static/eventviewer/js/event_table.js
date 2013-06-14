@@ -1,14 +1,4 @@
-var eventTable = null;
-
-function loadDataTable() {
-    // prepare data for DataTable
-    var d = [];
-    date.top(Infinity).forEach(function(p, i) {
-        var record = [];
-        record.push(p.category, p.desc, p.date);
-        d.push(record);
-    });
-
+function initDataTable() {
     // initialize DataTable
     $('#event_tabs').tabs()
         .find('.ui-tabs-nav')
@@ -19,19 +9,23 @@ function loadDataTable() {
     eventTable = $('#event_all').dataTable({
         "bJQueryUI": true
       , 'sScrollY': '100%'
-      , "aaData": d 
+//      , "aaData": d 
 //        "sPaginationType": "full_numbers"
     });
 
+    return eventTable;
 }
 
 function updateDataTable() {
      // prepare data for DataTable
     if (eventTable) {
+        if (dDate == null) {
+            return;
+        }
         var d = [];
-        date.top(Infinity).forEach(function(p, i) {
+        dDate.top(Infinity).forEach(function(p, i) {
             var record = [];
-            record.push(p.category, p.desc, p.date);
+            record.push(p.category, p.desc, formatDate(p.date));
             d.push(record);
         });
         eventTable.fnClearTable();

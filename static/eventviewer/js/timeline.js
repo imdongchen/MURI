@@ -1,8 +1,11 @@
-function loadTimeline() {
+function initTimeline() {
+    if (dDate == null || gDate == null) {
+        return null;
+    }
     var charts = [
         barChart()
-            .dimension(date)
-            .group(dates)
+            .dimension(dDate)
+            .group(gDate)
             .round(d3.time.day.round)
           .x(d3.time.scale()
             .domain([new Date(2010, 0, 1), new Date(2010, 5, 1)])
@@ -14,26 +17,14 @@ function loadTimeline() {
     // Given our array of charts, which we assume are in the same order as the
     // .chart elements in the DOM, bind the charts to the DOM and render them.
     // We also listen to the chart's brush events to update the display.
-    var chart = d3.selectAll("#timeline")
+    timeline = d3.selectAll("#timeline")
       .data(charts)
       .each(function(chart) { chart.on("brush", renderAll).on("brushend", renderAll); });
 
-    renderAll();
+//    renderAll();
 
      d3.selectAll("#total")
       .text(datafilter.size());
-
-    // Renders the specified chart or list.
-    function render(method) {
-        d3.select(this).call(method);
-    }
-
-    // Whenever the brush moves, re-rendering everything.
-    function renderAll() {
-        chart.each(render);
-        d3.select("#active").text(all.value());
-        updateDataTable();
-    }
 
     window.filter = function(filters) {
         filters.forEach(function(d, i) { charts[i].filter(d); });
@@ -236,4 +227,6 @@ function loadTimeline() {
 
         return d3.rebind(chart, brush, "on");
     }
+
+    return timeline;
 }
