@@ -49,7 +49,14 @@ def getData(request):
         e_info['footprints'] = []
         for fp in event.footprints.all():
             fp_info = {}
-            pass
+            fp_info['id']   = fp.id
+            fp_info['desc'] = fp.desc
+            fp_info['category'] = fp.category
+            fp_info['precision'] = fp.precision
+            fp_info['remark'] = fp.remark
+            fp_info['shape'] = fp.shape.wkt
+            fp_info['srid'] = fp.shape.srid
+            e_info['footprints'].append(fp_info)
         e_info['persons'] = []
         for person in event.persons.all():
             p_info = {}

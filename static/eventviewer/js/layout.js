@@ -45,8 +45,6 @@ $(document).ready(function () {
         , stop: function( event, ui ) {}
     });
 
-    // init map
-    initMap();
 });
 
 function getDayDelta(fromdate, todate) {

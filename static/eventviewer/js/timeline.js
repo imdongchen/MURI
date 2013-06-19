@@ -23,8 +23,8 @@ function initTimeline() {
 
 //    renderAll();
 
-     d3.selectAll("#total")
-      .text(datafilter.size());
+//     d3.selectAll("#total")
+//      .text(datafilter.size());
 
     window.filter = function(filters) {
         filters.forEach(function(d, i) { charts[i].filter(d); });

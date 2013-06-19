@@ -1,3 +1,119 @@
+var width = 960,
+    height = 500;
+
+var nodes = [],
+    links = [];
+
+var node = null, link = null;
+
+var force = null;
+
+function initSN() {
+    var svg = d3.select("#network").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    node = svg.selectAll(".node");
+    link = svg.selectAll(".link");
+
+    force = d3.layout.force()
+        .nodes(nodes)
+        .links(links)
+        .charge(-400)
+        .linkDistance(120)
+        .size([width, height])
+        .on("tick", tick);
+
+    d3.timer(force.resume);
+
+
+    function tick() {
+        link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; })
+        node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    }
+}
+
+function updateSN() {
+    prepareNetworkData();
+
+    force.nodes(nodes).links(links);
+
+
+//    link = link.data(links, function(d) { return d.source.id + "-" + d.target.id; });
+    link = link.data(links);
+    link.enter().append("line").attr("class", "link")
+      .style("stroke", "#FF0000");
+    link.exit().remove();
+
+//   node = node.data(nodes, function(d) { return d.id;});
+    node = node.data(nodes);
+    node.enter().append("g")
+      .attr("class", "node")
+      .call(force.drag)
+      .on("mouseover", mouseover)
+      .on("mouseout", mouseout)
+      .on("mousedown", function(d) {
+            d.fixed = true;
+            d3.select(this).classed("sticky", true);
+       });
+
+    node.append("image")
+      .attr("xlink:href", function(d) {
+          if (d.type == 'group') {
+              return "{{STATIC_URL}}eventviewer/img/group.png";
+          } 
+          else if (d.type == 'person') {
+              return "{{STATIC_URL}}eventviewer/img/head.jpg";
+          }
+      })
+       .attr("x", -8)
+       .attr("y", -8)
+       .attr("width", 36)
+       .attr("height", 36);
+    node.append("text")
+      .attr("dx", "-1.95em")
+      .attr("dy", "-.95em")
+      .text(function(d) { return d.name });
+    node.append("svg:title").text(function(d) { 
+        var res = '';
+        res += "Name: " + d.name;
+        if (d.type == 'group') {
+            res += "\nDescription: " + d.desc;
+            res += "\nType: " + d.category;
+        }
+        else if (d.type == 'person') {
+            res += "\nAlias: " + d.alias;
+            res += "\nBirth: " + d.birth;
+            res += "\nprofession: " + d.prof;
+            res += "\nLiving? " + d.living;
+        }
+        return res;
+    });
+
+    node.exit().remove();
+
+    force.start();
+
+
+}
+
+function mouseover() {
+  d3.select(this).select("image").transition()
+      .duration(450)
+      .attr("width", 64)
+      .attr("height", 64);
+}
+
+function mouseout() {
+  d3.select(this).select("image").transition()
+      .duration(450)
+       .attr("width", 36)
+       .attr("height", 36);
+}
+
 function prepareNetworkData() {
     // prepare social network data
     // {
@@ -7,203 +123,38 @@ function prepareNetworkData() {
     //               {"source": ..., "target": ...}
     //              ]
     //  }
-    var nodes = {}, links = {};
+    var nodesDict = {}, linksDict = {};
     dDate.top(Infinity).forEach(function(p, i) {
         p.persons.forEach(function(person) {
             person.groups.forEach(function(group) {
-                var link = {};
-                link.source = nodes[person.id] || 
-                    (nodes[person.id] = {
+                var link_info = {};
+                link_info.source = nodesDict[person.id] || 
+                    (nodesDict[person.id] = {
                         id:     person.id
                       , name:   person.name
                       , living: person.living
                       , alias:  person.alias
                       , birth:  person.birth
-                      , prof:   person.birth
+                      , prof:   person.prof
                       , type:   'person'
                       , photo:  person.photo
                     });
-                link.target = nodes[group.id] || 
-                    (nodes[group.id] = {
+                link_info.target = nodesDict[group.id] || 
+                    (nodesDict[group.id] = {
                         id:   group.id
                       , name: group.name
                       , desc: group.desc
                       , category: group.category
                       , type: 'group'
                     });
-                link.id = link.source.id + '-' + link.target.id;
-                links[link.id] = links[link.id] || link; 
+                link_info.id = link_info.source.id + '-' + link_info.target.id;
+                if (linksDict[link_info.id] == undefined) {
+                    linksDict[link_info.id] = link_info;
+                }
             });
         });
     });
-    nodes = d3.values(nodes);
-    links = d3.values(links);
-
-    return {"nodes": nodes, "links": links};
-}
-
-//var force = null;
-//var nodes = [];
-//var links = [];
-//var network = null;
-//var node = null;
-//var link = null;
-//
-//function initSN() {
-//    if (dDate == null) {
-//        return null;
-//    }
-//    var width = 900
-//      , height = 900
-//    ;
-//
-//    network = d3.select("#network").append("svg")
-//        .attr("width", width)
-//        .attr("height", height)
-//    ;
-//    node = network.selectAll('.node');
-//    link = network.selectAll('.link');
-//
-//    force = d3.layout.force()
-//        .gravity(.05)
-//        .distance(250)
-//        .charge(-320)
-//        .nodes(nodes)
-//        .links(links)
-//        .size([width, height])
-//        .on("tick", tick);
-//
-//    updateSN();
-//
-//    return network;
-//}
-//
-//function updateSN() {
-//    var data = prepareNetworkData();
-//    nodes = data.nodes;
-//    links = data.links;
-//
-////    link = link.data(links, function(d) {
-////        return d.id;
-////    });
-//    link = link.data(links);
-//    link.enter().append("line")
-//      .attr("class", "link")
-//      .style("stroke", "#00FFDD");
-////    link.exit().remove();
-//
-////    node = node.data(nodes, function(d) {
-////        return d.id;
-////    });
-//    node = node.data(nodes);
-//    node.enter()
-//      .append("image")
-//      .attr("xlink:href", function(d) {
-//          if (d.type == 'group') {
-//              return "{{STATIC_URL}}eventviewer/img/group.png";
-//          } 
-//          else if (d.type == 'person') {
-//              return "{{STATIC_URL}}eventviewer/img/head.jpg";
-//          }
-//      })
-//      .attr("x", -8)
-//      .attr("y", -8)
-//      .attr("width", 36)
-//      .attr("height", 36)
-//      .attr("class", "node")
-//      .call(force.drag);
-//
-//    node.enter().append("text")
-//      .attr("dx", "-1.95em")
-//      .attr("dy", "-.95em")
-//      .text(function(d) { return d.name });
-//
-////    node.exit().remove();
-//
-//    force.start();
-//}
-//
-//function tick() {
-//    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-//    link.attr("x1", function(d) { return d.source.x; })
-//        .attr("y1", function(d) { return d.source.y; })
-//        .attr("x2", function(d) { return d.target.x; })
-//        .attr("y2", function(d) { return d.target.y; });
-//}
-
-function initSN() {
-var width = 960,
-    height = 500;
-
-var color = d3.scale.category10();
-
-var nodes = [],
-    links = [];
-
-var force = d3.layout.force()
-    .nodes(nodes)
-    .links(links)
-    .charge(-400)
-    .linkDistance(120)
-    .size([width, height])
-    .on("tick", tick);
-
-var svg = d3.select("#network").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-var node = svg.selectAll(".node"),
-    link = svg.selectAll(".link");
-
-setTimeout(function() {
-// var a = {"id":"p6","name":"Abdul Jabar Wahied","living":"Y","alias":null,"birth":null,"prof":null,"type":"person"} ,
-//    b = {"id":"g2","name":"Rashid Criminal Group","desc":"Sunni","category":"Criminal Group","type":"group"} ,
-//    c = {"id":"g3","name":"Iranian Special Group","desc":"Shi'a","category":"Military force","type":"group"},
-//    d = {"id":"p1","name":"Dhanun Ahmad Mahmud","living":"N","alias":null,"birth":null,"prof":null,"type":"person"} ,
-//    e = {"id":"p2","name":"Mu'adh Nuri Khalid Jihad","living":"Y","alias":null,"birth":null,"prof":null,"type":"person"} ,
-//    la = {"source": {"id":"p6","name":"Abdul Jabar Wahied","living":"Y","alias":null,"birth":null,"prof":null,"type":"person"},"target":{"id":"g2","name":"Rashid Criminal Group","desc":"Sunni","category":"Criminal Group","type":"group"},"id":"p6-g2"} ,
-//    lb = {"source":{"id":"p6","name":"Abdul Jabar Wahied","living":"Y","alias":null,"birth":null,"prof":null,"type":"person"},"target":{"id":"g3","name":"Iranian Special Group","desc":"Shi'a","category":"Military force","type":"group"},"id":"p6-g3"} ,
-//    lc = {"source":{"id":"p1","name":"Dhanun Ahmad Mahmud","living":"N","alias":null,"birth":null,"prof":null,"type":"person"},"target":{"id":"g2","name":"Rashid Criminal Group","desc":"Sunni","category":"Criminal Group","type":"group"},"id":"p1-g2"} ,
-//    ld = {"source":{"id":"p2","name":"Mu'adh Nuri Khalid Jihad","living":"Y","alias":null,"birth":null,"prof":null,"type":"person"},"target":{"id":"g2","name":"Rashid Criminal Group","desc":"Sunni","category":"Criminal Group","type":"group"},"id":"p2-g2"} 
-//    la = {"source":a,"target":b,"id":"p6-g2"} ,
-//    lb = {"source":a,"target":c,"id":"p6-g3"} ,
-//    lc = {"source":d,"target":b,"id":"p1-g2"} ,
-//    ld = {"source":e,"target":b,"id":"p2-g2"} 
-//;
-  d = prepareNetworkData();
-  nodes = d.nodes;
-  links = d.links;
-  nodes.forEach(function(node) {
-      console.log(JSON.stringify(node));
-  });
-  links.forEach(function(link) {
-      console.log(JSON.stringify(link));
-  });
-//  nodes.push(a, b, c, d, e);
-//  links.push(la, lb, lc, ld);
-  start();
-}, 0);
-
-function start() {
-  link = link.data(force.links(), function(d) { return d.source.id + "-" + d.target.id; });
-  link.enter().insert("line", ".node").attr("class", "link");
-  link.exit().remove();
-
-  node = node.data(force.nodes(), function(d) { return d.id;});
-  node.enter().append("circle").attr("class", function(d) { return "node " + d.id; }).attr("r", 8);
-  node.exit().remove();
-
-  force.start();
-}
-
-function tick() {
-  node.attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; })
-
-  link.attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; })
-      .style("stroke", "#FF0000");
-}
+    
+    nodes = d3.values(nodesDict);   // global variable
+    links = d3.values(linksDict);   // global variable
 }

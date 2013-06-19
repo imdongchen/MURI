@@ -9,8 +9,11 @@ class Footprint(models.Model):
     shape = models.GeometryField(null=True)
 
     objects = models.GeoManager()
+
     def _get_geom_type(self):
         return self.shape.geom_type
+    def __unicode__(self):
+        return self.category
 
 class Person(models.Model):
     LIVING_CHOICES = (
