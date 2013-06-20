@@ -10,6 +10,9 @@
 {% compress js %}
 <script type="text/javascript" src="{% static 'eventviewer/js/map.js' %}"></script>
 {% endcompress %}
+{% compress css %}
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/map.css' %}"> 
+{% endcompress %}
 {% endblock %}
 
 {% block inner-center%}

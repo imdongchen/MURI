@@ -55,6 +55,7 @@ function initMap() {
         map.getProjectionObject()
     ), 6); // zoom level
 
+    var controlPanel = new OpenLayers.Control.Panel();
     var mapControls = {
         select: new OpenLayers.Control.SelectFeature(
                     [linelayer, pointlayer],
@@ -68,11 +69,13 @@ function initMap() {
                         box: true
                     }
                 )
+      , navigate: new OpenLayers.Control.Navigation()
     };
     for (var key in mapControls) {
         map.addControl(mapControls[key]);
-        mapControls[key].activate();
+        controlPanel.addControls([mapControls[key]]);
     }
+    map.addControl(controlPanel);
     
     // add behavior to html
 //    for (var i=map.layers.length-1; i>=0; --i) {

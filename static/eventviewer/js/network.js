@@ -1,5 +1,6 @@
 var width = 960,
-    height = 500;
+    height = 500,
+    shiftKey;
 
 var nodes = [],
     links = [];
@@ -8,8 +9,16 @@ var node = null, link = null;
 
 var force = null;
 
+function keyflip() {
+  shiftKey = d3.event.shiftKey || d3.event.metaKey;
+}
+
 function initSN() {
-    var svg = d3.select("#network").append("svg")
+    var svg = d3.select("#network")
+        .on("keydown.brush", keyflip)
+        .on("keyup.brush", keyflip)
+        .each(function() { this.focus(); })
+        .append("svg")
         .attr("width", width)
         .attr("height", height);
 
@@ -24,7 +33,27 @@ function initSN() {
         .size([width, height])
         .on("tick", tick);
 
-    d3.timer(force.resume);
+      var brush = svg.append("g")
+      .datum(function() { return {selected: false, previouslySelected: false}; })
+      .attr("class", "brush")
+      .call(d3.svg.brush()
+        .x(d3.scale.identity().domain([0, width]))
+        .y(d3.scale.identity().domain([0, height]))
+        .on("brushstart", function(d) {
+          node.each(function(d) { d.previouslySelected = shiftKey && d.selected; });
+        })
+        .on("brush", function() {
+          var extent = d3.event.target.extent();
+          node.classed("selected", function(d) {
+            return d.selected = d.previouslySelected ^
+                (extent[0][0] <= d.x && d.x < extent[1][0]
+                && extent[0][1] <= d.y && d.y < extent[1][1]);
+          });
+        })
+        .on("brushend", function() {
+          d3.event.target.clear();
+          d3.select(this).call(d3.event.target);
+        }));
 
 
     function tick() {
@@ -37,6 +66,10 @@ function initSN() {
 }
 
 function updateSN() {
+    link = link.data([]);
+    link.exit().remove();
+    node = node.data([]);
+    node.exit().remove();
     prepareNetworkData();
 
     force.nodes(nodes).links(links);
@@ -46,7 +79,6 @@ function updateSN() {
     link = link.data(links);
     link.enter().append("line").attr("class", "link")
       .style("stroke", "#FF0000");
-    link.exit().remove();
 
 //   node = node.data(nodes, function(d) { return d.id;});
     node = node.data(nodes);
@@ -58,6 +90,8 @@ function updateSN() {
       .on("mousedown", function(d) {
             d.fixed = true;
             d3.select(this).classed("sticky", true);
+            if (shiftKey) d3.select(this).classed("selected", d.selected = !d.selected);
+            else node.classed("selected", function(p) { return p.selected = d === p; });
        });
 
     node.append("image")
@@ -69,10 +103,18 @@ function updateSN() {
               return "{{STATIC_URL}}eventviewer/img/head.jpg";
           }
       })
-       .attr("x", -8)
-       .attr("y", -8)
+       .attr("x", -12)
+       .attr("y", -12)
        .attr("width", 36)
        .attr("height", 36);
+//    node.append("rect")
+//       .attr("x", -12)
+//       .attr("y", -12)
+//       .attr("width", 40)
+//       .attr("height", 40)
+      // .style("fill", "transparent")
+//       ;
+
     node.append("text")
       .attr("dx", "-1.95em")
       .attr("dy", "-.95em")
@@ -93,7 +135,6 @@ function updateSN() {
         return res;
     });
 
-    node.exit().remove();
 
     force.start();
 
