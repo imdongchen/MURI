@@ -1,8 +1,14 @@
-var map = null;
-var linelayer = null, pointlayer = null;
+SIIL.Map = function(div) {
+    this.map = null;
+    var linelayer = null;
+    var pointlayer = null;
+    var polygonlayer = null;
 
-function initMap() {
-    map = new OpenLayers.Map('map');
+    // if div starts with '#', delete it
+    if (div.substring(0,1) == '#') {
+        div = div.substring(1);
+    }
+    var map = new OpenLayers.Map(div);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     
     var gphy = new OpenLayers.Layer.Google(
@@ -76,63 +82,63 @@ function initMap() {
         controlPanel.addControls([mapControls[key]]);
     }
     map.addControl(controlPanel);
-    
-    // add behavior to html
-//    for (var i=map.layers.length-1; i>=0; --i) {
-//        map.layers[i].animationEnabled = true;
-//    }
-}
 
-function updateMap() {
-    linelayer.removeAllFeatures();
-    pointlayer.removeAllFeatures();
+    this.map = map;
+        
+        // add behavior to html
+    //    for (var i=map.layers.length-1; i>=0; --i) {
+    //        map.layers[i].animationEnabled = true;
+    //    }
 
-    var points = [], lines = [];
+    this.update = function() {
+        linelayer.removeAllFeatures();
+        pointlayer.removeAllFeatures();
 
-    dFootprint.top(Infinity).forEach(function(fp, i) {
-        // todo: avoid pushing the same feature multiple times
-        fea = fp.shape;
-        if (fea.geometry instanceof OpenLayers.Geometry.LineString) {
-            lines.push(fea);
-        }
-        else if (fea.geometry instanceof OpenLayers.Geometry.Point) {
-            points.push(fea);
-        }
-    });
-    linelayer.addFeatures(lines);
-    pointlayer.addFeatures(points);
-    linelayer.redraw();
-    pointlayer.redraw();
-}
+        var points = [], lines = [];
 
-function filterByLocation(feature) {
-    var selectedFeas = []; // selected feature ids
-    // get the id of all selected features
-    this.layers.forEach(function(layer) {
-        for (var i = 0, len = layer.selectedFeatures.length; i < len; i++) {
-            selectedFeas.push(layer.selectedFeatures[i].attributes.id);
-        }
-    });
-
-    if (selectedFeas.length == 0) {
-        dFootprints.filterAll();
-        renderAllButMap();
-    } else {
-        // filter event data by above feature ids
-        var count = 0;
-        dFootprints.filter(function(fps) {
-            count ++;
-            for (var i = 0; i < fps.length; i++) {
-                for (var j = 0; j < selectedFeas.length; j++) {
-                    if (fps[i].id == selectedFeas[j]) return true; 
-                }
+        dFootprint.top(Infinity).forEach(function(fp, i) {
+            // todo: avoid pushing the same feature multiple times
+            fea = fp.shape;
+            if (fea.geometry instanceof OpenLayers.Geometry.LineString) {
+                lines.push(fea);
             }
-            return false;
+            else if (fea.geometry instanceof OpenLayers.Geometry.Point) {
+                points.push(fea);
+            }
         });
-        console.log(count);
-
-        renderAllButMap();
+        linelayer.addFeatures(lines);
+        pointlayer.addFeatures(points);
+        linelayer.redraw();
+        pointlayer.redraw();
     }
-}
 
+    function filterByLocation(feature) {
+        var selectedFeas = []; // selected feature ids
+        // get the id of all selected features
+        this.layers.forEach(function(layer) {
+            for (var i = 0, len = layer.selectedFeatures.length; i < len; i++) {
+                selectedFeas.push(layer.selectedFeatures[i].attributes.id);
+            }
+        });
 
+        if (selectedFeas.length == 0) {
+            dFootprints.filterAll();
+            renderAllButMap();
+        } else {
+            // filter event data by above feature ids
+            var count = 0;
+            dFootprints.filter(function(fps) {
+                count ++;
+                for (var i = 0; i < fps.length; i++) {
+                    for (var j = 0; j < selectedFeas.length; j++) {
+                        if (fps[i].id == selectedFeas[j]) return true; 
+                    }
+                }
+                return false;
+            });
+            console.log(count);
+
+            renderAllButMap();
+        }
+    }
+};

@@ -1,12 +1,12 @@
-function initDataTable() {
+SIIL.DataTable = function(div) {
     // initialize DataTable
-    $('#event_tabs').tabs()
+    $("#event_tabs").tabs()
         .find('.ui-tabs-nav')
         .sortable({ axis: 'x', zIndex: 2 })
     ;
     $("div.ui-tabs-panel").css('padding','0px');
 
-    eventTable = $('#event_all').dataTable({
+    this.eventTable = $(div).dataTable({
         "bJQueryUI": true
       , 'sScrollY': '100%'
       , "aoColumns": [ 
@@ -18,12 +18,8 @@ function initDataTable() {
 //        "sPaginationType": "full_numbers"
     });
 
-    return eventTable;
-}
-
-function updateDataTable() {
-     // prepare data for DataTable
-    if (eventTable) {
+    this.update = function() {
+         // prepare data for DataTable
         if (dDate == null) {
             return;
         }
@@ -33,9 +29,9 @@ function updateDataTable() {
             record.push(p.category, p.desc, formatDate(p.date));
             d.push(record);
         });
-        eventTable.fnClearTable();
-        eventTable.fnAddData(d);
-    }
-}
+        this.eventTable.fnClearTable();
+        this.eventTable.fnAddData(d);
+    };
 
 
+};

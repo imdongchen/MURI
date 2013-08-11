@@ -55,9 +55,9 @@ class Facility(models.Model):
 
 class EventInfo(models.Model):
     category = models.CharField(max_length=30)
-    desc     = models.CharField(max_length=300)
+    desc     = models.CharField(max_length=500)
     date     = models.DateTimeField(null=True)
-    remark   = models.CharField(max_length=300, null=True)
+    remark   = models.CharField(max_length=500, null=True)
     persons  = models.ManyToManyField(Person, db_table='eventviewer_event_person', null=True)
     footprints = models.ManyToManyField(Footprint, db_table='eventviewer_event_footprint', null=True)
     groups   = models.ManyToManyField(GroupInfo, db_table='eventviewer_event_group', null=True)

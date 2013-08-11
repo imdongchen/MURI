@@ -1,4 +1,4 @@
-function initTimeline() {
+SIIL.Timeline = function(div) {
     if (dDate == null || gDate == null) {
         return null;
     }
@@ -17,7 +17,7 @@ function initTimeline() {
     // Given our array of charts, which we assume are in the same order as the
     // .chart elements in the DOM, bind the charts to the DOM and render them.
     // We also listen to the chart's brush events to update the display.
-    timeline = d3.selectAll("#timeline")
+    var timeline = d3.selectAll(div)
       .data(charts)
       .each(function(chart) { chart.on("brush", renderAll).on("brushend", renderAll); });
 
@@ -229,4 +229,4 @@ function initTimeline() {
     }
 
     return timeline;
-}
+};
