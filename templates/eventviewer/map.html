@@ -5,7 +5,7 @@
 <script src="http://maps.google.com/maps/api/js?v=3&amp;sensor=false"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/lib/OpenLayers-2.12/theme/default/style.css' %}"> 
 <link rel="stylesheet" href="{% static 'eventviewer/lib/OpenLayers-2.12/theme/default/google.css' %}" type="text/css">
-<link rel="stylesheet" href="{% static 'eventviewer/lib/OpenLayers-2.12/examples/style.css' %}" type="text/css">
+<!-- <link rel="stylesheet" href="{% static 'eventviewer/lib/OpenLayers-2.12/examples/style.css' %}" type="text/css"> -->
 
 {% compress js %}
 <script type="text/javascript" src="{% static 'eventviewer/js/map.js' %}"></script>
@@ -16,5 +16,10 @@
 {% endblock %}
 
 {% block inner-center%}
-    <div id="map" class='smallmap'></div>                
+    <div id="map" class='map'></div>                
+    <div id="footprint_popup" style="display:none">
+        <label class="header">Category: </label><span style="width:15px"></span><label id="category"></label><br>
+        <label class="header">Precision: </label><span style="width:15px"></span><label id="precision"></label><br>
+        <label class="header">Description: </label><span style="width:15px"></span><label id="description"></label><br>
+    </div>
 {% endblock %}

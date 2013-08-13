@@ -28,6 +28,7 @@ def getData(request):
     events = EventInfo.objects.all().order_by('date')
     for event in events:
         e_info = {}
+        e_info['id']        = event.id 
         e_info['category']  = event.category 
         e_info['desc']      = event.desc 
         e_info['date']      = ''
@@ -36,6 +37,7 @@ def getData(request):
         e_info['groups']  = [] 
         for group in event.groups.all():
             g_info = {}
+            g_info['id']        = group.id
             g_info['name']      = group.name
             g_info['category']  = group.category
             g_info['desc']      = group.desc
@@ -43,6 +45,7 @@ def getData(request):
         e_info['facilities'] = []
         for facility in event.facilities.all():
             f_info = {}
+            f_info['id']        = facility.id
             f_info['category']  = facility.category
             f_info['desc']      = facility.desc
             e_info['facilities'].append(f_info)

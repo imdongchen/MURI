@@ -65,7 +65,7 @@
 	padding-top: 3px;
 }
 
-table.display thead th {
+table thead th {
 	padding: 3px 0px 3px 10px;
 	cursor: pointer;
 	* cursor: hand;
@@ -79,12 +79,12 @@ div.dataTables_wrapper .ui-widget-header {
 /*
  * Sort arrow icon positioning
  */
-table.display thead th div.DataTables_sort_wrapper {
+table thead th div.DataTables_sort_wrapper {
 	position: relative;
 	padding-right: 20px;
 }
 
-table.display thead th div.DataTables_sort_wrapper span {
+table thead th div.DataTables_sort_wrapper span {
 	position: absolute;
 	top: 50%;
 	margin-top: -8px;
@@ -126,12 +126,12 @@ table.display thead th div.DataTables_sort_wrapper span {
 }
 
 .dataTables_length {
-	width: 40%;
+/*	width: 40%; */
 	float: left;
 }
 
 .dataTables_filter {
-	width: 50%;
+/*	width: 50%; */
 	float: right;
 	text-align: right;
 }
@@ -151,28 +151,28 @@ table.display thead th div.DataTables_sort_wrapper span {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * DataTables display
  */
-table.display {
+table {
 	margin: 0 auto;
 	width: 100%;
 	clear: both;
 	border-collapse: collapse;
 }
 
-table.display tfoot th {
+table tfoot th {
 	padding: 3px 0px 3px 10px;
 	font-weight: bold;
 	font-weight: normal;
 }
 
-table.display tr.heading2 td {
+table tr.heading2 td {
 	border-bottom: 1px solid #aaa;
 }
 
-table.display td {
+table td {
 	padding: 3px 10px;
 }
 
-table.display td.center {
+table td.center {
 	text-align: center;
 }
 
@@ -344,11 +344,11 @@ td.details {
 	background-color: #99B3FF;
 }
 
-table.display tr.even.row_selected td {
+.dataTable tr.even.row_selected td {
 	background-color: #B0BED9;
 }
 
-table.display tr.odd.row_selected td {
+.dataTable tr.odd.row_selected td {
 	background-color: #9FAFD1;
 }
 
@@ -492,10 +492,13 @@ tr.even.gradeU td.sorting_3 {
 /*
  * Row highlighting example
  */
-.ex_highlight #example tbody tr.even:hover, #example tbody tr.even td.highlighted {
-	background-color: #ECFFB3;
+
+tr.even:hover td {
+	background-color: #B0BED9;
 }
 
-.ex_highlight #example tbody tr.odd:hover, #example tbody tr.odd td.highlighted {
-	background-color: #E6FF99;
+
+tr.odd:hover td {
+	background-color: #9FAFD1;
 }
+
