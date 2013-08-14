@@ -26,6 +26,7 @@ $(document).ready(function() {
         // Various formatters.
         var data = result.events;
         var wktParser = new OpenLayers.Format.WKT();
+        var allFootprints = [];
         var footprints = []; // unique footprint
 
         data.forEach(function(d, i) {
@@ -39,11 +40,13 @@ $(document).ready(function() {
                 feature.attributes.category = fp.category;
                 feature.attributes.precision = fp.precision;
                 feature.attributes.description = fp.description;
-                fp = feature;
-                footprints.push(fp);
+                fp.shape = feature;
+                allFootprints.push(fp);
+                footprints = allFootprints.filter(function(ele, pos) {
+                    return allFootprints.indexOf(ele) == pos;
+                });
             });
         });
-        footprints = eliminateDuplicates(footprints);
 
         function parseDate(d) {
             return new Date(2001,
@@ -74,22 +77,6 @@ $(document).ready(function() {
         renderAll();
     });
 });
-
-function eliminateDuplicates(fps) {
-    var i,
-    len = fps.length,
-    out = [],
-    obj = {};
-
-    for (i = 0;i < len; i++) {
-        obj[fps[i].attributes.id] = fps[i];
-    }
-    for (i in obj) {
-        out.push(obj[i]);
-    }
-    return out;
-}
-
 //
 //
 // Renders the specified chart or list.
@@ -121,7 +108,6 @@ function updateFootprints() {
             });
         }
     });
-    footprints = eliminateDuplicates(footprints);
     var footprintfilter = crossfilter(footprints);
     dFootprint      = footprintfilter.dimension(function(p) { return p.id; });
 }

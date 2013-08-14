@@ -45,6 +45,21 @@ $(document).ready(function() {
         });
         footprints = eliminateDuplicates(footprints);
 
+        function eliminateDuplicates(fps) {
+            var i,
+            len = fps.length,
+            out = [],
+            obj = {};
+
+            for (i = 0;i < len; i++) {
+                obj[fps[i].attributes.id] = fps[i];
+            }
+            for (i in obj) {
+                out.push(obj[i]);
+            }
+            return out;
+        }
+
         function parseDate(d) {
             return new Date(2001,
                 d.substring(0, 2) - 1,
@@ -74,22 +89,6 @@ $(document).ready(function() {
         renderAll();
     });
 });
-
-function eliminateDuplicates(fps) {
-    var i,
-    len = fps.length,
-    out = [],
-    obj = {};
-
-    for (i = 0;i < len; i++) {
-        obj[fps[i].attributes.id] = fps[i];
-    }
-    for (i in obj) {
-        out.push(obj[i]);
-    }
-    return out;
-}
-
 //
 //
 // Renders the specified chart or list.

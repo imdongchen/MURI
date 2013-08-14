@@ -35,11 +35,11 @@ SIIL.Map = function(div) {
     pointlayer = new OpenLayers.Layer.Vector("Locations", {
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/red_pin.png'
+                externalGraphic: '/static/eventviewer/img/red_pin.png'
               , pointRadius: 16 
             }),
             'select':  new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/blue_pin.png'
+                externalGraphic: '/static/eventviewer/img/blue_pin.png'
               , pointRadius: 16 
             })
         })
@@ -101,11 +101,12 @@ SIIL.Map = function(div) {
 
         dFootprint.top(Infinity).forEach(function(fp, i) {
             // todo: avoid pushing the same feature multiple times
-            if (fp.geometry instanceof OpenLayers.Geometry.LineString) {
-                lines.push(fp);
+            fea = fp.shape;
+            if (fea.geometry instanceof OpenLayers.Geometry.LineString) {
+                lines.push(fea);
             }
-            else if (fp.geometry instanceof OpenLayers.Geometry.Point) {
-                points.push(fp);
+            else if (fea.geometry instanceof OpenLayers.Geometry.Point) {
+                points.push(fea);
             }
         });
         linelayer.addFeatures(lines);

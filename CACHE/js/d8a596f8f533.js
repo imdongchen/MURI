@@ -39,11 +39,26 @@ $(document).ready(function() {
                 feature.attributes.category = fp.category;
                 feature.attributes.precision = fp.precision;
                 feature.attributes.description = fp.description;
-                fp = feature;
+                fp.shape = feature;
                 footprints.push(fp);
             });
         });
         footprints = eliminateDuplicates(footprints);
+
+        function eliminateDuplicates(fps) {
+            var i,
+            len = arr.length,
+            out = [],
+            obj = {};
+
+            for (i = 0;i < len; i++) {
+                obj[fps[i].attributes.id] = fps[i];
+            }
+            for (i in obj) {
+                out.push(obj[i]);
+            }
+            return out;
+        }
 
         function parseDate(d) {
             return new Date(2001,
@@ -74,22 +89,6 @@ $(document).ready(function() {
         renderAll();
     });
 });
-
-function eliminateDuplicates(fps) {
-    var i,
-    len = fps.length,
-    out = [],
-    obj = {};
-
-    for (i = 0;i < len; i++) {
-        obj[fps[i].attributes.id] = fps[i];
-    }
-    for (i in obj) {
-        out.push(obj[i]);
-    }
-    return out;
-}
-
 //
 //
 // Renders the specified chart or list.
@@ -121,7 +120,6 @@ function updateFootprints() {
             });
         }
     });
-    footprints = eliminateDuplicates(footprints);
     var footprintfilter = crossfilter(footprints);
     dFootprint      = footprintfilter.dimension(function(p) { return p.id; });
 }

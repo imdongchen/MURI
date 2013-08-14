@@ -35,11 +35,11 @@ SIIL.Map = function(div) {
     pointlayer = new OpenLayers.Layer.Vector("Locations", {
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/red_pin.png'
+                externalGraphic: '/static/eventviewer/img/red_pin.png'
               , pointRadius: 16 
             }),
             'select':  new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/blue_pin.png'
+                externalGraphic: '/static/eventviewer/img/blue_pin.png'
               , pointRadius: 16 
             })
         })
