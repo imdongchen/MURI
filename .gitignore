@@ -16,5 +16,5 @@ Thumbs.db
 # swp file by vim
 *.swp
 
-./CACHE/
+/CACHE/
 data/
