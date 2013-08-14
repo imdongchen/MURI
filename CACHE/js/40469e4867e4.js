@@ -33,22 +33,18 @@ SIIL.Map = function(div) {
     map.addLayers([gphy, gmap, ghyb, gsat]);
 
     pointlayer = new OpenLayers.Layer.Vector("Locations", {
-        rendererOptions: { zIndexing: true },
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/red_pin.png'
+                externalGraphic: '/static/eventviewer/img/red_pin.png'
               , pointRadius: 16 
-              , graphicZIndex: 9
             }),
             'select':  new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}eventviewer/img/blue_pin.png'
+                externalGraphic: '/static/eventviewer/img/blue_pin.png'
               , pointRadius: 16 
-              , graphicZIndex: 99
             })
         })
     });
     linelayer = new OpenLayers.Layer.Vector("Routes", {
-        rendererOptions: { zIndexing: true },
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
                 strokeWidth: 3

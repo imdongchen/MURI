@@ -38,7 +38,6 @@ $(function() {
     });
 
     $(".editbtn").click(function() {
-        $('.edit-box').show();
     });
 });
 

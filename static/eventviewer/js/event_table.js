@@ -88,16 +88,17 @@ SIIL.DataTable = function(div) {
         this.eventTable.fnSetColumnVis(0, false); // set column 1 - id invisible
         
         self = this;
-//        this.eventTable.$('tr').click(function(e) {
-//            if ( $(this).hasClass('row_selected') ) {
-//                $(this).removeClass('row_selected');
-//            } else {
-//                if (! e.shiftKey) {
-//                    self.eventTable.$('tr.row_selected').removeClass('row_selected');
-//                }
-//                $(this).addClass('row_selected');
-//            }
-//        });
+        this.eventTable.$('tr').click(function(e) {
+            if ( $(this).hasClass('row_selected') ) {
+                $(this).removeClass('row_selected');
+            } else {
+                if (! e.shiftKey) {
+                    self.eventTable.$('tr.row_selected').removeClass('row_selected');
+                }
+                document.getSelection().removeAllRanges(); // disable text selection when shift+clik
+                $(this).addClass('row_selected');
+            }
+        });
 
         this.eventTable.$('tr').mouseover(function() {
             var data = self.eventTable.fnGetData(this);

@@ -37,8 +37,8 @@ $(function() {
         });
     });
 
-    $(".editbtn").click(function() {
-        $('.edit-box').show();
+    $("#btn").click(function() {
+        alert("hi");
     });
 });
 

@@ -2,8 +2,8 @@ $(function() {
     $("#workspace_btn").click(function() {
         var dialogOptions = {
             "title" : "Workspace",
-            "width" : 800,
-            "height" : 500,
+            "width" : 400,
+            "height" : 300,
             "modal" : false,
             "resizable" : true,
             "draggable" : true,
@@ -23,22 +23,5 @@ $(function() {
         };
 
         $("#workspace").dialog(dialogOptions).dialogExtend(dialogExtendOptions);
-        $( ".accordion" ).accordion({
-            collapsible: true,
-            header: "> div > div.header"
-        }).sortable({
-            axis: "y",
-            handle: "h3",
-            stop: function( event, ui ) {
-              // IE doesn't register the blur when sorting
-              // so trigger focusout handlers to remove .ui-state-focus
-              ui.item.children( "h3" ).triggerHandler( "focusout" );
-            }
-        });
-    });
-
-    $(".editbtn").click(function() {
-        $('.edit-box').show();
     });
 });
-

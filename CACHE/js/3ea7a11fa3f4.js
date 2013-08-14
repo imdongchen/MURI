@@ -24,21 +24,15 @@ $(function() {
 
         $("#workspace").dialog(dialogOptions).dialogExtend(dialogExtendOptions);
         $( ".accordion" ).accordion({
-            collapsible: true,
-            header: "> div > div.header"
+            collapsible: true;
         }).sortable({
-            axis: "y",
-            handle: "h3",
-            stop: function( event, ui ) {
-              // IE doesn't register the blur when sorting
-              // so trigger focusout handlers to remove .ui-state-focus
-              ui.item.children( "h3" ).triggerHandler( "focusout" );
-            }
-        });
-    });
-
-    $(".editbtn").click(function() {
-        $('.edit-box').show();
+        axis: "y",
+        handle: "h3",
+        stop: function( event, ui ) {
+          // IE doesn't register the blur when sorting
+          // so trigger focusout handlers to remove .ui-state-focus
+          ui.item.children( "h3" ).triggerHandler( "focusout" );
+        }
+      });;
     });
 });
-

@@ -36,9 +36,8 @@ $(function() {
             }
         });
     });
-
-    $(".editbtn").click(function() {
-        $('.edit-box').show();
-    });
 });
 
+$(".editbtn").click(function() {
+    alert("hi");
+});

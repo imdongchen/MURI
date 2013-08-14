@@ -24,8 +24,7 @@ $(function() {
 
         $("#workspace").dialog(dialogOptions).dialogExtend(dialogExtendOptions);
         $( ".accordion" ).accordion({
-            collapsible: true,
-            header: "> div > div.header"
+            collapsible: true
         }).sortable({
             axis: "y",
             handle: "h3",
@@ -36,9 +35,4 @@ $(function() {
             }
         });
     });
-
-    $(".editbtn").click(function() {
-        $('.edit-box').show();
-    });
 });
-
