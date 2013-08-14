@@ -6,6 +6,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/layout.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/theme.css' %}">
 <script type="text/javascript" src="{% static 'eventviewer/js/layout.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventviewer/js/SIIL.js' %}"></script>
 <!-- crossfilter for coordinated view -->
 <script type="text/javascript" src="{% static 'eventviewer/lib/d3-3.1.10/d3.js' %}"></script>
 <script type="text/javascript" src="{% static 'eventviewer/lib/crossfilter-1.2.0/crossfilter.js' %}"></script>
@@ -15,6 +16,9 @@
 {% endcompress %}
 {% endblock %}
 
+{% block page-header %}
+    {% include 'eventviewer/page_header.html' %}
+{% endblock %}
 {% block outer-west %}
     {% include 'eventviewer/event_table.html' %}
 {% endblock %}
