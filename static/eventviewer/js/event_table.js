@@ -1,3 +1,33 @@
+$(function() {
+    // workspace dialogue
+    $("#event_table_btn").click(function() {
+        var dialogOptions = {
+            "title" : "Workspace",
+            "width" : 800,
+            "height" : 500,
+            "modal" : false,
+            "resizable" : true,
+            "draggable" : true,
+            "close" : function(){
+                $(this).remove(); 
+            }
+        };
+            // dialog-extend options
+        var dialogExtendOptions = {
+            "closable" :    true,
+            "maximizable" : true,
+            "minimizable" : true,
+            "minimizeLocation" : "left",
+            "collapsable" : true,
+            "dblclick" : "collapse",
+//            "titlebar" : $("#my-form [name=titlebar]:checked").val() || false
+        };
+
+        $("#event_table").dialog(dialogOptions).dialogExtend(dialogExtendOptions);
+    });
+});
+
+
 SIIL.DataTable = function(div) {
     // initialize DataTable
     $("#event_tabs").tabs()

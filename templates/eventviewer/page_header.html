@@ -1,16 +1,11 @@
 {% load static %}
 {% load compress %}
 {% block extralib %}
-<!-- extended dialogue -->
-<script type="text/javascript" src="{% static 'eventviewer/lib/jquery-dialogextend-2.02/build/jquery.dialogextend.js' %}"></script>
 {% compress js %}
-<script type="text/javascript" src="{% static 'eventviewer/js/workspace.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventviewer/js/page_header.js' %}"></script>
 {% endcompress %}
-<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/workspace.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/navbar.css' %}">
 {% endblock %}
-{% block page-header %}
-    <div class='page-header'>
 <!--        <div id='user_greeting'>
             <span> Hello,&nbsp; </span>
             <a href="#">Dong! </a>
@@ -19,110 +14,23 @@
         <button type="button" id="workspace_btn">WorkSapce</button>
         <h1>Dashboard</h1>
 -->
-        <nav class="blue">
-            <ul class="clear">
-                <li><a href="#">Map</a></li>
-                <li><a href="#">Table</a></li>
-                <li><a href="#">Network</a>
-                    <ul>
-                        <li><a href="#">Branding</a></li>
-                        <li><a href="#">Print</a></li>
-                        <li><a href="#">Web</a></li>
-                        <li><a href="#">Marketing</a></li>
-                    </ul>
-                </li>
-                <li><a href="#">Timeline</a></li>
-                <li><a href="#">Clients</a></li>
-                <li><a href="#">Our blog</a></li>
-                <li><a href="#">Downloads</a></li>
-                <li><a href="#">Contact us</a></li>
+<nav class="blue">
+    <ul class="clear">
+        <li><a href="#" id="event_table_btn">Map</a></li>
+        <li><a href="#">Table</a></li>
+        <li><a href="#">Network</a>
+            <ul>
+                <li><a href="#">Branding</a></li>
+                <li><a href="#">Print</a></li>
+                <li><a href="#">Web</a></li>
+                <li><a href="#">Marketing</a></li>
             </ul>
-        </nav>
-    </div>
-    <div id="workspace">
-        <div class="accordion">
-            <div class="task">
-                <div class='header'>
-                    <button type="button" class="editbtn">Edit</button>
-                    <h3>Task 1</h3>
-                </div>
-                <div>
-                    <div class="edit-box" style="display:none;">
-                        <ul>
-                            <li class="item">
-                                <label>Change the title?</label>
-                                <input value="Instructions">
-                            </li>
-                            <li class="item">
-                                <label>Available colors:</label>
-                                <ul class="colors">
-                                    <li class="color-yellow"></li>
-                                    <li class="color-red"></li>
-                                    <li class="color-blue"></li>
-                                    <li class="color-white"></li>
-                                    <li class="color-orange"></li>
-                                    <li class="color-green"></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                    <p>
-                    Mauris mauris ante, blandit et, ultrices a, suscipit eget, quam. Integer
-                    ut neque. Vivamus nisi metus, molestie vel, gravida in, condimentum sit
-                    amet, nunc. Nam a nibh. Donec suscipit eros. Nam mi. Proin viverra leo ut
-                    odio. Curabitur malesuada. Vestibulum a velit eu ante scelerisque vulputate.
-                    </p>
-                </div>
-            </div>
-            <div class="task">
-                <div class='header'>
-                    <h3>Task 2</h3>
-                </div>
-                <div>
-                    <p>
-                    Sed non urna. Donec et ante. Phasellus eu ligula. Vestibulum sit amet
-                    purus. Vivamus hendrerit, dolor at aliquet laoreet, mauris turpis porttitor
-                    velit, faucibus interdum tellus libero ac justo. Vivamus non quam. In
-                    suscipit faucibus urna.
-                    </p>
-                </div>
-            </div>
-            <div class="task">
-                <div class='header'>
-                    <h3>Task 3</h3>
-                </div>
-                <div>
-                    <p>
-                    Nam enim risus, molestie et, porta ac, aliquam ac, risus. Quisque lobortis.
-                    Phasellus pellentesque purus in massa. Aenean in pede. Phasellus ac libero
-                    ac tellus pellentesque semper. Sed ac felis. Sed commodo, magna quis
-                    lacinia ornare, quam ante aliquam nisi, eu iaculis leo purus venenatis dui.
-                    </p>
-                    <ul>
-                      <li>List item one</li>
-                      <li>List item two</li>
-                      <li>List item three</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="task">
-                <div class='header'>
-                    <h3>Task 4</h3>
-                </div>
-                <div>
-                    <p>
-                    Cras dictum. Pellentesque habitant morbi tristique senectus et netus
-                    et malesuada fames ac turpis egestas. Vestibulum ante ipsum primis in
-                    faucibus orci luctus et ultrices posuere cubilia Curae; Aenean lacinia
-                    mauris vel est.
-                    </p>
-                    <p>
-                    Suspendisse eu nisl. Nullam ut libero. Integer dignissim consequat lectus.
-                    Class aptent taciti sociosqu ad litora torquent per conubia nostra, per
-                    inceptos himenaeos.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock %}
+        </li>
+        <li><a href="#">Timeline</a></li>
+        <li><a href="#">Clients</a></li>
+        <li><a href="#">Our blog</a></li>
+        <li><a href="#">Downloads</a></li>
+        <li><a href="#">Contact us</a></li>
+    </ul>
+</nav>
+
