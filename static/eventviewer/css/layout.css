@@ -10,11 +10,13 @@
 }
 .ui-layout-pane-north ,
 .ui-layout-pane-south {
-        border:			1px solid #BBB;
+        border:			0px solid #BBB;
         overflow:		hidden;
+        padding: 0px;
 }
 .ui-layout-pane-west ,
 .ui-layout-pane-east {
+    padding: 0px;
 }
 .ui-layout-pane-center	{
         border-left:	0;

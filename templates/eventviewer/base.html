@@ -18,34 +18,9 @@
         {% block extralib %}{% endblock %}
     </head>
     <body>
-        <div class="ui-layout-north">
-            {% block page-header %} 
-<<<<<<< HEAD
-            <div class='page-header'>
-                <h1>Dashboard</h1>
-            </div>
-=======
->>>>>>> 29ad0a8127d83a4a1f4fdb5b29f093c5b2097c68
-            {% endblock %}
-        </div>
-        <div class="ui-layout-south">Contact, Terms, etc.</div>
-        <div class="outer-west">
-            {% block outer-west %}{% endblock %}
-        </div>
-        <div class="outer-east">
-            {% block outer-east %}{% endblock %}
-        </div>
-        <div class="outer-center">
-            <div class="middle-center">
-                {% block middle-center %}
-                <div class="inner-center">
-                    {% block inner-center %}{% endblock %}
-                </div>
-                <div class="ui-layout-south">
-                    {% block inner-south %}{% endblock %}
-                </div>
-                {% endblock %}
-            </div>
-        </div>
+        {% block page-header %} 
+        {% endblock %}
+        {% block page-body %} 
+        {% endblock %}
     </body>
 </html>

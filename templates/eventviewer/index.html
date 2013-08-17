@@ -19,16 +19,6 @@
 {% block page-header %}
     {% include 'eventviewer/page_header.html' %}
 {% endblock %}
-{% block outer-west %}
+{% block page-body %}
     {% include 'eventviewer/event_table.html' %}
 {% endblock %}
-{% block outer-east %}
-    {% include 'eventviewer/network.html' %}
-{% endblock %}
-{% block inner-center %}
-    {% include 'eventviewer/map.html' %}
-{% endblock %}
-{% block inner-south %}
-    {% include 'eventviewer/timeline.html' %}
-{% endblock %}
-

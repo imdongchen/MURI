@@ -7,16 +7,37 @@
 <script type="text/javascript" src="{% static 'eventviewer/js/workspace.js' %}"></script>
 {% endcompress %}
 <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/workspace.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/navbar.css' %}">
 {% endblock %}
 {% block page-header %}
     <div class='page-header'>
-        <div id='user_greeting'>
+<!--        <div id='user_greeting'>
             <span> Hello,&nbsp; </span>
             <a href="#">Dong! </a>
             <a id="logout" href="#">Log out</a>
         </div>
         <button type="button" id="workspace_btn">WorkSapce</button>
         <h1>Dashboard</h1>
+-->
+        <nav class="blue">
+            <ul class="clear">
+                <li><a href="#">Map</a></li>
+                <li><a href="#">Table</a></li>
+                <li><a href="#">Network</a>
+                    <ul>
+                        <li><a href="#">Branding</a></li>
+                        <li><a href="#">Print</a></li>
+                        <li><a href="#">Web</a></li>
+                        <li><a href="#">Marketing</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">Timeline</a></li>
+                <li><a href="#">Clients</a></li>
+                <li><a href="#">Our blog</a></li>
+                <li><a href="#">Downloads</a></li>
+                <li><a href="#">Contact us</a></li>
+            </ul>
+        </nav>
     </div>
     <div id="workspace">
         <div class="accordion">

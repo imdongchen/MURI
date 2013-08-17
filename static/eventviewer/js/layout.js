@@ -15,7 +15,7 @@ function doLayout() {
     ,	spacing_closed:			12 // ALL panes
     //,	north__spacing_open:	0
     //,	south__spacing_open:	0
-    ,	north__maxSize:			50
+    ,	north__maxSize:			300
     ,	south__maxSize:			200
     ,	north__spacing_open:	0
     ,	south__spacing_open:	0
