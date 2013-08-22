@@ -43,7 +43,7 @@ SIIL.Map = function(div) {
             'select':  new OpenLayers.Style({
                 externalGraphic: '{{STATIC_URL}}eventviewer/img/blue_pin.png'
               , pointRadius: 16 
-              , graphicZIndex: 99
+ //             , graphicZIndex: 99
             })
         })
     });
@@ -53,7 +53,7 @@ SIIL.Map = function(div) {
             'default': new OpenLayers.Style({
                 strokeWidth: 3
               , strokeColor: '#FF0000'
-              , graphicZIndex: 9
+//              , graphicZIndex: 9
             }),
             'select': new OpenLayers.Style({
                 strokeWidth: 3
@@ -196,4 +196,8 @@ SIIL.Map = function(div) {
             renderAllButMap();
         }
     }
+
+    this.updateSize = function() {
+        map.updateSize();
+    };
 };

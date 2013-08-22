@@ -4,12 +4,6 @@ var dDate   // date dimension
   , dFootprints
   , gAll    // group for all
   ;
-var timeline    = null   // instance of timeline
-  , eventTable  = null   // instance of event table
-  , facilityTable  = null // instance of facility table
-  , groupTable   = null  // instance of group table
-  , sn          = null   // instance of social network
-  ;
 
 var formatNumber = d3.format(",d"),
   formatChange = d3.format("+,d"),
@@ -19,7 +13,8 @@ var formatNumber = d3.format(",d"),
 var network = null;
 var map = null;
 var timeline = null;
-var eventTable = null;
+var objectTable = null;
+var messageTable = null;
 
 $(document).ready(function() {
     d3.json("data", function(error, result) {
@@ -63,14 +58,6 @@ $(document).ready(function() {
         gDate = dDate.group(d3.time.day);
         var footprintfilter = crossfilter(footprints);
         dFootprint = footprintfilter.dimension(function(p) { return p.id; });
-        
-        timeline = new SIIL.Timeline("#timeline");
-        eventTable = new SIIL.DataTable("#event_all");
-        network = new SIIL.Network("#network");
-        
-        map     = new SIIL.Map("#map");
-
-        renderAll();
     });
 });
 //
@@ -83,7 +70,9 @@ function render(method) {
 // Whenever the brush moves, re-render everything.
 function renderAll() {
     updateFootprints();
-    map.update();
+    if (map) {
+        map.update();
+    }
     renderAllButMap();
 }
 
@@ -91,8 +80,15 @@ function renderAllButMap() {
     if(timeline) {
         timeline.each(render);
     }
-    eventTable.update();
-    network.update();
+    if (messageTable) {
+        messageTable.update();
+    }
+    if (objectTable) {
+        objectTable.update();
+    }
+    if (network) {
+        network.update();
+    }
 }
 
 function updateFootprints() {

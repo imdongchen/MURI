@@ -31,6 +31,10 @@
  * jQuery UI specific styling
  */
 
+#tabs {
+    font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+    font-size: 80%;
+}
 .paging_two_button .ui-button {
 	float: left;
 	cursor: pointer;

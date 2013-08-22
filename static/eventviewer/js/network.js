@@ -1,6 +1,6 @@
 SIIL.Network = function(div) {
-    this.width  = 960;
-    this.height = 500;
+    this.width  = 700;
+    this.height = 400;
 
     var force  = null;
     var shiftKey = null;

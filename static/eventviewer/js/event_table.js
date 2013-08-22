@@ -1,50 +1,14 @@
-$(function() {
-    // workspace dialogue
-    $("#event_table_btn").click(function() {
-        var dialogOptions = {
-            "title" : "Workspace",
-            "width" : 800,
-            "height" : 500,
-            "modal" : false,
-            "resizable" : true,
-            "draggable" : true,
-            "close" : function(){
-                $(this).remove(); 
-            }
-        };
-            // dialog-extend options
-        var dialogExtendOptions = {
-            "closable" :    true,
-            "maximizable" : true,
-            "minimizable" : true,
-            "minimizeLocation" : "left",
-            "collapsable" : true,
-            "dblclick" : "collapse",
-//            "titlebar" : $("#my-form [name=titlebar]:checked").val() || false
-        };
-
-        $("#event_table").dialog(dialogOptions).dialogExtend(dialogExtendOptions);
-    });
-});
-
-
 SIIL.DataTable = function(div) {
     // initialize DataTable
-    $("#event_tabs").tabs()
-        .find('.ui-tabs-nav')
-        .sortable({ axis: 'x', zIndex: 2 })
-    ;
-    $("div.ui-tabs-panel").css('padding','0px');
-
-    this.eventTable = $(div).dataTable({
-        "bJQueryUI": true
-      , 'sScrollY': '100%'
-      , "aoColumns": [ 
-             {"sWidth": "1%"} , // column 1 will be hidden
-             {"sWidth": "19%"} ,
-             {"sWidth": "60%"},
-             {"sWidth": "20%"},
-        ],
+    this.table = $(div).dataTable({
+        "bJQueryUI": true, 
+        'sScrollY': '100%',
+//      , "aoColumns": [ 
+//             {"sWidth": "1%"} , // column 1 will be hidden
+//             {"sWidth": "19%"} ,
+//             {"sWidth": "60%"},
+//             {"sWidth": "20%"},
+//        ],
         // for multi select with ctrl and shift
         "sRowSelect": "multi",
         "fnPreRowSelect": function(e, nodes, isSelect) {
@@ -113,25 +77,25 @@ SIIL.DataTable = function(div) {
             record.push(p.id, p.category, p.desc, formatDate(p.date));
             d.push(record);
         });
-        this.eventTable.fnClearTable();
-        this.eventTable.fnAddData(d);
-        this.eventTable.fnSetColumnVis(0, false); // set column 1 - id invisible
+        this.table.fnClearTable();
+        this.table.fnAddData(d);
+        this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
         
         self = this;
-        this.eventTable.$('tr').click(function(e) {
+        this.table.$('tr').click(function(e) {
             if ( $(this).hasClass('row_selected') ) {
                 $(this).removeClass('row_selected');
             } else {
                 if (! e.shiftKey) {
-                    self.eventTable.$('tr.row_selected').removeClass('row_selected');
+                    self.table.$('tr.row_selected').removeClass('row_selected');
                 }
                 document.getSelection().removeAllRanges(); // disable text selection when shift+clik
                 $(this).addClass('row_selected');
             }
         });
 
-        this.eventTable.$('tr').mouseover(function() {
-            var data = self.eventTable.fnGetData(this);
+        this.table.$('tr').mouseover(function() {
+            var data = self.table.fnGetData(this);
             highlight(data[0]); // data[0]: event id
         });
         

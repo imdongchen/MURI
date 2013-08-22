@@ -4,33 +4,26 @@
 {% compress js %}
 <script type="text/javascript" src="{% static 'eventviewer/js/page_header.js' %}"></script>
 {% endcompress %}
-<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/navbar.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/page_header.css' %}">
 {% endblock %}
-<!--        <div id='user_greeting'>
-            <span> Hello,&nbsp; </span>
-            <a href="#">Dong! </a>
-            <a id="logout" href="#">Log out</a>
-        </div>
-        <button type="button" id="workspace_btn">WorkSapce</button>
-        <h1>Dashboard</h1>
--->
+
+<div id='user_greeting'>
+    <span> Hello,&nbsp; </span>
+    <a href="#">Dong! </a>
+    <a id="logout" href="#">Log out</a>
+</div>
+<button type="button" id="workspace_btn">WorkSapce</button>
 <nav class="blue">
     <ul class="clear">
-        <li><a href="#" id="event_table_btn">Map</a></li>
-        <li><a href="#">Table</a></li>
-        <li><a href="#">Network</a>
+        <li><a id="timeline_btn" href="#">Timeline</a></li>
+        <li><a id="map_btn" href="#" >Map</a></li>
+        <li><a href="#">Table</a>
             <ul>
-                <li><a href="#">Branding</a></li>
-                <li><a href="#">Print</a></li>
-                <li><a href="#">Web</a></li>
-                <li><a href="#">Marketing</a></li>
+                <li><a id="message_table_btn" href="#">Messages</a></li>
+                <li><a id="object_table_btn" href="#">Objects</a></li>
             </ul>
         </li>
-        <li><a href="#">Timeline</a></li>
-        <li><a href="#">Clients</a></li>
-        <li><a href="#">Our blog</a></li>
-        <li><a href="#">Downloads</a></li>
-        <li><a href="#">Contact us</a></li>
+        <li><a id="network_btn" href="#">Network</a></li>
     </ul>
 </nav>
 
