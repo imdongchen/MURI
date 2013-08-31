@@ -1,6 +1,6 @@
 SIIL.Network = function(div) {
     this.width  = 700;
-    this.height = 400;
+    this.height = 800;
 
     var force  = null;
     var shiftKey = null;
@@ -139,6 +139,7 @@ SIIL.Network = function(div) {
           .duration(450)
           .attr("width", 64)
           .attr("height", 64);
+      highlightFromNetwork(this.__data__.id);
     }
 
     function mouseout() {
@@ -146,6 +147,7 @@ SIIL.Network = function(div) {
           .duration(450)
            .attr("width", 36)
            .attr("height", 36);
+      unhighlightFromNetwork(this.__data__.id);
     }
 
     function prepareNetworkData() {

@@ -15,8 +15,10 @@ var map = null;
 var timeline = null;
 var objectTable = null;
 var messageTable = null;
+var workspace = null;
 
 $(document).ready(function() {
+    alert($("#display_dialogs").val());
     d3.json("data", function(error, result) {
         // Various formatters.
         var data = result.events;
@@ -58,6 +60,8 @@ $(document).ready(function() {
         gDate = dDate.group(d3.time.day);
         var footprintfilter = crossfilter(footprints);
         dFootprint = footprintfilter.dimension(function(p) { return p.id; });
+
+        showDialogs(["map", "timeline", "message_table", "network"]);
     });
 });
 //
@@ -108,6 +112,7 @@ function highlight(event_id) {
     var eve = null; // the target event
     var NoException = {};
     try {
+        // NoException: dirty trick to do 'break' in forEach
         dDate.top(Infinity).forEach(function(p, i) {
             if (p.id == event_id) {
                 eve = p;
@@ -120,6 +125,20 @@ function highlight(event_id) {
         for (var i = 0; i < eve.footprints.length; i++) {
             footprints_id.push(eve.footprints[i].id);
         }
-        map.highlight(footprints_id);
+        if (map) {
+            map.highlight(footprints_id);
+        }
+    }
+}
+
+function highlightFromNetwork(ids) {
+    for (var i = 0, len = ids.length; i < len; i++) {
+        dDate.top(Infinity).forEach(function(p, i) {
+        });
+    }
+}
+
+function unhighlightFromNetwork(ids) {
+    for (var i = 0, len = ids.length; i < len; i++) {
     }
 }

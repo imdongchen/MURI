@@ -5,9 +5,10 @@ import json
 import networkx as nx
 from networkx.readwrite import json_graph
 from itertools import combinations
+from django.template import Context
 
 def index(request):
-    return render(request, 'eventviewer/index.html')
+    return render(request, 'eventviewer/index.html', Context({"dialogs": ["map", "timeline"]}))
 
 def queryEvent(request):
     response = {}

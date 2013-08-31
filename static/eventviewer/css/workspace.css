@@ -4,3 +4,7 @@
 .accordion button.editbtn {
     float: right;
 }
+
+.accordion-body {
+    width: 100px;
+}

@@ -2,6 +2,7 @@ SIIL.DataTable = function(div) {
     // initialize DataTable
     this.table = $(div).dataTable({
         "bJQueryUI": true, 
+        "bDestroy": true,
         'sScrollY': '100%',
 //      , "aoColumns": [ 
 //             {"sWidth": "1%"} , // column 1 will be hidden
@@ -102,7 +103,9 @@ SIIL.DataTable = function(div) {
 //        function fnGetSelected (OTableLocal) {
 //            alert('hi');
 //        }
+    };
 
+    this.destroy = function() {
     };
 
 
