@@ -18,7 +18,6 @@ var messageTable = null;
 var workspace = null;
 
 $(document).ready(function() {
-    alert($("#display_dialogs").val());
     d3.json("data", function(error, result) {
         // Various formatters.
         var data = result.events;
@@ -61,7 +60,10 @@ $(document).ready(function() {
         var footprintfilter = crossfilter(footprints);
         dFootprint = footprintfilter.dimension(function(p) { return p.id; });
 
-        showDialogs(["map", "timeline", "message_table", "network"]);
+        // show requested dialogs
+        var dialogs = $.trim($("#display_dialogs").text()).split(",");
+        console.log(dialogs);
+        showDialogs(dialogs);
     });
 });
 //

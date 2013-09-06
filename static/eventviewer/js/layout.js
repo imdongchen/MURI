@@ -58,6 +58,9 @@ function showDialogs(dialogs) {
                     dragStop: function() {
                         map.updateSize(); //to prevent drag-zoom error
                     },
+                    close: function() {
+                        map.destroy();
+                    },
                     position: ['left+400', 36]
                 }, dialogOptions))
                     .dialogExtend($.extend({

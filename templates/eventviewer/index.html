@@ -27,5 +27,7 @@
     {% include 'eventviewer/map.html' %}
     {% include 'eventviewer/network.html' %}
     {% include 'eventviewer/workspace.html' %}
-    <input id="display_dialogs" value="{{dialogs}}"></input>
+    <div id="display_dialogs" style="display:none">
+        {% for d in dialogs %}{% if not forloop.first %},{% endif %}{{d}}{% endfor %}
+    </div>
 {% endblock %}

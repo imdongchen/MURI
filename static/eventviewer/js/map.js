@@ -83,7 +83,7 @@ SIIL.Map = function(div) {
                         box: true
                     }
                 )
-      , navigate: new OpenLayers.Control.Navigation()
+//      , navigate: new OpenLayers.Control.Navigation()
     };
     for (var key in mapControls) {
         map.addControl(mapControls[key]);
@@ -199,5 +199,10 @@ SIIL.Map = function(div) {
 
     this.updateSize = function() {
         map.updateSize();
+    };
+
+    this.destroy = function() {
+        map.destroy();
+        this = null;
     };
 };
