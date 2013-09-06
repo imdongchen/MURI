@@ -1,0 +1,32 @@
+{% load static %}
+{% block extralib %}
+<script type="text/javascript" language="javascript" src="{% static 'eventviewer/lib/DataTables-1.9.4/media/js/jquery.dataTables.js' %}"></script>
+<!--        <link rel="stylesheet" type="text/css" href="lib/DataTables-1.9.4/media/css/jquery.dataTables.css"> -->
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/lib/DataTables-1.9.4/media/css/demo_table_jui.css' %}"> 
+
+<script type="text/javascript" language="javascript" src="{% static 'eventviewer/js/event_table.js' %}"></script>
+{% endblock %}
+
+<table id="message_table" class="hidden">
+    <thead>
+        <tr>
+            <th>Event ID</th>
+            <th>Event Type</th>
+            <th>Event Desc</th>
+            <th>Event Date</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<table id="object_table" class="hidden">
+    <thead>
+        <tr>
+            <th>Object ID</th>
+            <th>Object Type</th>
+            <th>Object Desc</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>

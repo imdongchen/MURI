@@ -1,0 +1,33 @@
+{% extends 'eventviewer/base.html' %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block extralib %}
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/layout.css' %}"> -->
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/theme.css' %}">
+<script type="text/javascript" src="{% static 'eventviewer/js/layout.js' %}"></script> 
+<script type="text/javascript" src="{% static 'eventviewer/js/SIIL.js' %}"></script>
+<!-- crossfilter for coordinated view -->
+<script type="text/javascript" src="{% static 'eventviewer/lib/d3-3.1.10/d3.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventviewer/lib/crossfilter-1.2.0/crossfilter.js' %}"></script>
+
+<!-- extended dialogue -->
+<script type="text/javascript" src="{% static 'eventviewer/lib/jquery-dialogextend-2.02/build/jquery.dialogextend.js' %}"></script>
+{% compress js %}
+<script type="text/javascript" src="{% static 'eventviewer/js/linkedview.js' %}"></script>
+{% endcompress %}
+{% endblock %}
+
+{% block page-header %}
+    {% include 'eventviewer/page_header.html' %}
+{% endblock %}
+{% block page-body %}
+    {% include 'eventviewer/event_table.html' %}
+    {% include 'eventviewer/timeline.html' %}
+    {% include 'eventviewer/map.html' %}
+    {% include 'eventviewer/network.html' %}
+    {% include 'eventviewer/workspace.html' %}
+    <div id="display_dialogs" style="display:none">
+        {% for d in dialogs %}{% if not forloop.first %},{% endif %}{{d}}{% endfor %}
+    </div>
+{% endblock %}

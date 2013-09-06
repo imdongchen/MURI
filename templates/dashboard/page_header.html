@@ -1,0 +1,29 @@
+{% load static %}
+{% load compress %}
+{% block extralib %}
+{% compress js %}
+<script type="text/javascript" src="{% static 'eventviewer/js/page_header.js' %}"></script>
+{% endcompress %}
+<link rel="stylesheet" type="text/css" href="{% static 'eventviewer/css/page_header.css' %}">
+{% endblock %}
+
+<div id='user_greeting'>
+    <span> Hello,&nbsp; </span>
+    <a href="#">Dong! </a>
+    <a id="logout" href="#">Log out</a>
+</div>
+<button type="button" id="workspace_btn">WorkSapce</button>
+<nav class="blue">
+    <ul class="clear">
+        <li><a id="timeline_btn" href="#">Timeline</a></li>
+        <li><a id="map_btn" href="#" >Map</a></li>
+        <li><a href="#">Table</a>
+            <ul>
+                <li><a id="message_table_btn" href="#">Messages</a></li>
+                <li><a id="object_table_btn" href="#">Objects</a></li>
+            </ul>
+        </li>
+        <li><a id="network_btn" href="#">Network</a></li>
+    </ul>
+</nav>
+
