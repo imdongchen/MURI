@@ -1,0 +1,10 @@
+.accordion .ui-accordion-header {
+    margin: 0px;
+}
+.accordion button.editbtn {
+    float: right;
+}
+
+.accordion-body {
+    width: 100px;
+}

@@ -6,6 +6,8 @@ import networkx as nx
 from networkx.readwrite import json_graph
 from itertools import combinations
 from django.template import Context
+from django.db.models import Q
+from itertools import chain
 
 def index(request):
     bbox    = request.REQUEST.getlist('map')
@@ -19,17 +21,21 @@ def index(request):
     if (len(message_ids) != 0): 
         dialogs.append("message_table")
 
-    return render(request, 'eventviewer/index.html', Context({"dialogs": dialogs}))
+    return render(request, 'dashboard/index.html', Context({"dialogs": dialogs}))
 
 def queryEvent(request):
     response = {}
     response['aaData'] = [] # this field name is required by client 
-    events = EventInfo.objects.all().order_by('date')
+    events = Event.objects.all().order_by('date')
     for event in events:
-        try:
-            record = [event.category, event.desc, event.date.strftime('%m/%d/%Y')]
-        except:
-            record = [event.category, event.desc, '']
+        date_begin = ""
+        date_end = ""
+        if event.date_begin != None:
+            date_begin = event.date_begin.strftime('%m/%d/%Y')
+        if event.date_end != None:
+            date_end = event.date_end.strftime('%m/%d/%Y')
+
+        record = [event.name, event.types, date_begin, date_end]
         response['aaData'].append(record)
 
     return HttpResponse(json.dumps(response), mimetype='application/json')
@@ -37,112 +43,57 @@ def queryEvent(request):
 def getData(request):
     response = {}
     response['events'] = []
-    events = EventInfo.objects.all().order_by('date')
+    events = Event.objects.all().order_by('date_begin')
     for event in events:
         e_info = {}
-        e_info['id']        = event.id 
-        e_info['category']  = event.category 
-        e_info['desc']      = event.desc 
-        e_info['date']      = ''
-        if (event.date != ''): 
-            e_info['date']  = event.date.strftime('%m/%d/%Y') 
-        e_info['groups']  = [] 
-        for group in event.groups.all():
-            g_info = {}
-            g_info['id']        = group.id
-            g_info['name']      = group.name
-            g_info['category']  = group.category
-            g_info['desc']      = group.desc
-            e_info['groups'].append(g_info)
-        e_info['facilities'] = []
-        for facility in event.facilities.all():
-            f_info = {}
-            f_info['id']        = facility.id
-            f_info['category']  = facility.category
-            f_info['desc']      = facility.desc
-            e_info['facilities'].append(f_info)
-        e_info['footprints'] = []
-        for fp in event.footprints.all():
-            fp_info = {}
-            fp_info['id']   = fp.id
-            fp_info['desc'] = fp.desc
-            fp_info['category'] = fp.category
-            fp_info['precision'] = fp.precision
-            fp_info['remark'] = fp.remark
-            fp_info['shape'] = fp.shape.wkt
-            fp_info['srid'] = fp.shape.srid
-            e_info['footprints'].append(fp_info)
-        e_info['persons'] = []
-        for person in event.persons.all():
-            p_info = {}
-            p_info['id']        = 'p' + str(person.id)
-            p_info['name']      = person.name
-            p_info['alias']     = person.alias
-            p_info['sect']      = person.sect
-            p_info['region']    = person.region
-            p_info['role']      = person.role
-            p_info['prof']      = person.prof
-            p_info['living']    = person.living
-            p_info['birth']     = person.birth
-            p_info['groups']    = []
-            for group in person.groupinfo_set.all():
-                g_info = {}
-                g_info['id']        = 'g' + str(group.id)
-                g_info['name']      = group.name
-                g_info['category']  = group.category
-                g_info['desc']      = group.desc
-                p_info['groups'].append(g_info)
+        e_info = event.getKeyAttr()
 
-            e_info['persons'].append(p_info)
+        linked_entities = list(chain(event.findTargets(), event.findSources()))
+
+        e_info['organizations']  = [] 
+        e_info['resources']  = [] 
+        e_info['persons']  = [] 
+        e_info['footprints']  = [] 
+
+        for entity in linked_entities:
+            if hasattr(entity, 'organization'):
+                e_info['organizations'].append(entity.getKeyAttr())
+            elif hasattr(entity, 'resource'):
+                e_info['resources'].append(entity.getKeyAttr())
+            elif hasattr(entity, 'person'):
+                e_info['persons'].append(entity.getKeyAttr())
+            elif hasattr(entity, 'footprint'):
+                e_info['footprints'].append(entity.getKeyAttr())
 
         response['events'].append(e_info)
 
     return HttpResponse(json.dumps(response), mimetype='application/json')
 
 def prepareNetwork(request):
-    response = {}
-    response['nodes'] = []
-    response['links'] = []
-    node_type = request.GET.getlist('node', None)
-    print node_type
-    link_type = request.GET.get('link', None)
-    graph   = nx.Graph()
+    if request.method == 'POST':
+        response = {}
+        response['nodes'] = []
+        response['links'] = []
+        node_types = request.POST.getlist('entities[]', None)
+        events_id = request.POST.getlist('events_id[]', None)
 
-    if node_type:
-        if 'person' in node_type:
-            persons = Person.objects.all()
-            for person in persons:
-                node_attr = {}
-                node_attr['name'] = person.name
-                node_attr['alias']    = person.alias
-                node_attr['prof']     = person.prof
-                node_attr['living']   = person.living
-                node_attr['birth']    = person.birth
-                node_attr['photo']    = ''
-                node_attr['type']     = 'person'
-                graph.add_node('p_'+str(person.id), node_attr)
-        if 'group' in node_type:
-            groups = GroupInfo.objects.all()
-            for group in groups:
-                node_attr = {}
-                node_attr['name']     = group.name
-                node_attr['category'] = group.category
-                node_attr['desc']     = group.desc
-                node_attr['type']     = 'group'
-                graph.add_node('g_'+str(group.id), node_attr)
+        if node_types == None or events_id == None:
+            return
 
-                # add person-group link
-                group_persons = group.persons.all()
-                for g_p in group_persons:
-                    graph.add_edge('p_'+str(g_p.id), 'g_'+str(group.id))
+        graph   = nx.DiGraph()
 
-    print 'number of nodes: ', graph.number_of_nodes()
-    print 'number of links: ', graph.number_of_edges()
+        events = Entity.objects.filter(id__in=events_id)
+        linked_entities = list(events.select_subclasses())
 
-    return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
+        for eve in events:
+            entities = list(chain(eve.findTargets(), eve.findSources()))
+            linked_entities += entities
+        for entity in linked_entities:
+            graph.add_node(entity.id, entity.getAllAttr())
 
+        relations = Relationship.objects.filter( Q(source__in=linked_entities) & Q(target__in=linked_entities) )
+        for relation in relations:
+            graph.add_edge(relation.source.id, relation.target.id, relation.getAllAttr())
 
-
-
-
-
+        return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
+    return
