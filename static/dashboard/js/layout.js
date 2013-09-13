@@ -12,9 +12,17 @@ $(document).ready(function () {
     $("#timeline_btn").click(function() {
         showDialogs(["timeline"]);
     });
-    // Object dialogue
-    $("#object_table_btn").click(function() {
-        showDialogs(["object_table"]);
+    // Resource dialogue
+    $("#resource_table_btn").click(function() {
+        showDialogs(["resource_table"]);
+    });
+    // People dialogue
+    $("#person_table_btn").click(function() {
+        showDialogs(["person_table"]);
+    });
+    // Organization dialogue
+    $("#organization_table_btn").click(function() {
+        showDialogs(["organization_table"]);
     });
     // Message dialogue
     $("#message_table_btn").click(function() {
@@ -81,7 +89,7 @@ function showDialogs(dialogs) {
                 break;
             case "message_table":
                 $("#message_table").dialog($.extend({
-                    title: "Message",
+                    title: "Events",
                     position: ['left', 36],
                     height: 800
                 }, dialogOptions))
@@ -89,13 +97,29 @@ function showDialogs(dialogs) {
                 messageTable = new SIIL.DataTable("#message_table");
                 messageTable.update();
                 break;
-            case "object_table":
-                $("#object_table").dialog($.extend({
-                    title: "Object"
+            case "person_table":
+                $("#person_table").dialog($.extend({
+                    title: "People"
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
-                objectTable = new SIIL.DataTable("#object_table");
-                objectTable.update();
+                personTable = new SIIL.DataTable("#person_table");
+                personTable.update();
+                break;
+            case "organization_table":
+                $("#organization_table").dialog($.extend({
+                    title: "Organizations"
+                }, dialogOptions))
+                    .dialogExtend(dialogExtendOptions);
+                organizationTable = new SIIL.DataTable("#organization_table");
+                organizationTable.update();
+                break;
+            case "resource_table":
+                $("#resource_table").dialog($.extend({
+                    title: "Resources"
+                }, dialogOptions))
+                    .dialogExtend(dialogExtendOptions);
+                resourceTable = new SIIL.DataTable("#resource_table");
+                resourceTable.update();
                 break;
             case "network":
                 $("#network").dialog($.extend({

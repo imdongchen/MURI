@@ -2,10 +2,14 @@ var dDate   // date dimension
   , gDate   // group by date
   , dFootprint
   , dFootprints
-  , dPersons
-  , dOrganizations
-  , dEvents
-  , dResources
+  , dPerson
+  , gPerson
+  , dOrganization
+  , gOrganization
+  , dEvent
+  , gEvent
+  , dResource
+  , gResource
   , gAll    // group for all
   ;
 
@@ -17,7 +21,9 @@ var formatNumber = d3.format(",d"),
 var network = null;
 var map = null;
 var timeline = null;
-var objectTable = null;
+var resourceTable = null;
+var personTable = null;
+var organizationTable = null;
 var messageTable = null;
 var workspace = null;
 
@@ -30,18 +36,16 @@ $(document).ready(function() {
 
         data.forEach(function(d, i) {
             d.date  = new Date(d.date);
-            d.footprints.forEach(function(fp, i) {
-                if (fp.shape) {
-                    var feature = wktParser.read(fp.shape);
-                    var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
-                    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
-                    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
-                    feature.attributes.id = fp.id;
-                    feature.attributes.name= fp.name;
-                    fp.shape = feature;
-                    footprints.push(fp);
-                }
-            });
+            var fp = d.footprint;
+            if (fp.shape) {
+                var feature = wktParser.read(fp.shape);
+                var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
+                var dest_prj   = new OpenLayers.Projection("EPSG:900913");
+                feature.geometry.transform(origin_prj, dest_prj); // projection of google map
+                feature.attributes.id = fp.id;
+                feature.attributes.name= fp.name;
+                fp.shape = feature;
+              }
         });
 
         // A nest operator, for grouping the flight list.
@@ -52,12 +56,51 @@ $(document).ready(function() {
         datafilter = crossfilter(data);
         gAll = datafilter.groupAll();
         dDate = datafilter.dimension(function(d) { return d.date; });
-        dFootprints = datafilter.dimension(function(d) { return d.footprints; });
+        dFootprints = datafilter.dimension(function(d) {
+            return [d.footprint.uid, d.footprint.name, d.footprint.shape, d.footprint.srid]; });
         gDate = dDate.group(d3.time.day);
-        dResource = datafilter.dimension(function(d) { return d.resources; });
+        dResource = datafilter.dimension(function(d) { 
+            return [d.resource.uid, d.resource.name]; 
+        });
         dEvent    = datafilter.dimension(function(d) { return d.uid; });
-        dPerson   = datafilter.dimension(function(d) { return d.persons; });
-        dOrganization = datafilter.dimension(function(d) { return d.organizations; });
+        dPerson   = datafilter.dimension(function(d) { 
+            return [d.person.uid, d.person.name, d.person.gender, d.person.race, d.person.nationality]; 
+//            return d.persons;
+        });
+        gPerson = dPerson.group();
+        gEvent  = dEvent.group();
+        gResource = dResource.group();
+        dOrganization = datafilter.dimension(function(d) {
+            return [d.organization.uid, d.organization.name, d.organization.types]; 
+        });
+//      gResources = dResources.groupAll().reduce(
+//          //add
+//          function(p,v){
+//              v.resources.forEach(function(val, idx) {
+//                  p[val] = (p[val] || 0) + 1;
+//              });
+//              return p;
+//          },
+//          //remove
+//          function(p,v){
+//          },
+//          //init
+//          function(p,v){
+//              return {};
+//          }
+//      ).value();
+//      gResources.all = function() {
+//          var newObject = [];
+//          for (var key in this) {
+//              if (this.hasOwnProperty(key) && key != "all") {
+//                  newObject.push({
+//                      key: key,
+//                      value: this[key]
+//                  });
+//              }
+//          }
+//          return newObject;
+//      }
         var footprintfilter = crossfilter(footprints);
         dFootprint = footprintfilter.dimension(function(p) { return p.uid; });
 
@@ -84,15 +127,15 @@ function render(method) {
 
 // Whenever the brush moves, re-render everything.
 function renderAll() {
-    updateFootprints();
+//  updateFootprints();
     if (map) {
-        map.update();
+//      map.update();
     }
     renderAllButMap();
 }
 
 function renderAllButNetwork() {
-    updateFootprints();
+//  updateFootprints();
     if (map) {
         map.update();
     }
@@ -102,8 +145,11 @@ function renderAllButNetwork() {
     if (messageTable) {
         messageTable.update();
     }
-    if (objectTable) {
-        objectTable.update();
+    if (resourceTable) {
+        resourceTable.update();
+    }
+    if (organizationTable) {
+        organizationTable.update();
     }
     if (network) {
         network.update();
@@ -112,16 +158,16 @@ function renderAllButNetwork() {
 
 function renderAllButMap() {
     if(timeline) {
-        timeline.each(render);
+//      timeline.each(render);
     }
     if (messageTable) {
         messageTable.update();
     }
-    if (objectTable) {
-        objectTable.update();
+    if (resourceTable) {
+        resourceTable.update();
     }
     if (network) {
-        network.update();
+//      network.update();
     }
 }
 

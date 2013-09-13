@@ -47,6 +47,7 @@ class Footprint(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
+        attr['node'] = 'footprint'
         if self.shape:
             attr['shape'] = self.shape.wkt
             attr['srid'] = self.shape.srid
@@ -57,7 +58,6 @@ class Footprint(Entity):
         attr['affiliation'] = self.affiliation
         attr['allegiance'] = self.allegiance
         attr['intelligence_evaluation'] = self.intelligence_evaluation
-        attr['node'] = 'footprint'
         return attr
 
 class Person(Entity):
@@ -83,19 +83,19 @@ class Person(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
+        attr['gender'] = self.gender
+        attr['race'] = self.race
+        attr['nationality'] = self.nationality
+        attr['node'] = 'person'
         return attr
 
     def getAllAttr(self):
         attr = self.getKeyAttr()
         attr['primary_citizenship'] = self.primary_citizenship
         attr['alias'] = self.alias
-        attr['nationality'] = self.nationality
         attr['ethnicity'] = self.ethnicity
-        attr['race'] = self.race
-        attr['gender'] = self.gender
         attr['marital_status'] = self.marital_status
         attr['status'] = self.status
-        attr['node'] = 'person'
         return attr
 
 class Organization(Entity):
@@ -112,6 +112,7 @@ class Organization(Entity):
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['types'] = self.types
+        attr['node'] = 'organization'
         return attr
 
     def getAllAttr(self):
@@ -119,7 +120,6 @@ class Organization(Entity):
         attr['nationality'] = self.nationality
         attr['ethnicity'] = self.ethnicity
         attr['religion'] = self.religion
-        attr['node'] = 'organization'
         return attr
 
 class Event(Entity):
@@ -140,13 +140,13 @@ class Event(Entity):
         attr['excerpt'] = ''
         if len(messages) != 0:
             attr['excerpt'] = messages[0].content[:100] + "..." # get the first 100 characters in the first string
+        attr['node'] = 'event'
         return attr
 
     def getAllAttr(self):
         attr = self.getKeyAttr()
         attr['nationality'] = self.nationality
         attr['intelligence_evaluation'] = self.intelligence_evaluation
-        attr['node'] = 'event'
         messages = self.message_set.all()
         if len(messages) != 0:
             attr['messages'] = [message for message in messages]
@@ -169,6 +169,7 @@ class Unit(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
+        attr['node'] = 'unit'
         return attr
 
     def getAllAttr(self):
@@ -176,7 +177,6 @@ class Unit(Entity):
         attr['unit_number'] = self.unit_number
         attr['unit_type'] = self.unit_type
         attr['echelon'] = self.echelon
-        attr['node'] = 'unit'
         return attr
 
 class Resource(Entity):
@@ -189,6 +189,7 @@ class Resource(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
+        attr['node'] = 'resource'
         return attr
 
     def getAllAttr(self):
@@ -196,7 +197,6 @@ class Resource(Entity):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
         return attr
 
 class Equipment(Resource):
@@ -204,6 +204,7 @@ class Equipment(Resource):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
+        attr['node'] = 'equipment'
         return attr
 
     def getAllAttr(self):
@@ -211,7 +212,6 @@ class Equipment(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'equipment'
         return attr
 
 

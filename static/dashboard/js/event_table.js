@@ -1,6 +1,8 @@
 SIIL.DataTable = function(div) {
     // initialize DataTable
-    this.columns = []
+    this.columns = [];
+    this.name = div.split("_")[0].split("#")[1]; // Temporary trick: use div name to distinguish data
+    var self = this
 
     this.table = $(div).dataTable({
         "bJQueryUI": true, 
@@ -75,14 +77,53 @@ SIIL.DataTable = function(div) {
         if (dDate == null) {
             return;
         }
-        var d = [];
-        dDate.top(Infinity).forEach(function(p, i) {
-            var record = [];
-            record.push(p.uid, p.types, p.excerpt, formatDate(p.date));
-            d.push(record);
-        });
+        var data = [];
+        switch (self.name) {
+            case "event":
+                dEvent.top(Infinity).forEach(function(d) {
+                    data.push([d.uid, d.name, d.types, d.date, d.excerpt]);
+                });
+//                record.push(p.uid, p.types, p.excerpt, formatDate(p.date));
+                break;
+            case "resource":
+                dResource.group().top(Infinity).forEach(function(d) {
+                    data.push(d.key);
+                });
+ //               record.push(p.uid, p.name);
+                break;
+            case "person":
+                dPerson.group().top(Infinity).forEach(function(d) {
+                    data.push(d.key);
+                });
+                break;
+            case "organization":
+                dOrganization.group().top(Infinity).forEach(function(d) {
+                    data.push(d.key);
+                });
+//                record.push(p.uid, p.name, p.types);
+                break;
+        }
+//        var d = [];
+//        dDate.top(Infinity).forEach(function(p, i) {
+//            var record = [];
+//            switch (self.name) {
+//                case "message":
+//                    record.push(p.uid, p.types, p.excerpt, formatDate(p.date));
+//                    break;
+//                case "resource":
+//                    record.push(p.uid, p.name);
+//                    break;
+//                case "person":
+//                    record.push(p.uid, p.name, p.gender, p.race, p.nationality);
+//                    break;
+//                case "organization":
+//                    record.push(p.uid, p.name, p.types);
+//                    break;
+//            }
+//            d.push(record);
+//        });
         this.table.fnClearTable();
-        this.table.fnAddData(d);
+        this.table.fnAddData(data);
         this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
         
         self = this;
@@ -100,7 +141,7 @@ SIIL.DataTable = function(div) {
 
         this.table.$('tr').mouseover(function() {
             var data = self.table.fnGetData(this);
-            highlight(data[0]); // data[0]: event id
+//          highlight(data[0]); // data[0]: event id
         });
         
 //        function fnGetSelected (OTableLocal) {

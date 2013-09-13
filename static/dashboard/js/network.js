@@ -1,6 +1,6 @@
 SIIL.Network = function(div) {
-    this.width  = 700;
-    this.height = 800;
+    this.width  = 200;
+    this.height = 200;
 
     var force  = null;
     var shiftKey = null;
@@ -75,7 +75,7 @@ function tick() {
 
         events_id = []
         dDate.top(Infinity).forEach(function(p, i) {
-            events_id.push(p.id);
+            events_id.push(p.uid);
         });
 
         entities = ['person, organization'];
