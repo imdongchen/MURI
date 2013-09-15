@@ -31,13 +31,13 @@ SIIL.Workspace = function(div) {
                 "indicator": {
                     "valid_children": ["default"],
                     "icon": {
-                        "image": "{{STATIC_URL}}eventviewer/img/indicator.png"
+                        "image": "{{STATIC_URL}}dashboard/img/indicator.png"
                     }
                 },
                 "default": {
                     "valid_children": "none",
                     "icon": {
-                        "image": "{{STATIC_URL}}eventviewer/img/evidence.png"
+                        "image": "{{STATIC_URL}}dashboard/img/evidence.png"
                     },
                 }
             }

@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     // workspace dialogue
     $("#workspace_btn").click(function() {
         showDialogs(["workspace"]);
@@ -23,6 +22,10 @@ $(document).ready(function () {
     // Organization dialogue
     $("#organization_table_btn").click(function() {
         showDialogs(["organization_table"]);
+    });
+    // Event dialogue
+    $("#event_table_btn").click(function() {
+        showDialogs(["event_table"]);
     });
     // Message dialogue
     $("#message_table_btn").click(function() {
@@ -87,10 +90,22 @@ function showDialogs(dialogs) {
                 timeline = new SIIL.Timeline("#timeline");
                 timeline.each(render);
                 break;
-            case "message_table":
-                $("#message_table").dialog($.extend({
+            case "event_table":
+                $("#event_table").dialog($.extend({
                     title: "Events",
                     position: ['left', 36],
+                    resizeStop: function() { eventTable.resize(); },
+                    height: 800
+                }, dialogOptions))
+                    .dialogExtend(dialogExtendOptions);
+                eventTable = new SIIL.DataTable("#event_table");
+                eventTable.update();
+                break;
+            case "message_table":
+                $("#message_table").dialog($.extend({
+                    title: "Messages",
+                    position: ['left', 36],
+                    resizeStop: function() { messageTable.resize(); },
                     height: 800
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
@@ -99,7 +114,8 @@ function showDialogs(dialogs) {
                 break;
             case "person_table":
                 $("#person_table").dialog($.extend({
-                    title: "People"
+                    title: "People",
+                    resizeStop: function() { eventTable.resize(); },
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
                 personTable = new SIIL.DataTable("#person_table");
@@ -107,7 +123,8 @@ function showDialogs(dialogs) {
                 break;
             case "organization_table":
                 $("#organization_table").dialog($.extend({
-                    title: "Organizations"
+                    title: "Organizations",
+                    resizeStop: function() { eventTable.resize(); },
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
                 organizationTable = new SIIL.DataTable("#organization_table");
@@ -115,7 +132,8 @@ function showDialogs(dialogs) {
                 break;
             case "resource_table":
                 $("#resource_table").dialog($.extend({
-                    title: "Resources"
+                    title: "Resources",
+                    resizeStop: function() { eventTable.resize(); },
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
                 resourceTable = new SIIL.DataTable("#resource_table");

@@ -16,7 +16,7 @@ SIIL.DataTable = function(div) {
 //        ],
         // for multi select with ctrl and shift
         "sRowSelect": "multi",
-        "sDom": "Rlfrtip",
+        "sDom": "RlfrtipS",
         "fnPreRowSelect": function(e, nodes, isSelect) {
             if (e) {
                 mySelectList = myDeselectList = null;
@@ -40,6 +40,7 @@ SIIL.DataTable = function(div) {
 //      , "aaData": d 
 //        "sPaginationType": "full_numbers"
     });
+//  $('div.dataTables_scrollBody').height($('div.dataTables_wrapper').height());
 
     function mySelectEventHandler(nodes) {
         if (myDeselectList) {
@@ -72,6 +73,11 @@ SIIL.DataTable = function(div) {
         return result.length>0?result:null;
     }
 
+    this.resize = function() {
+//      $('div.dataTables_scrollBody').height($('div.dataTables_wrapper').height());
+        this.table.fnAdjustColumnSizing();
+    }
+
     this.update = function() {
          // prepare data for DataTable
         if (dDate == null) {
@@ -79,52 +85,47 @@ SIIL.DataTable = function(div) {
         }
         var data = [];
         switch (self.name) {
-            case "event":
-                dEvent.top(Infinity).forEach(function(d) {
-                    data.push([d.uid, d.name, d.types, d.date, d.excerpt]);
+            case "message":
+                dMessage.group().top(Infinity).forEach(function(d) {
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push(d.key);
+                    }
                 });
-//                record.push(p.uid, p.types, p.excerpt, formatDate(p.date));
+                break;
+            case "event":
+                dEvent.group().top(Infinity).forEach(function(d) {
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push(d.key);
+                    }
+                });
                 break;
             case "resource":
                 dResource.group().top(Infinity).forEach(function(d) {
-                    data.push(d.key);
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push(d.key.concat([d.value]));
+                    }
                 });
- //               record.push(p.uid, p.name);
                 break;
             case "person":
                 dPerson.group().top(Infinity).forEach(function(d) {
-                    data.push(d.key);
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push(d.key.concat([d.value]));
+                    }
                 });
                 break;
             case "organization":
                 dOrganization.group().top(Infinity).forEach(function(d) {
-                    data.push(d.key);
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push(d.key.concat([d.value]));
+                    }
                 });
-//                record.push(p.uid, p.name, p.types);
                 break;
         }
-//        var d = [];
-//        dDate.top(Infinity).forEach(function(p, i) {
-//            var record = [];
-//            switch (self.name) {
-//                case "message":
-//                    record.push(p.uid, p.types, p.excerpt, formatDate(p.date));
-//                    break;
-//                case "resource":
-//                    record.push(p.uid, p.name);
-//                    break;
-//                case "person":
-//                    record.push(p.uid, p.name, p.gender, p.race, p.nationality);
-//                    break;
-//                case "organization":
-//                    record.push(p.uid, p.name, p.types);
-//                    break;
-//            }
-//            d.push(record);
-//        });
         this.table.fnClearTable();
         this.table.fnAddData(data);
-        this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
+        if (this.name != 'message') {
+            this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
+        }
         
         self = this;
         this.table.$('tr').click(function(e) {
@@ -137,11 +138,91 @@ SIIL.DataTable = function(div) {
                 document.getSelection().removeAllRanges(); // disable text selection when shift+clik
                 $(this).addClass('row_selected');
             }
+            var selected_rows = self.table.$('tr.row_selected');
+            if (selected_rows.length == 0) {
+                switch (self.name) {
+                    case "message":
+                        dMessage.filterAll();
+                        break;
+                    case "event":
+                        dEvent.filterAll();
+                        break;
+                    case "resource":
+                        dResource.filterAll();
+                        break;
+                    case "person":
+                        dPerson.filterAll();
+                        break;
+                    case "organization":
+                        dOrganization.filterAll();
+                        break;
+                }
+            } else {
+                records_id = [];
+                self.table.$('tr.row_selected').each(function(idx, $row) {
+                    row = self.table.fnGetData($row);
+                    records_id.push(row[0]);
+                });
+                var count = 0;
+                switch (self.name) {
+                    case "message":
+                        dMessage.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
+                    case "event":
+                        dEvent.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
+                    case "resource":
+                        dResource.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
+                    case "person":
+                        dPerson.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
+                    case "organization":
+                        dOrganization.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
+                }
+            }
+            renderAllExcept([self.name + 'Table']);
         });
 
         this.table.$('tr').mouseover(function() {
             var data = self.table.fnGetData(this);
-//          highlight(data[0]); // data[0]: event id
+            highlight(data[0]); // data[0]: event id
         });
         
 //        function fnGetSelected (OTableLocal) {

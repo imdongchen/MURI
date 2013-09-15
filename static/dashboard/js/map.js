@@ -33,32 +33,26 @@ SIIL.Map = function(div) {
     map.addLayers([gphy, gmap, ghyb, gsat]);
 
     pointlayer = new OpenLayers.Layer.Vector("Locations", {
-        rendererOptions: { zIndexing: true },
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
                 externalGraphic: '{{STATIC_URL}}dashboard/img/red_pin.png'
               , pointRadius: 16 
-              , graphicZIndex: 9
             }),
             'select':  new OpenLayers.Style({
                 externalGraphic: '{{STATIC_URL}}dashboard/img/blue_pin.png'
               , pointRadius: 16 
- //             , graphicZIndex: 99
             })
         })
     });
     linelayer = new OpenLayers.Layer.Vector("Routes", {
-        rendererOptions: { zIndexing: true },
         styleMap: new OpenLayers.StyleMap({
             'default': new OpenLayers.Style({
                 strokeWidth: 3
               , strokeColor: '#FF0000'
-//              , graphicZIndex: 9
             }),
             'select': new OpenLayers.Style({
                 strokeWidth: 3
               , strokeColor: '#0000FF'
-              , graphicZIndex: 99
             })
         })
     });
@@ -74,7 +68,7 @@ SIIL.Map = function(div) {
         select: new OpenLayers.Control.SelectFeature(
                     [linelayer, pointlayer],
                     {
-                        clickout: true, toggle: false,
+                        clickout: true, toggle: true,
                         multiple: false, hover: false,
                         toggleKey: "ctrlKey", // ctrl key removes from selection
                         multipleKey: "shiftKey", // shift key adds to selection
@@ -83,7 +77,7 @@ SIIL.Map = function(div) {
                         box: true
                     }
                 )
-//      , navigate: new OpenLayers.Control.Navigation()
+        , navigate: new OpenLayers.Control.Navigation()
     };
     for (var key in mapControls) {
         map.addControl(mapControls[key]);
@@ -105,15 +99,17 @@ SIIL.Map = function(div) {
 
         var points = [], lines = [];
 
-        dFootprint.top(Infinity).forEach(function(fp, i) {
-            // todo: avoid pushing the same feature multiple times
-            if (fp.shape) {
-                fea = fp.shape;
-                if (fea.geometry instanceof OpenLayers.Geometry.LineString) {
-                    lines.push(fea);
-                }
-                else if (fea.geometry instanceof OpenLayers.Geometry.Point) {
-                    points.push(fea);
+        dFootprint.group().top(Infinity).forEach(function(d, i) {
+            // d = {key: [id, name, shape, srid], value: Integer}
+            var fp = d.key;
+            if (fp[0] != undefined && d.value != 0) {
+                if (fp[2] != undefined) { // has shape attr
+                    if (fp[2].geometry instanceof OpenLayers.Geometry.LineString) {
+                        lines.push(fp[2]);
+                    }
+                    else if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
+                        points.push(fp[2]);
+                    }
                 }
             }
         });
@@ -179,24 +175,25 @@ SIIL.Map = function(div) {
         });
 
         if (selectedFeas.length == 0) {
-            dFootprints.filterAll();
-            renderAllButMap();
+            dFootprint.filterAll();
         } else {
             // filter event data by above feature ids
             var count = 0;
-            dFootprints.filter(function(fps) {
-                count ++;
-                for (var i = 0; i < fps.length; i++) {
-                    for (var j = 0; j < selectedFeas.length; j++) {
-                        if (fps[i].id == selectedFeas[j]) return true; 
+            dFootprint.filter(function(fp) { // fp is an array [id, name, shape, srid]
+                if (fp[0] == undefined) {
+                    return false;
+                }
+                for (var j = 0; j < selectedFeas.length; j++) {
+                    if (fp[0] === selectedFeas[j]) {
+                        count ++;
+                        return true; 
                     }
                 }
                 return false;
             });
             console.log(count);
-
-            renderAllButMap();
         }
+        renderAllButMap();
     }
 
     this.updateSize = function() {

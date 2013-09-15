@@ -12,6 +12,7 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 event = Event(name=row[0], 
+                        entity_type='event',
                         security_info=row[1], 
                         types=row[2], 
                         category=row[3], 
@@ -21,7 +22,6 @@ def importEntitiesFromFile(filename):
                         date_first_info=formatDate(row[7]),
                         affiliation=row[8],
                         allegiance=row[9],
-                        purpose=row[10],
                         nationality=row[11],
                         intelligence_evaluation=row[12],
                         guid=row[15])
@@ -30,6 +30,7 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 org= Organization(name=row[0], 
+                        entity_type='organization',
                         security_info=row[1], 
                         types=row[2], 
                         date_as_of=formatDate(row[3]),
@@ -49,6 +50,8 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 equip= Equipment(name=row[0], 
+                        entity_type='resource',
+                        resource_type='equipment',
                         security_info=row[1], 
                         date_as_of=formatDate(row[4]),
                         date_first_info=formatDate(row[5]),
@@ -65,6 +68,7 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 footprint= Footprint(name=row[0], 
+                        entity_type='place',
                         security_info=row[1], 
                         date_as_of=formatDate(row[2]),
                         date_begin=formatDate(row[3]),
@@ -73,12 +77,13 @@ def importEntitiesFromFile(filename):
                         allegiance=row[6],
                         intelligence_evaluation=row[7],
                         guid=row[9],
-                        location=formatGeometry(row[10]))
+                        shape=formatGeometry(row[10]))
                 footprint.save()
         elif sheet.name == "Person":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 person= Person(name=row[0], 
+                        entity_type='person',
                         security_info=row[1], 
                         first_name=row[2], 
                         middle_name=row[3], 
@@ -109,6 +114,8 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 weapon= Weapon(name=row[0], 
+                        entity_type='resource',
+                        resource_type='weapon',
                         security_info=row[1], 
                         affiliation=row[3],
                         allegiance=row[4],
@@ -130,6 +137,8 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 vehicle= Vehicle(name=row[0], 
+                        entity_type='resource',
+                        resource_type='vehicle',
                         security_info=row[1], 
                         date_as_of=formatDate(row[6]),
                         date_first_info=formatDate(row[7]),
@@ -157,6 +166,8 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 facility= Facility(name=row[0], 
+                        entity_type='resource',
+                        resource_type='facility',
                         security_info=row[1], 
                         types=row[2],
                         date_as_of=formatDate(row[6]),
@@ -180,6 +191,8 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 doc= Document(name=row[0], 
+                        entity_type='resource',
+                        resource_type='document',
                         security_info=row[1], 
                         title=row[2], 
                         title_short=row[3], 
@@ -201,6 +214,7 @@ def importEntitiesFromFile(filename):
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
                 unit= Unit(name=row[1], 
+                        entity_type='unit',
                         security_info=row[0], 
                         unit_number=row[2], 
                         unit_type=row[3], 
