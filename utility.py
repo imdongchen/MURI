@@ -288,6 +288,36 @@ def importRelationshipsFromFile(filename):
                 except Exception as e:
                     print "Error: Import relationship record failed: ", e
 
+def importIEDFromFile(filename):
+    import csv
+    with open(filename, 'rb') as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        for row in reader:
+            event = Event(name='IED', 
+                    entity_type='event',
+                    types=row[2], 
+                    category=row[3], 
+                    description=row[4],
+                    date_begin=formatDate(row[1])
+                    )
+            event.save()
+            footprint= Footprint( 
+                    entity_type='place',
+                    date_begin=formatDate(row[1]),
+                    shape=formatGeometryFromLatLon(float(row[17]), float(row[18])))
+            footprint.save()
+            source = Entity.objects.get(id=event.id)
+            target = Entity.objects.get(id=footprint.id)
+            rel = Relationship(
+                    source=source,
+                    target=target,
+                    date_begin=formatDate(row[1]),
+                    )
+            rel.save()
+
+def formatGeometryFromLatLon(lat, lon):
+    return Point(lat, lon, srid='4326')
+
 def formatDate(datestring):
 # datestring: dd hhmmssZ mmm yyyy
     if (datestring != None and datestring != ""):

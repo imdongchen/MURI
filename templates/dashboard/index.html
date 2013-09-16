@@ -30,4 +30,6 @@
     <div id="display_dialogs" style="display:none">
         {% for d in dialogs %}{% if not forloop.first %},{% endif %}{{d}}{% endfor %}
     </div>
+
+    <div id="progressbar"><div class="progress-label">Loading...</div></div>
 {% endblock %}

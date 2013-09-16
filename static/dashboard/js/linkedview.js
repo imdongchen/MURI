@@ -23,8 +23,14 @@ var organizationTable = null;
 var messageTable = null;
 var workbench = null;
 var eventTable = null;
+var locationTable = null;
 
 $(document).ready(function() {
+    // show progress bar before data is loaded
+    $("#progressbar").progressbar({
+        value: false
+    });
+    
     d3.json("data", function(error, result) {
         // Various formatters.
         var data = result.events;
@@ -80,6 +86,8 @@ $(document).ready(function() {
         console.log(dialogs);
         showDialogs(dialogs);
 
+        $("#progressbar").hide();
+
         function parseDate(d) {
             return new Date(2001,
                 d.substring(0, 2) - 1,
@@ -106,7 +114,7 @@ function renderAll() {
 
 function renderAllExcept(charts) {
     var toDraw = [];
-    var all = ['map', 'timeline', 'network', 'personTable', 'messageTable', 'resourceTable', 'eventTable','organizationTable'];
+    var all = ['map', 'locationTable', 'timeline', 'network', 'personTable', 'messageTable', 'resourceTable', 'eventTable','organizationTable'];
     for (var i = 0, len = all.length; i < len; i++) {
         if (charts.indexOf(all[i]) === -1) {
             toDraw.push(all[i])
@@ -118,7 +126,7 @@ function renderAllExcept(charts) {
                 if (map) map.update();
                 break;
             case "timeline":
-                if (timeline) timeline.update();
+                if (timeline) timeline.each(render);
                 break;
             case "network":
                 if (network) network.update();
@@ -128,6 +136,9 @@ function renderAllExcept(charts) {
                 break;
             case "messageTable":
                 if (messageTable) messageTable.update();
+                break;
+            case "locationTable":
+                if (locationTable) locationTable.update();
                 break;
             case "resourceTable":
                 if (resourceTable) resourceTable.update();
@@ -152,6 +163,9 @@ function renderAllButNetwork() {
     }
     if (eventTable) {
         eventTable.update();
+    }
+    if (locationTable) {
+        locationTable.update();
     }
     if (messageTable) {
         messageTable.update();
@@ -180,6 +194,9 @@ function renderAllButMap() {
     if (resourceTable) {
         resourceTable.update();
     }
+    if (locationTable) {
+        locationTable.update();
+    }
     if (eventTable) {
         eventTable.update();
     }
@@ -194,27 +211,28 @@ function renderAllButMap() {
     }
 }
 
-function highlight(event_id) {
-    var eve = null; // the target event
-    var NoException = {};
-    try {
-        // NoException: dirty trick to do 'break' in forEach
-        dDate.top(Infinity).forEach(function(p, i) {
-            if (p.id == event_id) {
-                eve = p;
-                throw NoException;
-            }
-        });
-    } catch(e) {
-        if (e !== NoException) throw e;
-        var footprints_id = [];
-        for (var i = 0; i < eve.footprints.length; i++) {
-            footprints_id.push(eve.footprints[i].id);
-        }
-        if (map) {
-            map.highlight(footprints_id);
-        }
-    }
+function highlight(footprint_id) {
+    if (map) map.highlight([footprint_id]);
+//  var eve = null; // the target event
+//  var NoException = {};
+//  try {
+//      // NoException: dirty trick to do 'break' in forEach
+//      dDate.top(Infinity).forEach(function(p, i) {
+//          if (p.id == event_id) {
+//              eve = p;
+//              throw NoException;
+//          }
+//      });
+//  } catch(e) {
+//      if (e !== NoException) throw e;
+//      var footprints_id = [];
+//      for (var i = 0; i < eve.footprints.length; i++) {
+//          footprints_id.push(eve.footprints[i].id);
+//      }
+//      if (map) {
+//          map.highlight(footprints_id);
+//      }
+//  }
 }
 
 function highlightFromNetwork(ids) {

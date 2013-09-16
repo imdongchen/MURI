@@ -85,6 +85,13 @@ SIIL.DataTable = function(div) {
         }
         var data = [];
         switch (self.name) {
+            case "location":
+                dFootprint.group().top(Infinity).forEach(function(d) {
+                    if (d.value != 0 && d.key[0] != undefined) {
+                        data.push([d.key[0], d.key[1]].concat([d.value]));
+                    }
+                });
+                break;
             case "message":
                 dMessage.group().top(Infinity).forEach(function(d) {
                     if (d.value != 0 && d.key[0] != undefined) {
@@ -141,6 +148,9 @@ SIIL.DataTable = function(div) {
             var selected_rows = self.table.$('tr.row_selected');
             if (selected_rows.length == 0) {
                 switch (self.name) {
+                    case "location":
+                        dFootprint.filterAll();
+                        break;
                     case "message":
                         dMessage.filterAll();
                         break;
@@ -165,6 +175,16 @@ SIIL.DataTable = function(div) {
                 });
                 var count = 0;
                 switch (self.name) {
+                    case "location":
+                        dFootprint.filter(function(d) {
+                            for (var i = 0; i < records_id.length; i++) {
+                                if (d[0] === records_id[i]) {
+                                    count++;
+                                    return true;
+                                }
+                            }
+                        });
+                        break;
                     case "message":
                         dMessage.filter(function(d) {
                             for (var i = 0; i < records_id.length; i++) {
@@ -221,8 +241,10 @@ SIIL.DataTable = function(div) {
         });
 
         this.table.$('tr').mouseover(function() {
-            var data = self.table.fnGetData(this);
-            highlight(data[0]); // data[0]: event id
+            if (self.name == 'location') {
+                var data = self.table.fnGetData(this);
+                highlight(data[0]); // data[0]: event id
+            }
         });
         
 //        function fnGetSelected (OTableLocal) {

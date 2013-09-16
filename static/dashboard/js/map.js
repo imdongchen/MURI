@@ -49,6 +49,9 @@ SIIL.Map = function(div) {
             'default': new OpenLayers.Style({
                 strokeWidth: 3
               , strokeColor: '#FF0000'
+              , fillColor: '#FFDB73'
+              , fillOpacity: 0.4
+
             }),
             'select': new OpenLayers.Style({
                 strokeWidth: 3
@@ -104,11 +107,11 @@ SIIL.Map = function(div) {
             var fp = d.key;
             if (fp[0] != undefined && d.value != 0) {
                 if (fp[2] != undefined) { // has shape attr
-                    if (fp[2].geometry instanceof OpenLayers.Geometry.LineString) {
-                        lines.push(fp[2]);
-                    }
-                    else if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
+                    if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
                         points.push(fp[2]);
+                    }
+                    else {
+                        lines.push(fp[2]);
                     }
                 }
             }
@@ -148,9 +151,8 @@ SIIL.Map = function(div) {
     };
 
     var showDetails = function(feature) {
-        $("#footprint_popup #category").text(feature.attributes.name);
-        $("#footprint_popup #precision").text(feature.attributes.id);
-        $("#footprint_popup #description").text(feature.attributes.description);
+        $("#footprint_popup #footprint_name").text(feature.attributes.name);
+        $("#footprint_popup #footprint_id").text(feature.attributes.id);
         var content = $('#footprint_popup').css('display', '').clone();
         
         feature.popup = new OpenLayers.Popup.FramedCloud(

@@ -11,6 +11,10 @@ $(document).ready(function () {
     $("#timeline_btn").click(function() {
         showDialogs(["timeline"]);
     });
+    // Location dialogue
+    $("#location_table_btn").click(function() {
+        showDialogs(["location_table"]);
+    });
     // Resource dialogue
     $("#resource_table_btn").click(function() {
         showDialogs(["resource_table"]);
@@ -111,6 +115,16 @@ function showDialogs(dialogs) {
                     .dialogExtend(dialogExtendOptions);
                 messageTable = new SIIL.DataTable("#message_table");
                 messageTable.update();
+                break;
+            case "location_table":
+                $("#location_table").dialog($.extend({
+                    title: "Locations",
+                    resizeStop: function() { eventTable.resize(); },
+                    width: 200
+                }, dialogOptions))
+                    .dialogExtend(dialogExtendOptions);
+                locationTable = new SIIL.DataTable("#location_table");
+                locationTable.update();
                 break;
             case "person_table":
                 $("#person_table").dialog($.extend({
