@@ -1,8 +1,11 @@
 {% load static %}
 {% load compress %}
 {% block extralib %}
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/jQuery-TE_v.1.4.0/jquery-te-1.4.0.css' %}">
+<script type="text/javascript" src="{% static 'dashboard/lib/jQuery-TE_v.1.4.0/jquery-te-1.4.0.min.js' %}"></script>
+{% compress css %}
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/workspace.css' %}">
-<script type="text/javascript" src="{% static 'dashboard/lib/jstree-v.pre1.0/jquery.jstree.js' %}"></script>
+{% endcompress %}
 {% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/workspace.js' %}"></script>
 {% endcompress %}
@@ -12,41 +15,14 @@
     <div class="accordion">
         <div class="task">
             <div class='accordion-header'>
-                <button type="button" class="editbtn">Edit</button>
                 <h3>PIR 1: Identify the relationship between Jack and Mulin</h3>
             </div>
             <div class='accordion-body'>
-                <ul>
-                    <li rel="indicator"><a>Identify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIdentify the relationship between Jack and MulinIndicator &amp; Warning 1</a>
-                        <ul>
-                            <li><a>Evidence 1</a> </li>
-                            <li><a>Evidence 2</a> </li>
-                        </ul>
-                    </li>
-                    <li rel="indicator"><a>Indicator &amp; Warning 2</a>
-                    </li>
-                </ul>
-            </div>
-            <div>
-                <div class="edit-box" style="display:none;">
-                    <ul>
-                        <li class="item">
-                            <label>Change the title?</label>
-                            <input value="Instructions">
-                        </li>
-                        <li class="item">
-                            <label>Available colors:</label>
-                            <ul class="colors">
-                                <li class="color-yellow"></li>
-                                <li class="color-red"></li>
-                                <li class="color-blue"></li>
-                                <li class="color-white"></li>
-                                <li class="color-orange"></li>
-                                <li class="color-green"></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+                <div contenteditable="true" class='header'>Indicators & Warnings</div>
+                <div contenteditable="true" class='text_viewer'></div>
+                <form>
+                    <textarea class="rich_editor"></textarea>
+                </form>
             </div>
         </div>
         <div class="task">

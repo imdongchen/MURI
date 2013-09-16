@@ -11,90 +11,25 @@ SIIL.Workspace = function(div) {
               ui.item.children( "h3" ).triggerHandler( "focusout" );
             }
         });
-    $(".accordion-body").jstree({
-        core: {
-            load_open: true,
-            html_titles: false,
+    $(".rich_editor").jqte();
+    $(".text_viewer").html("<b>hello</b>");
 
-        },
-        plugins: ["themes", "html_data", "ui", "dnd", "contextmenu", "crrm", "types"],
-        contextmenu: {
-            items: customMenu
-        },
-        themes: {
-//            "url": "{{STATIC_URL}}eventviewer/css/workspace.css"
-        },
-        types: {
-            "valid_children": ["indicator"],
-            "max_depth": 2, 
-            "types": {
-                "indicator": {
-                    "valid_children": ["default"],
-                    "icon": {
-                        "image": "{{STATIC_URL}}dashboard/img/indicator.png"
-                    }
-                },
-                "default": {
-                    "valid_children": "none",
-                    "icon": {
-                        "image": "{{STATIC_URL}}dashboard/img/evidence.png"
-                    },
-                }
-            }
+//    $('.accordion-body .header').html('Indicators & Warnings');
+    $('.accordion-body .header').focus(function() {
+        if ($(this).html() == 'Indicators &amp; Warnings') {
+            $(this).html('');
         }
-    })
-        .bind("create.jstree", function(e, data) {
-            // post to server about the change
-        })
-        .bind("remove.jstree", function(e, data) {
-            // post to server about the change
-        })
-        .bind("rename.jstree", function(e, data) {
-            // post to server about the change
-        })
-        .bind("move_node.jstree", function(e, data) {
-            // post to server about the change
-        });
-
-    $('.accordion-body').bind('dblclick.jstree', function(obj) {
-        $(".accordion-body").jstree("rename");
+    });
+    $('.accordion-body .header').blur(function() {
+        if ($(this).html() == '' || $(this).html() == '<br>') {
+            $(this).html('Indicators & Warnings');
+        }
+    });
+    $('.accordion-body .text_viewer').focus(function() {
+        $(this).hide();
+        $('.jqte').show();
+        $('.rich_editor').jqteVal($(this).html());
+        $('.jqte_editor').focus();
     });
 
-    function customMenu(node) {
-        // The default set of all items
-        var items = {
-            renameItem: { // The "rename" menu item
-                label: "Edit",
-                action: function(obj) {
-                    this.rename(obj);
-                }
-            },
-            deleteItem: { // The "delete" menu item
-                label: "Delete",
-                action: function (obj) {
-                    this.remove(obj);
-                }
-            },
-            createIndicator: {
-                label: "Add Indicator",
-                action: function(obj) {
-//                    $(".accordion-body").jstree("create", null, "last", { "attr": { "rel": "indicator"} });
-                    this.create_node(obj, "after", { "attr": { "rel": "indicator"}, "data": "New indicator" } );
-                }
-            },
-            createEvidence: {
-                label: "Add Evidence",
-                action: function(obj) {
-                    this.create_node(obj, "after", { "attr": { "rel": "default"}, "data": "New evidence" } );
-                }
-            }
-        };
-
-        if ($(node).hasClass("default")) {
-            // Delete the "delete" menu item
-            items.createIndicator._disabled = true;
-        }
-
-        return items;
-    }
 };

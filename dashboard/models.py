@@ -156,7 +156,17 @@ class Event(Entity):
 class Message(models.Model):
     uid = models.CharField(max_length=10)
     content = models.CharField(max_length=1000)
+    date  = models.DateTimeField(null=True, blank=True)
     event = models.ManyToManyField(Event, null=True, blank=True)
+
+    def getKeyAttr(self):
+        attr = {}
+        attr['uid'] = self.id
+        attr['content'] = self.content
+        attr['date']    = '' 
+        if self.date != None: 
+            attr['date']  = self.date.strftime('%m/%d/%Y') 
+        return attr
 
 class Unit(Entity):
     unit_number    = models.CharField(max_length=50, null=True, blank=True)

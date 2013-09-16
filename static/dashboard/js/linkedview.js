@@ -72,7 +72,7 @@ $(document).ready(function() {
         });
         dMessage  = datafilter.dimension(function(d) {
             var mes = d.message;
-            return [mes.uid, mes.content] 
+            return [mes.uid, mes.content, mes.date] 
         });
         //
         // show requested dialogs

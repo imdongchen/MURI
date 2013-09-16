@@ -57,7 +57,7 @@ def getData(request):
         e_info['messages']  = [] 
 
         for mes in event.message_set.all():
-            e_info['messages'].append({'uid': mes.id, 'content': mes.content})
+            e_info['messages'].append(mes.getKeyAttr())
 
         linked_entities = list(chain(event.findTargets(), event.findSources()))
         for entity in linked_entities:
@@ -68,7 +68,6 @@ def getData(request):
             elif hasattr(entity, 'person'):
                 e_info['persons'].append(entity.getKeyAttr())
             elif hasattr(entity, 'footprint'):
-                print 'footprint: ', entity.id
                 e_info['footprints'].append(entity.getKeyAttr())
 
         response['events'] += flatten(e_info)

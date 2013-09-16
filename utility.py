@@ -231,6 +231,7 @@ def importEntitiesFromFile(filename):
                 unit.save()
 
 def importMessagesFromFile(filename):
+    import datetime
     book = xlrd.open_workbook(filename)
     sheet = book.sheet_by_name("Message")
 # import messages
@@ -238,7 +239,8 @@ def importMessagesFromFile(filename):
         for rownum in range(sheet.nrows):
             row = sheet.row_values(rownum)
             message = Message(uid=str(row[0]).split(".")[0], # for some reason the id shows up as 1.0, 11.0
-                    content = row[1])
+                    date = datetime.datetime(*xlrd.xldate_as_tuple(row[1], 0)),
+                    content = row[2])
             message.save()
     except Exception as e:
         print e
