@@ -21,7 +21,7 @@ var resourceTable = null;
 var personTable = null;
 var organizationTable = null;
 var messageTable = null;
-var workspace = null;
+var workbench = null;
 var eventTable = null;
 
 $(document).ready(function() {

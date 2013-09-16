@@ -1,7 +1,7 @@
 $(document).ready(function () {
-    // workspace dialogue
-    $("#workspace_btn").click(function() {
-        showDialogs(["workspace"]);
+    // workbench dialogue
+    $("#workbench_btn").click(function() {
+        showDialogs(["workbench"]);
     });
     // map dialogue
     $("#map_btn").click(function() {
@@ -39,7 +39,7 @@ $(document).ready(function () {
 
 function showDialogs(dialogs) {
     var dialogOptions = {
-//        "title" : "Workspace",
+//        "title" : "Workbench",
         "width" : 800,
         "height" : 500,
         "modal" : false,
@@ -147,12 +147,12 @@ function showDialogs(dialogs) {
                 network = new SIIL.Network("#network");
                 network.update();
                 break;
-            case "workspace":
-                $("#workspace").dialog($.extend({
-                    title: "Workspace"
+            case "workbench":
+                $("#workbench").dialog($.extend({
+                    title: "Workbench"
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
-                workspace = new SIIL.Workspace("#workspace");
+                workbench = new SIIL.Workbench("#workbench");
                 break;
         }
     }
