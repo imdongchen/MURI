@@ -86,7 +86,7 @@ $(document).ready(function() {
         console.log(dialogs);
         showDialogs(dialogs);
 
-        $("#progressbar").hide();
+        $("#progressbar").remove();
 
         function parseDate(d) {
             return new Date(2001,

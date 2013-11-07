@@ -18,33 +18,39 @@
     content: url('../img/indicator.png');
     margin-right: 1em;
 }
+.ui-accordion .ui-accordion-content {
+    padding: 0 0 0 0; !important
+}
+
+#workbench {
+    padding: 0 0 0 0; !important
+}
 
 .jqte {
-    margin: 1em 0em;
-}
-.accordion-body .editor_form {
-    display: none;
-    margin: 1em 2em;
-}
-.accordion-body .editor_form input {
-    font-size: 5em;
-}
-.accordion-body .rich_editor {
+    margin: 0em 0em;
+    border: 0px;
+    height: 100%;
+    overflow: scroll;
+    font-size:20px; !important
 }
 
-.accordion-body .evidence_div {
-    font-weight: normal;
-    margin-left: 3em;
-}
-#add_evidence_btn {
-    font-size: 5em;
-}
-#add_indicator_btn {
-    font-size: 5em;
-}
-.accordion-body .text_viewer:before {
-    content: url('../img/evidence.png');
-    margin-right: 1em;
+#contextmenu {
+    z-index:999;
+    display:none;
 }
 
+.question {
+    background: rgba(255, 144, 55, .5);
+}
+.claim {
+    background: rgba(102, 163, 180, .5);
+    margin-left: 4em; !important
+}
+.evidence {
+    background: rgba(255, 253, 115, .5);
+    margin-left: 8em; !important
+}
+.conclusion {
+    background: rgba(138, 120, 215, .5);
+}
 

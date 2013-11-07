@@ -26,3 +26,18 @@ h1 {
 .ui-dialog-content {
     overflow: scroll;
 }
+
+#progressbar {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    width: 400px;
+    margin: 0 0 0 -150px;
+}
+.progress-label {
+    position: absolute;
+    left: 45%;
+    top: 4px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #fff;
+  }

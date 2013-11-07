@@ -161,7 +161,7 @@ class Message(models.Model):
 
     def getKeyAttr(self):
         attr = {}
-        attr['uid'] = self.id
+        attr['uid'] = self.uid
         attr['content'] = self.content
         attr['date']    = '' 
         if self.date != None: 

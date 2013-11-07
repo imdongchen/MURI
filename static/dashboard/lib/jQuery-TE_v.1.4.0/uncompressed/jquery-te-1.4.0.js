@@ -32,7 +32,8 @@
 			{title:"Remove Link"},
 			{title:"Cleaner Style",hotkey:"Delete"},
 			{title:"Horizontal Rule",hotkey:"H"},
-			{title:"Source"}
+			{title:"Source"},
+                        {title:"Mark"}
 			];
 		
 		// default text formats
@@ -143,6 +144,7 @@
 		addParams('remove','removeformat','.','',false); // remove all styles --> ctrl + delete
 		addParams('rule','inserthorizontalrule','H',["hr"],false); // insertion horizontal rule --> ctrl + H
 		addParams('source','displaysource','','',false); // feature of displaying source
+//		addParams('mark','linkcreator','M',["a"],true); // feature of marking
 
 		return this.each(function(){
 			if(!$(this).data("jqte") || $(this).data("jqte")==null || $(this).data("jqte")=="undefined")

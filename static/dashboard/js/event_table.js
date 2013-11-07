@@ -2,7 +2,6 @@ SIIL.DataTable = function(div) {
     // initialize DataTable
     this.columns = [];
     this.name = div.split("_")[0].split("#")[1]; // Temporary trick: use div name to distinguish data
-    var self = this
 
     this.table = $(div).dataTable({
         "bJQueryUI": true, 
@@ -72,188 +71,187 @@ SIIL.DataTable = function(div) {
         }
         return result.length>0?result:null;
     }
+};
 
-    this.resize = function() {
+SIIL.DataTable.prototype.resize = function() {
 //      $('div.dataTables_scrollBody').height($('div.dataTables_wrapper').height());
-        this.table.fnAdjustColumnSizing();
+    this.table.fnAdjustColumnSizing();
+}
+
+SIIL.DataTable.prototype.update = function() {
+     // prepare data for DataTable
+    if (dDate == null) {
+        return;
     }
+    var data = [];
+    switch (this.name) {
+        case "location":
+            dFootprint.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push([d.key[0], d.key[1]].concat([d.value]));
+                }
+            });
+            break;
+        case "message":
+            dMessage.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push(d.key);
+                }
+            }); break;
+        case "event":
+            dEvent.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push(d.key);
+                }
+            });
+            break;
+        case "resource":
+            dResource.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push(d.key.concat([d.value]));
+                }
+            });
+            break;
+        case "person":
+            dPerson.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push(d.key.concat([d.value]));
+                }
+            });
+            break;
+        case "organization":
+            dOrganization.group().top(Infinity).forEach(function(d) {
+                if (d.value != 0 && d.key[0] != undefined) {
+                    data.push(d.key.concat([d.value]));
+                }
+            });
+            break;
+    }
+    this.table.fnClearTable();
+    this.table.fnAddData(data);
+    if (this.name != 'message') {
+        this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
+    }
+    
+    var self = this;
+    this.table.$('tr').click(function(e) {
+        if ( $(this).hasClass('row_selected') ) {
+            $(this).removeClass('row_selected');
+        } else {
+            if (! e.shiftKey) {
+                self.table.$('tr.row_selected').removeClass('row_selected');
+            }
+            document.getSelection().removeAllRanges(); // disable text selection when shift+clik
+            $(this).addClass('row_selected');
+        }
+        var selected_rows = self.table.$('tr.row_selected');
+        if (selected_rows.length == 0) {
+            switch (self.name) {
+                case "location":
+                    dFootprint.filterAll();
+                    break;
+                case "message":
+                    dMessage.filterAll();
+                    break;
+                case "event":
+                    dEvent.filterAll();
+                    break;
+                case "resource":
+                    dResource.filterAll();
+                    break;
+                case "person":
+                    dPerson.filterAll();
+                    break;
+                case "organization":
+                    dOrganization.filterAll();
+                    break;
+            }
+        } else {
+            records_id = [];
+            self.table.$('tr.row_selected').each(function(idx, $row) {
+                row = self.table.fnGetData($row);
+                records_id.push(row[0]);
+            });
+            var count = 0;
+            switch (self.name) {
+                case "location":
+                    dFootprint.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+                case "message":
+                    dMessage.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+                case "event":
+                    dEvent.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+                case "resource":
+                    dResource.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+                case "person":
+                    dPerson.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+                case "organization":
+                    dOrganization.filter(function(d) {
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+                    break;
+            }
+        }
+        renderAllExcept([self.name + 'Table']);
+    });
 
-    this.update = function() {
-         // prepare data for DataTable
-        if (dDate == null) {
-            return;
+    this.table.$('tr').mouseover(function() {
+        if (self.name == 'location') {
+            var data = self.table.fnGetData(this);
+            highlight(data[0]); // data[0]: event id
         }
-        var data = [];
-        switch (self.name) {
-            case "location":
-                dFootprint.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push([d.key[0], d.key[1]].concat([d.value]));
-                    }
-                });
-                break;
-            case "message":
-                dMessage.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push(d.key);
-                    }
-                });
-                break;
-            case "event":
-                dEvent.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push(d.key);
-                    }
-                });
-                break;
-            case "resource":
-                dResource.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push(d.key.concat([d.value]));
-                    }
-                });
-                break;
-            case "person":
-                dPerson.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push(d.key.concat([d.value]));
-                    }
-                });
-                break;
-            case "organization":
-                dOrganization.group().top(Infinity).forEach(function(d) {
-                    if (d.value != 0 && d.key[0] != undefined) {
-                        data.push(d.key.concat([d.value]));
-                    }
-                });
-                break;
-        }
-        this.table.fnClearTable();
-        this.table.fnAddData(data);
-        if (this.name != 'message') {
-            this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
-        }
-        
-        self = this;
-        this.table.$('tr').click(function(e) {
-            if ( $(this).hasClass('row_selected') ) {
-                $(this).removeClass('row_selected');
-            } else {
-                if (! e.shiftKey) {
-                    self.table.$('tr.row_selected').removeClass('row_selected');
-                }
-                document.getSelection().removeAllRanges(); // disable text selection when shift+clik
-                $(this).addClass('row_selected');
-            }
-            var selected_rows = self.table.$('tr.row_selected');
-            if (selected_rows.length == 0) {
-                switch (self.name) {
-                    case "location":
-                        dFootprint.filterAll();
-                        break;
-                    case "message":
-                        dMessage.filterAll();
-                        break;
-                    case "event":
-                        dEvent.filterAll();
-                        break;
-                    case "resource":
-                        dResource.filterAll();
-                        break;
-                    case "person":
-                        dPerson.filterAll();
-                        break;
-                    case "organization":
-                        dOrganization.filterAll();
-                        break;
-                }
-            } else {
-                records_id = [];
-                self.table.$('tr.row_selected').each(function(idx, $row) {
-                    row = self.table.fnGetData($row);
-                    records_id.push(row[0]);
-                });
-                var count = 0;
-                switch (self.name) {
-                    case "location":
-                        dFootprint.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                    case "message":
-                        dMessage.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                    case "event":
-                        dEvent.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                    case "resource":
-                        dResource.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                    case "person":
-                        dPerson.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                    case "organization":
-                        dOrganization.filter(function(d) {
-                            for (var i = 0; i < records_id.length; i++) {
-                                if (d[0] === records_id[i]) {
-                                    count++;
-                                    return true;
-                                }
-                            }
-                        });
-                        break;
-                }
-            }
-            renderAllExcept([self.name + 'Table']);
-        });
-
-        this.table.$('tr').mouseover(function() {
-            if (self.name == 'location') {
-                var data = self.table.fnGetData(this);
-                highlight(data[0]); // data[0]: event id
-            }
-        });
-        
+    });
+    
 //        function fnGetSelected (OTableLocal) {
 //            alert('hi');
 //        }
-    };
-
-    this.destroy = function() {
-    };
-
-
 };
+
+SIIL.DataTable.prototype.destroy = function() {
+};
+
+
