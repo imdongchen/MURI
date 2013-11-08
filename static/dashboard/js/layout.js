@@ -162,8 +162,39 @@ function showDialogs(dialogs) {
                 network.update();
                 break;
             case "workbench":
+                var dialogLayout;
                 $("#workbench").dialog($.extend({
-                    title: "Workbench"
+                    title: "Workbench",
+                    open:		function() {
+                                                    var layout_settings = {
+                                                        zIndex:			0		// HANDLE BUG IN CHROME - required if using 'modal' (background mask)
+                                                ,	resizeWithWindow:	false	// resizes with the dialog, not the window
+                                                ,	spacing_open:		6
+                                                ,	spacing_closed:		6
+                                                ,	west__size:			'30%' 
+                                                ,	west__minSize:		100 
+                                                ,	west__maxSize:		300 
+                                                ,       center__childOptions: {
+                                                    center__paneSelector:	".inner-center"
+                                                        ,       north__size:	300 
+                                                        ,       spacing_open: 6
+                                                    ,      	north__minSize:		100 
+                                                        ,	north__maxSize:		300 
+                                                        
+                                                }
+//                                                ,	south__closable:	false 
+//                                                ,	south__resizable:	false 
+//                                                ,	south__slidable:	false 
+                                                //,	applyDefaultStyles:		true // DEBUGGING
+                                        };
+							if (!dialogLayout)
+								// init layout *the first time* dialog opens
+								dialogLayout = $("#workbench").layout( layout_settings );
+							else
+								// just in case - probably not required
+								dialogLayout.resizeAll();
+						}
+		,	resize:		function(){ if (dialogLayout) dialogLayout.resizeAll(); }
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
                 workbench = new SIIL.Workbench("#workbench");

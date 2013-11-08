@@ -1,4 +1,7 @@
 SIIL.Workbench = function(div) {
+
+
+
     $( ".accordion" ).accordion({
             collapsible: true,
             header: "> div > div.accordion-header"
