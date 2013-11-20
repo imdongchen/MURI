@@ -1,3 +1,11 @@
+$.widget("vis.visnetwork", $.vis.viscontainer, {
+    options: {
+    },
+    _create: function() {
+    },
+    destroy: function() {
+    },
+});
 SIIL.Network = function(div) {
     this.width  = 200;
     this.height = 200;

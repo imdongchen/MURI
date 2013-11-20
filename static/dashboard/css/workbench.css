@@ -53,4 +53,6 @@
 .conclusion {
     background: rgba(138, 120, 215, .5);
 }
-
+.inner-center .ui-layout-center .ui-layout-pane {
+    padding:0px; !important
+}

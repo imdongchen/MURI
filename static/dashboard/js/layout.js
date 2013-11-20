@@ -1,15 +1,37 @@
 $(document).ready(function () {
+    var container_options = {
+        "width" : 800,
+        "height" : 500,
+        "modal" : true,
+        "resizable" : true,
+        "draggable" : true,
+    };
     // workbench dialogue
     $("#workbench_btn").click(function() {
-        showDialogs(["workbench"]);
+        $("<div>").dialog($.extend({
+            "title": "Workbench",
+        }, container_options))
+        .visworkbench();
     });
     // map dialogue
     $("#map_btn").click(function() {
-        showDialogs(["map"]);
+        $("<div>").dialog($.extend({
+            "title": "Map",
+        }, container_options))
+        .vismap({
+            dimension: dFootprint,
+        });
     });
     // timeline dialogue
     $("#timeline_btn").click(function() {
-        showDialogs(["timeline"]);
+        $("<div>").dialog($.extend(container_options, {
+            "title": "Timeline",
+            "width": 1000,
+            "height": 200,
+        }))
+        .vistimeline({
+            dimension: dDate,
+        });
     });
     // Location dialogue
     $("#location_table_btn").click(function() {
@@ -48,9 +70,9 @@ function showDialogs(dialogs) {
         "height" : 500,
         "modal" : false,
         "resizable" : true,
-        "draggable" : true
+        "draggable" : true,
 //        "close" : function(){
-//            $(this).remove(); 
+//            $(this).empty(); 
 //        }
     };
         // dialog-extend options
@@ -176,7 +198,7 @@ function showDialogs(dialogs) {
                                                 ,	west__maxSize:		300 
                                                 ,       center__childOptions: {
                                                     center__paneSelector:	".inner-center"
-                                                        ,       north__size:	300 
+                                                        ,       north__size:	150 
                                                         ,       spacing_open: 6
                                                     ,      	north__minSize:		100 
                                                         ,	north__maxSize:		300 
@@ -187,14 +209,18 @@ function showDialogs(dialogs) {
 //                                                ,	south__slidable:	false 
                                                 //,	applyDefaultStyles:		true // DEBUGGING
                                         };
-							if (!dialogLayout)
+							if (!dialogLayout) {
 								// init layout *the first time* dialog opens
 								dialogLayout = $("#workbench").layout( layout_settings );
-							else
+                                                        } else
 								// just in case - probably not required
 								dialogLayout.resizeAll();
 						}
-		,	resize:		function(){ if (dialogLayout) dialogLayout.resizeAll(); }
+		,	resize:		function() { if (dialogLayout) dialogLayout.resizeAll(); },
+                        close: function() {
+                            workbench.destroy();
+                        },
+                    
                 }, dialogOptions))
                     .dialogExtend(dialogExtendOptions);
                 workbench = new SIIL.Workbench("#workbench");

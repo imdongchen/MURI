@@ -1,3 +1,11 @@
+$.widget("vis.visdatatable", $.vis.viscontainer, {
+    options: {
+    },
+    _create: function() {
+    },
+    destroy: function() {
+    },
+});
 SIIL.DataTable = function(div) {
     // initialize DataTable
     this.columns = [];
@@ -252,6 +260,7 @@ SIIL.DataTable.prototype.update = function() {
 };
 
 SIIL.DataTable.prototype.destroy = function() {
+    this.table.remove();
 };
 
 

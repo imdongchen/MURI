@@ -1,7 +1,36 @@
+$.widget("vis.visworkbench", $.vis.viscontainer, {
+    options: {
+    },
+    _create: function() {
+        if (!this.element.find(".ui-layout-north").length) {
+            var layout = "";
+            layout += '<div class="ui-layout-north"></div>';
+            layout += '<div class="ui-layout-center">';
+            layout += '<textarea></textarea>';
+            layout += '</div>';
+            $(layout).appendTo(this.element);
+        }
+        var layout_settings = {
+            zIndex:	    0,		
+            resizeWithWindow:	false,	// resizes with the dialog, not the window
+            spacing_open:	6,
+            spacing_closed:	6,
+            north__size:	'30%', 
+            north__minSize:	100, 
+            north__maxSize:	300, 
+        };
+        this.element.layout(layout_settings);
+        this.element.find(".ui-layout-center>textarea").jqte();
+        this.element.addClass("visworkbench");
+        this._super("_create");
+    },
+    destroy: function() {
+        this.element.remove();
+        this._super("_destroy");
+    },
+});
+
 SIIL.Workbench = function(div) {
-
-
-
     $( ".accordion" ).accordion({
             collapsible: true,
             header: "> div > div.accordion-header"
@@ -80,4 +109,9 @@ SIIL.Workbench = function(div) {
                 document.selection.createRange().pasteHTML(newText);
         }
     }
+};
+
+SIIL.Workbench.prototype.destroy = function() {
+    $(".jqte").remove();
+    $(".inner-center").append("<textarea class='rich_editor'></textarea>");
 };

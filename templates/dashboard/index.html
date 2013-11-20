@@ -5,7 +5,6 @@
 {% block extralib %}
 <!-- <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/layout.css' %}"> -->
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
-<script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script> 
 <script type="text/javascript" src="{% static 'dashboard/js/SIIL.js' %}"></script>
 <!-- crossfilter for coordinated view -->
 <script type="text/javascript" src="{% static 'dashboard/lib/d3-3.1.10/d3.js' %}"></script>
@@ -13,6 +12,8 @@
 
 <!-- extended dialogue -->
 <script type="text/javascript" src="{% static 'dashboard/lib/jquery-dialogextend-2.02/build/jquery.dialogextend.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/viscontainer.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script> 
 {% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/linkedview.js' %}"></script>
 {% endcompress %}
