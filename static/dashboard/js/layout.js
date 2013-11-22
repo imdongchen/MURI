@@ -2,7 +2,7 @@ $(document).ready(function () {
     var container_options = {
         "width" : 800,
         "height" : 500,
-        "modal" : true,
+        "modal" : false,
         "resizable" : true,
         "draggable" : true,
     };

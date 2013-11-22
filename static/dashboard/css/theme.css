@@ -1,23 +1,7 @@
-body {
-    font-family: "Lucida Grande", Verdana, Geneva, Lucida, Arial, Helvetica, sans-serif;
-    font-size: 80%;
-    color: #222;
-    background: #fff;
-    margin: 0px;
-}
-h1 {
-    font-size: 130%;
-    margin-bottom: 0.5em;
-    color: #003a6b;
-}
-
 .ui-widget-header {
     background: #C5CEFF; !important
 }
 
-.hidden {
-    display: none;
-}
 #page_header {
     padding: 0px;
     margin: 0px;
