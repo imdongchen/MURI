@@ -93,8 +93,10 @@
 	};
 
 	VizAnnotation.prototype.setAnnotations = function(field, annotation) {
-	    var element = this.getElementByXpath(annotation.ranges[0].start);
-            return annotation.annotations = this.options.parseAnnotations(this.tagDisplay.val());
+	    var anchor = this.annotator.selectedRanges[0].commonAncestor;
+	    var msg_id = $(anchor).parent().find(":first").html();
+            annotation.annotations = this.options.parseAnnotations(this.tagDisplay.val());
+	    annotation.anchor_id = msg_id;
 	};
 
 	VizAnnotation.prototype.updateViewer = function(field, annotation) {
