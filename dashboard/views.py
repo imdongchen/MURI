@@ -43,11 +43,11 @@ def queryEvent(request):
 
 def getData(request):
     response = {}
-    response['events'] = []
-    events = Event.objects.all().order_by('date_begin')
-    for event in events:
+    response['data'] = []
+    messages = Message.objects.all().order_by('-date')
+    for msg in messages:
         e_info = {}
-        e_info = event.getKeyAttr()
+        e_info = msg.getKeyAttr()
 
 
         e_info['organizations']  = [] 
@@ -55,22 +55,22 @@ def getData(request):
         e_info['persons']  = [] 
         e_info['footprints']  = [] 
         e_info['messages']  = [] 
+#
+#        for mes in event.message_set.all():
+#            e_info['messages'].append(mes.getKeyAttr())
+#
+#        linked_entities = list(chain(event.findTargets(), event.findSources()))
+#        for entity in linked_entities:
+#            if hasattr(entity, 'organization'):
+#                e_info['organizations'].append(entity.getKeyAttr())
+#            elif hasattr(entity, 'resource'):
+#                e_info['resources'].append(entity.getKeyAttr())
+#            elif hasattr(entity, 'person'):
+#                e_info['persons'].append(entity.getKeyAttr())
+#            elif hasattr(entity, 'footprint'):
+#                e_info['footprints'].append(entity.getKeyAttr())
 
-        for mes in event.message_set.all():
-            e_info['messages'].append(mes.getKeyAttr())
-
-        linked_entities = list(chain(event.findTargets(), event.findSources()))
-        for entity in linked_entities:
-            if hasattr(entity, 'organization'):
-                e_info['organizations'].append(entity.getKeyAttr())
-            elif hasattr(entity, 'resource'):
-                e_info['resources'].append(entity.getKeyAttr())
-            elif hasattr(entity, 'person'):
-                e_info['persons'].append(entity.getKeyAttr())
-            elif hasattr(entity, 'footprint'):
-                e_info['footprints'].append(entity.getKeyAttr())
-
-        response['events'] += flatten(e_info)
+        response['data'] += flatten(e_info)
 
     return HttpResponse(json.dumps(response), mimetype='application/json')
 
@@ -79,10 +79,8 @@ def flatten(dic):
     for person in dic['persons']+[{}]:
 	rec = {}
 	rec['uid'] = dic['uid']
-	rec['name'] = dic['name']
-	rec['types'] = dic['types']
 	rec['date'] = dic['date']
-	rec['excerpt'] = dic['excerpt']
+	rec['content'] = dic['content']
 
         if len(dic['persons']) != 0 and person == {}:
             continue
@@ -134,3 +132,4 @@ def prepareNetwork(request):
 
         return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
     return
+

@@ -1,5 +1,9 @@
 from django.contrib.gis.db import models
 from model_utils.managers import InheritanceManager
+from django.template.defaultfilters import slugify
+
+from south.modelsinspector import add_introspection_rules
+add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.GeometryField"])
 
 # Create your models here.
 class Entity(models.Model):
@@ -34,6 +38,25 @@ class Entity(models.Model):
         for sou in sources_id:
             res.append(sou[0])
         return Entity.objects.filter(id__in=res).select_subclasses()
+
+class Message(models.Model):
+    uid = models.CharField(max_length=10)
+    content = models.CharField(max_length=1000)
+    date  = models.DateTimeField(null=True, blank=True)
+    tags  = models.ManyToManyField(Entity, null=True, blank=True, through="TagInMessage")
+
+    def getKeyAttr(self):
+        attr = {}
+        attr['uid'] = self.uid
+        attr['content'] = self.content
+        attr['date']    = '' 
+        if self.date != None: 
+            attr['date']  = self.date.strftime('%m/%d/%Y') 
+        return attr
+
+class TagInMessage(models.Model):
+    message = models.ForeignKey(Message)
+    tag	    = models.ForeignKey(Entity)
 
 class Footprint(Entity):
     shape = models.GeometryField(null=True, blank=True)
@@ -151,21 +174,6 @@ class Event(Entity):
         messages = self.message_set.all()
         if len(messages) != 0:
             attr['messages'] = [message for message in messages]
-        return attr
-
-class Message(models.Model):
-    uid = models.CharField(max_length=10)
-    content = models.CharField(max_length=1000)
-    date  = models.DateTimeField(null=True, blank=True)
-    event = models.ManyToManyField(Event, null=True, blank=True)
-
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.uid
-        attr['content'] = self.content
-        attr['date']    = '' 
-        if self.date != None: 
-            attr['date']  = self.date.strftime('%m/%d/%Y') 
         return attr
 
 class Unit(Entity):

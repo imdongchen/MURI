@@ -25,6 +25,10 @@ var workbench = null;
 var eventTable = null;
 var locationTable = null;
 
+var viz_panels = [];
+
+$.subscribe('/data/filter', update);
+
 $(document).ready(function() {
     // show progress bar before data is loaded
     $("#progressbar").progressbar({
@@ -33,25 +37,26 @@ $(document).ready(function() {
     
     d3.json("data", function(error, result) {
         // Various formatters.
-        var data = result.events;
+        var data = result.data;
         var wktParser = new OpenLayers.Format.WKT();
         var footprints = [];
 
         data.forEach(function(d, i) {
             d.date  = new Date(d.date);
-            var fp = d.footprint;
-            if (fp.shape) {
-                var feature = wktParser.read(fp.shape);
-                var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
-                var dest_prj   = new OpenLayers.Projection("EPSG:900913");
-                feature.geometry.transform(origin_prj, dest_prj); // projection of google map
-                feature.attributes.id = fp.uid;
-                feature.attributes.name= fp.name;
-                fp.shape = feature;
-              }
+	    if (d.footprint) {
+		var fp = d.footprint;
+		if (fp.shape) {
+		    var feature = wktParser.read(fp.shape);
+		    var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
+		    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
+		    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
+		    feature.attributes.id = fp.uid;
+		    feature.attributes.name= fp.name;
+		    fp.shape = feature;
+		 }
+	    }
         });
 
-        // A nest operator, for grouping the flight list.
         var nestByDate = d3.nest()
           .key(function(d) { return d3.time.day(d.date); });
 
@@ -77,7 +82,7 @@ $(document).ready(function() {
             return [org.uid, org.name, org.types, org.nationality, org.ethnicity, org.religion]; 
         });
         dMessage  = datafilter.dimension(function(d) {
-            var mes = d.message;
+            var mes = d;
             return [mes.uid, mes.content, mes.date] 
         });
         //
@@ -88,6 +93,7 @@ $(document).ready(function() {
 
         $("#progressbar").remove();
 
+
         function parseDate(d) {
             return new Date(2001,
                 d.substring(0, 2) - 1,
@@ -97,12 +103,25 @@ $(document).ready(function() {
         }
     });
 });
+
+function update() {
+    var panels = ["viz-viztimeline", "viz-viztable", "viz-vizmap", "viz-viznetwork"];
+    var len = arguments.length;
+    if (len > 1) {
+	// first argument is event object, ignore it
+	// other arguments are viz panels to be excluded for update
+	for (var j = 0; j < panels.length; j ++) {
+	    for (var i = 1; i < len; i++) {
+		$(":"+panels[j]).not(":"+arguments[i]).each(function() {
+		    this.update();
+		});
+	    }
+	}
+    }
+};
+
 //
 //
-// Renders the specified chart or list.
-function render(method) {
-    d3.select(this).call(method); // I don't understand, what method is being called?
-}
 
 // Whenever the brush moves, re-render everything.
 function renderAll() {

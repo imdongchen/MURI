@@ -1,4 +1,4 @@
-$.widget("vis.viscontainer", $.ui.dialogExtend, {
+$.widget("viz.vizcontainer", $.ui.dialogExtend, {
     options: {
         color: "red",
         "closable" :    true,
@@ -14,6 +14,9 @@ $.widget("vis.viscontainer", $.ui.dialogExtend, {
     },
     _create: function() {
         this._super("_create");
+    },
+    update: function() {
+	alert ("base");
     },
     destroy: function() {
         this._super("destroy");

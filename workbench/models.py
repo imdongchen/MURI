@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from taggit.managers import TaggableManager
 
 # Create your models here.
 class PIR(models.Model):
@@ -7,6 +8,7 @@ class PIR(models.Model):
     name   = models.CharField(max_length=500)
     content   = models.CharField(max_length=500, null=True, blank=True)
     date_created = models.DateTimeField(null=True, blank=True)
+    tags = TaggableManager()
 
     def __unicode__(self):
         return self.name

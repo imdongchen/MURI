@@ -237,7 +237,8 @@ def importMessagesFromFile(filename):
 # import messages
     try:
         for rownum in range(sheet.nrows):
-            row = sheet.row_values(rownum)
+            row = unicode(sheet.row_values(rownum))
+	    print row
             message = Message(uid=str(row[0]).split(".")[0], # for some reason the id shows up as 1.0, 11.0
                     date = datetime.datetime(*xlrd.xldate_as_tuple(row[1], 0)),
                     content = row[2])
@@ -245,19 +246,19 @@ def importMessagesFromFile(filename):
     except Exception as e:
         print e
 
-    sheet = book.sheet_by_name("Event")
-# import the relationship between messages and events
-    try:
-        for rownum in range(1, sheet.nrows):
-            row = sheet.row_values(rownum)
-            event_guid = row[15]
-            messages_id = row[10].split(",")
-            event = Event.objects.get(guid=event_guid)
-            for message in Message.objects.filter(uid__in=messages_id):
-                event.message_set.add(message)
-                event.save()
-    except Exception as e:
-        print e
+#    sheet = book.sheet_by_name("Event")
+## import the relationship between messages and events
+#    try:
+#        for rownum in range(1, sheet.nrows):
+#            row = sheet.row_values(rownum)
+#            event_guid = row[15]
+#            messages_id = row[10].split(",")
+#            event = Event.objects.get(guid=event_guid)
+#            for message in Message.objects.filter(uid__in=messages_id):
+#                event.message_set.add(message)
+#                event.save()
+#    except Exception as e:
+#        print e
 
 
 def importRelationshipsFromFile(filename):

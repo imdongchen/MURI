@@ -1,5 +1,6 @@
-$.widget("vis.visworkbench", $.vis.viscontainer, {
+$.widget("viz.vizworkbench", $.viz.vizcontainer, {
     options: {
+	test: this.test,
     },
     _create: function() {
 	$("<div id='editor'>").appendTo(this.element);

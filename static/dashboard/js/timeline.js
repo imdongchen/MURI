@@ -1,9 +1,8 @@
-$.widget("vis.vistimeline", $.vis.viscontainer, {
+$.widget("viz.viztimeline", $.viz.vizcontainer, {
     options: {
         dimension: null
     },
     _create: function() {
-        this._super("_create");
         var charts = [
             barChart()
                 .dimension(this.options.dimension)
@@ -20,8 +19,16 @@ $.widget("vis.vistimeline", $.vis.viscontainer, {
         // We also listen to the chart's brush events to update the display.
         d3.selectAll(this.element)
           .data(charts)
-          .each(function(chart) { chart.on("brush", renderAllButNetwork).on("brushend", renderAll); })
-          .each(render);
+          .each(function(chart) { chart.on("brush", function() {
+	      $.publish('/data/filter', ['visnetwork']);
+	  }).on("brushend", function(){
+	      $.publish('data/filter');
+	  }); })
+          .each(this.render);
+
+        this._super("_create");
+	this.element.addClass("viztimeline");
+	this.element.addClass("viz");
 
     //    renderAll();
 
@@ -33,10 +40,10 @@ $.widget("vis.vistimeline", $.vis.viscontainer, {
             renderAll();
         };
 
-        window.reset = function(i) {
-            charts[i].filter(null);
-            renderAll();
-        };
+//        window.reset = function(i) {
+//            charts[i].filter(null);
+//            renderAll();
+//        };
 
         function barChart() {
             if (!barChart.id) barChart.id = 0;
@@ -229,6 +236,13 @@ $.widget("vis.vistimeline", $.vis.viscontainer, {
 
             return d3.rebind(chart, brush, "on");
         }
+    },
+    update: function() {
+	d3.selectAll(this.element).each(this.render);
+    },
+    // Renders the specified chart or list.
+    render: function(method) {
+	this.element.call(method); // I don't understand, what method is being called?
     },
     destroy: function() {
     },

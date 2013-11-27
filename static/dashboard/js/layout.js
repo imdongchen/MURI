@@ -8,30 +8,49 @@ $(document).ready(function () {
     };
     // workbench dialogue
     $("#workbench_btn").click(function() {
-        $("<div>").dialog($.extend({
-            "title": "Workbench",
-        }, container_options))
-        .visworkbench();
+        viz_panels.push(
+	    $("<div>").dialog($.extend({
+		"title": "Workbench",
+	    }, container_options))
+	    .vizworkbench()
+	);
     });
     // map dialogue
     $("#map_btn").click(function() {
-        $("<div>").dialog($.extend({
-            "title": "Map",
-        }, container_options))
-        .vismap({
-            dimension: dFootprint,
-        });
+        viz_panels.push(
+	    $("<div>").dialog($.extend({
+		"title": "Map",
+	    }, container_options))
+	    .vizmap({
+		dimension: dFootprint,
+	    })
+	);
     });
     // timeline dialogue
     $("#timeline_btn").click(function() {
-        $("<div>").dialog($.extend(container_options, {
-            "title": "Timeline",
-            "width": 1000,
-            "height": 200,
-        }))
-        .vistimeline({
-            dimension: dDate,
-        });
+	viz_panels.push(
+	    $("<div>").dialog($.extend({}, container_options, {
+		"title": "Timeline",
+		"width": 1000,
+		"height": 200,
+	    }))
+	    .viztimeline({
+		dimension: dDate,
+	    })
+	);
+    });
+    $("#message_table_btn").click(function() {
+	var table = 
+	    $("<table>").dialog($.extend({}, container_options, {
+		"title": "Messages",
+	    }))
+	    .viztable({
+		"dimension": dMessage,
+		"columns": ['ID', 'Content', 'Date'],
+		"hasMenu": true,
+	    });
+	viz_panels.push( table
+	);
     });
     // Location dialogue
     $("#location_table_btn").click(function() {
@@ -54,9 +73,6 @@ $(document).ready(function () {
         showDialogs(["event_table"]);
     });
     // Message dialogue
-    $("#message_table_btn").click(function() {
-        showDialogs(["message_table"]);
-    });
     // Network dialogue
     $("#network_btn").click(function() {
         showDialogs(["network"]);
@@ -227,5 +243,5 @@ function showDialogs(dialogs) {
                 break;
         }
     }
-}
+};
 

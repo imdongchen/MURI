@@ -3,6 +3,7 @@
 {% load compress %}
 
 {% block extralib %}
+<script type="text/javascript" src="{% static 'dashboard/lib/jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
 <!-- <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/layout.css' %}"> -->
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
 <script type="text/javascript" src="{% static 'dashboard/js/SIIL.js' %}"></script>
@@ -12,6 +13,7 @@
 
 <!-- extended dialogue -->
 <script type="text/javascript" src="{% static 'dashboard/lib/jquery-dialogextend-2.02/build/jquery.dialogextend.js' %}"></script>
+<script src="{% static 'dashboard/lib/jquery-ui-contextmenu/jquery.ui-contextmenu.js' %}" type="text/javascript"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/viscontainer.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script> 
 {% compress js %}
@@ -23,7 +25,7 @@
     {% include 'dashboard/page_header.html' %}
 {% endblock %}
 {% block page-body %}
-    {% include 'dashboard/event_table.html' %}
+    {% include 'dashboard/table.html' %}
     {% include 'dashboard/timeline.html' %}
     {% include 'dashboard/map.html' %}
     {% include 'dashboard/network.html' %}

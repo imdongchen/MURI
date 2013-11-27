@@ -1,9 +1,10 @@
-$.widget("vis.vismap", $.vis.viscontainer, {
+$.widget("viz.vizmap", $.viz.vizcontainer, {
     options: {
         dimension : null,
     },
     _create: function() {
-        this.element.addClass("vismap");
+        this.element.addClass("vizmap");
+        this.element.addClass("viz");
         
         this.map = null;
         this.layers = [];
