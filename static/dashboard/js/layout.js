@@ -46,7 +46,7 @@ $(document).ready(function () {
 	    }))
 	    .viztable({
 		"dimension": dMessage,
-		"columns": ['ID', 'Content', 'Date'],
+		"columns": ['ID', 'Content', 'Date', 'Tags'],
 		"hasMenu": true,
 	    });
 	viz_panels.push( table

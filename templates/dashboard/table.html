@@ -1,16 +1,31 @@
 {% load static %}
 {% block extralib %}
 <!-- <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/annotator-src-1.2.7/annotator-full.js' %}"></script> -->
-<script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/annotator-full.1.2.7/annotator-full.min.js' %}"></script> 
+<!-- <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/annotator-full.1.2.7/annotator-full.min.js' %}"></script>  -->
+    <!-- The main Annotator script -->
+<script src="{% static 'annotator/lib/util.js' %}"></script>
+<script src="{% static 'annotator/lib/console.js' %}"></script>
+<script src="{% static 'annotator/lib/class.js' %}"></script>
+<script src="{% static 'annotator/lib/range.js' %}"></script>
+<script src="{% static 'annotator/lib/annotator.js' %}"></script>
+<script src="{% static 'annotator/lib/widget.js' %}"></script>
+<script src="{% static 'annotator/lib/editor.js' %}"></script>
+<script src="{% static 'annotator/lib/viewer.js' %}"></script>
+<script src="{% static 'annotator/lib/notification.js' %}"></script>
+<script src="{% static 'annotator/lib/xpath.js' %}"></script>
+<script src="{% static 'annotator/lib/plugin/store.js' %}"></script>
+<script type="text/javascript" language="javascript" src="{% static 'annotator/lib/plugin/annotation.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/annotator-1.2.x/css/annotator.css' %}">
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/DataTables-1.9.4/media/js/jquery.dataTables.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/DataTables-1.9.4/plugin/ColReorderWithResize.js' %}"></script>
 <!--        <link rel="stylesheet" type="text/css" href="lib/DataTables-1.9.4/media/css/jquery.dataTables.css"> -->
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/DataTables-1.9.4/media/css/demo_table_jui.css' %}"> 
-<!-- <link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/annotator-src-1.2.7/css/annotator.css' %}"> -->
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/annotator-full.1.2.7/annotator.min.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/jquery-dropdown/jquery.dropdown.css' %}"> 
+<script type="text/javascript" src="{% static 'dashboard/lib/jquery-dropdown/jquery.dropdown.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/annotation.css' %}">
 
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/js/table.js' %}"></script>
-<script type="text/javascript" language="javascript" src="{% static 'dashboard/js/annotation.js' %}"></script>
 {% endblock %}
 
 <table id="location_table" class="hidden">

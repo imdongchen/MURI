@@ -7,11 +7,11 @@ add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.Geometr
 
 # Create your models here.
 class Entity(models.Model):
-    name          = models.CharField(max_length=100, null=True, blank=True)
-    security_info = models.CharField(max_length=50, null=True, blank=True)
+    name          = models.CharField(max_length=100, blank=True)
+    security_info = models.CharField(max_length=50, blank=True)
     date_as_of    = models.DateTimeField(null=True, blank=True)
     date_first_info    = models.DateTimeField(null=True, blank=True)
-    affiliation   = models.CharField(max_length=100, null=True, blank=True)
+    affiliation   = models.CharField(max_length=100, blank=True)
     allegiance    = models.CharField(max_length=50, null=True, blank=True)
     intelligence_evaluation = models.CharField(max_length=50, null=True, blank=True)
     guid          = models.CharField(max_length=50, null=True, blank=True)
@@ -43,7 +43,6 @@ class Message(models.Model):
     uid = models.CharField(max_length=10)
     content = models.CharField(max_length=1000)
     date  = models.DateTimeField(null=True, blank=True)
-    tags  = models.ManyToManyField(Entity, null=True, blank=True, through="TagInMessage")
 
     def getKeyAttr(self):
         attr = {}
@@ -53,10 +52,6 @@ class Message(models.Model):
         if self.date != None: 
             attr['date']  = self.date.strftime('%m/%d/%Y') 
         return attr
-
-class TagInMessage(models.Model):
-    message = models.ForeignKey(Message)
-    tag	    = models.ForeignKey(Entity)
 
 class Footprint(Entity):
     shape = models.GeometryField(null=True, blank=True)
@@ -71,7 +66,7 @@ class Footprint(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
-        attr['node'] = 'footprint'
+        attr['tag'] = 'footprint'
         if self.shape:
             attr['shape'] = self.shape.wkt
             attr['srid'] = self.shape.srid
@@ -110,7 +105,7 @@ class Person(Entity):
         attr['gender'] = self.gender
         attr['race'] = self.race
         attr['nationality'] = self.nationality
-        attr['node'] = 'person'
+        attr['tag'] = 'person'
         return attr
 
     def getAllAttr(self):
@@ -139,7 +134,7 @@ class Organization(Entity):
         attr['nationality'] = self.nationality
         attr['ethnicity'] = self.ethnicity
         attr['religion'] = self.religion
-        attr['node'] = 'organization'
+        attr['tag'] = 'organization'
         return attr
 
     def getAllAttr(self):
@@ -164,7 +159,7 @@ class Event(Entity):
         attr['excerpt'] = ''
         if len(messages) != 0:
             attr['excerpt'] = messages[0].content[:100] + "..." # get the first 100 characters in the first string
-        attr['node'] = 'event'
+        attr['tag'] = 'event'
         return attr
 
     def getAllAttr(self):
@@ -188,7 +183,7 @@ class Unit(Entity):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
-        attr['node'] = 'unit'
+        attr['tag'] = 'unit'
         return attr
 
     def getAllAttr(self):
@@ -212,7 +207,7 @@ class Resource(Entity):
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['condition'] = self.condition
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource'
         attr['resource_type'] = self.resource_type
         return attr
 
@@ -231,7 +226,7 @@ class Equipment(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource.equipment'
         attr['resource_type'] = 'equipment'
         return attr
 
@@ -252,7 +247,7 @@ class Weapon(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource.weapon'
         attr['resource_type'] = 'weapon'
         return attr
 
@@ -280,7 +275,7 @@ class Vehicle(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource.vehicle'
         attr['resource_type'] = 'vehicle'
         return attr
 
@@ -305,7 +300,7 @@ class Facility(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource.facility'
         attr['resource_type'] = 'facility'
         return attr
 
@@ -332,7 +327,7 @@ class Document(Resource):
         attr['condition'] = self.condition
         attr['operational_status'] = self.operational_status
         attr['availability'] = self.availability
-        attr['node'] = 'resource'
+        attr['tag'] = 'resource.document'
         attr['resource_type'] = 'document'
         return attr
 
