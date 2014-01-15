@@ -68,7 +68,7 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
                     search:  '/search',
                 },
             });
-            $("body").annotator('addPlugin', 'VizAnnotation');
+            $("body").annotator('addPlugin', 'Tags');
 
             $(document).contextmenu({
                 delegate: ".viztable",

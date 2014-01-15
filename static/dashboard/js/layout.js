@@ -45,10 +45,10 @@ $(document).ready(function () {
 		"title": "Messages",
 	    }))
 	    .viztable({
-		"dimension": dMessage,
-		"columns": ['ID', 'Content', 'Date', 'Tags'],
-		"hasMenu": true,
-	    });
+            "dimension": dMessage,
+            "columns": ['ID', 'Content', 'Date'],
+            "hasMenu": true
+        });
 	viz_panels.push( table
 	);
     });

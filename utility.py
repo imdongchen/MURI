@@ -237,8 +237,7 @@ def importMessagesFromFile(filename):
 # import messages
     try:
         for rownum in range(sheet.nrows):
-            row = unicode(sheet.row_values(rownum))
-	    print row
+            row = sheet.row_values(rownum)
             message = Message(uid=str(row[0]).split(".")[0], # for some reason the id shows up as 1.0, 11.0
                     date = datetime.datetime(*xlrd.xldate_as_tuple(row[1], 0)),
                     content = row[2])

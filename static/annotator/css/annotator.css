@@ -47,6 +47,22 @@
 	background: rgba(255, 255, 10, 0.3);
 }
 
+.annotator-hl-event {
+    background: rgba(0, 255, 10, 0.3);
+}
+.annotator-hl-location {
+    background: rgba(255, 0, 10, 0.3);
+}
+.annotator-hl-person {
+    background: rgba(255, 100, 10, 0.3);
+}
+.annotator-hl-organization {
+    background: rgba(155, 255, 100, 0.3);
+}
+.annotator-hl-resource {
+    background: rgba(205, 155, 150, 0.3);
+}
+
 .annotator-hl-temporary {
 	background: rgba(0, 124, 255, 0.3);
 }
@@ -693,7 +709,7 @@
 	margin-bottom: 2px;
 	line-height: 1.6;
 	font-weight: bold;
-	background-color: rgb(230, 230, 230);
+/*	background-color: rgb(230, 230, 230); */
 	-webkit-border-radius: 8px;
 	-moz-border-radius: 8px;
 	-o-border-radius: 8px;
