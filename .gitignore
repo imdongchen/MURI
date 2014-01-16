@@ -27,3 +27,6 @@ pip-log.txt
 /.idea/
 /workbench/migrations/
 /annotation/migrations/
+
+# IDE configuration file
+/.idea/
