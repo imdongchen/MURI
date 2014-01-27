@@ -1,8 +1,66 @@
+/*
 $.widget("viz.viztable", $.viz.vizcontainer, {
     options: {
         dimension: null,
         columns: [],
-        hasMenu: false,
+        taggable: false,
+        editable: false
+    },
+    _create: function() {
+        var columns = $.map(this.options.columns, function (column) {
+            var column_lower = column.toLowerCase();
+            return {
+                id: column_lower,
+                name: column,
+                field: column_lower
+            }
+        });
+        var options = {
+            enableCellNavigation: true,
+            enableColumnReorder: false,
+            explicitInitialization: true,
+            autoHeight: false,
+            forceFitColumns: true,
+            editable: true,
+            syncColumnCellResize: true
+        }
+        this.slickgrid = new Slick.Grid(this.element, this._processData(), columns, options)
+        this.slickgrid.init();
+
+        this._super("create")
+    },
+    _processData: function() {
+        var rows = [];
+        var columns = this.options.columns;
+        this.options.dimension.group().top(Infinity).forEach(function(d, i) {
+            if (d.value !== 0 && d.key[0] !== undefined) {
+                var row = {};
+                if (d.key.length !== columns.length) {
+                    throw "Number of columns does not match with data!"
+                }
+                for (var i = 0, len = d.key.length; i < len; i++) {
+                    row[columns[i].toLowerCase()] = d.key[i];
+                }
+                rows.push(row);
+            }
+        })
+        return rows;
+    },
+    resize: function() {
+
+    },
+    update: function() {
+
+    }
+});
+ */
+$.widget("viz.viztable", $.viz.vizcontainer, {
+    options: {
+        dimension: null,
+        columns: [],
+        taggable: false,
+        editable: false,
+        data: ""
     },
     _create: function() {
         var thead = '<thead><tr>';
@@ -12,6 +70,7 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
         thead += '</tr></thead>';
         $(thead).appendTo(this.element);
 
+        var _this = this;
         this.table = this.element.dataTable({
             "bJQueryUI": true,
             "bDestroy": true,
@@ -48,36 +107,51 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             "fnRowDeselected": mySelectEventHandler,
             //      , "aaData": d
             //        "sPaginationType": "full_numbers"
+            "fnDrawCallback": function(oSettings) {
+                var ele =  this.closest(".ui-dialog");
+                if (ele.data("annotator")) {
+                    ele.annotator("destroy");
+                    _this._setupAnnotator();
+                }
+
+            }
         });
 
         this.element.addClass("viztable");
         this.element.addClass("viz");
+        this.element.data("entity", this.options.data);
         this._super("_create");
         this.update();
 
-        if (this.options.hasMenu) {
-            $("body").annotator();
-            $("body").annotator('addPlugin', 'Store', {
-                prefix: '/annotation',
-                urls: {
-                    // These are the default URLs.
-                    create:  '/annotations',
-                    read:    '/annotations/:id',
-                    update:  '/annotations/:id',
-                    destroy: '/annotations/:id',
-                    search:  '/search',
-                },
-            });
-            $("body").annotator('addPlugin', 'Tags');
+        if (this.options.taggable) {
+            this._setupAnnotator();
+        }
 
-            $(document).contextmenu({
-                delegate: ".viztable",
-                menu: "#message_tag_menu",
-                select: function(event, ui) {
-                    alert(ui.cmd);
-                }
-            });
-        };
+        if (this.options.editable) {
+            var table = this.table;
+            $('td', this.table.fnGetNodes()).editable("entity/attributes", {
+                tooltip: "Double click to edit",
+                cancel: "Cancel",
+                submit: "Save",
+                event: "dblclick",
+                indicator: '<img src="/static/dashboard/img/wait.gif">',
+                placeholder: "",
+                "callback": function( sValue, y ) {
+                    var aPos = table.fnGetPosition( this );
+                    table.fnUpdate( sValue, aPos[0], aPos[2] );
+                },
+                "submitdata": function ( value, settings ) {
+                    var column = table.fnGetPosition( this )[2];
+                    var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
+                    return {
+                        "row_id": $(this.parentNode.childNodes[0]).html(),
+                        "attr": attr,
+                        "entity": table.data("entity")
+                    };
+                },
+            })
+        }
+
 
 
         function mySelectEventHandler(nodes) {
@@ -110,6 +184,22 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             }
             return result.length>0?result:null;
         }
+    },
+    _setupAnnotator: function() {
+        var ele = this.element.closest(".ui-dialog");
+        ele.annotator();
+        ele.annotator('addPlugin', 'Store', {
+            prefix: '/annotation',
+            urls: {
+                // These are the default URLs.
+                create:  '/annotations',
+                read:    '/annotations/:id',
+                update:  '/annotations/:id',
+                destroy: '/annotations/:id',
+                search:  '/search'
+            }
+        });
+        ele.annotator('addPlugin', 'Tags');
     },
     resize: function() {
         this.table.fnAdjustColumnSizing();

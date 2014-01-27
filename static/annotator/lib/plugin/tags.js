@@ -23,7 +23,9 @@ Annotator.Plugin.Tags = (function(_super) {
             if (string) {
                 tags = string.split(', ');
             }
-            return tags;
+            return $.map(tags, function(tag){
+                return {'entity': tag};
+            })
         },
         stringifyTags: function(array) {
             return array.join(" ");
@@ -103,7 +105,7 @@ Annotator.Plugin.Tags = (function(_super) {
             return field.addClass('annotator-tags').html(function() {
                 var string;
                 return string = $.map(annotation.tags, function(tag) {
-                    return '<span class="annotator-tag annotator-hl-' + tag + '">' + Annotator.Util.escape(tag) + '</span>';
+                    return '<span class="annotator-tag annotator-hl-' + tag['entity'] + '">' + Annotator.Util.escape(tag['entity']) + '</span>';
                 }).join(' ');
             });
         } else {

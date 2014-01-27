@@ -1,6 +1,7 @@
+var datafilter = null;
 var dDate   // date dimension
   , gDate   // group by date
-  , dFootprint
+  , dLocation
   , dPerson
   , dOrganization
   , dEvent
@@ -28,6 +29,36 @@ var locationTable = null;
 var viz_panels = [];
 
 $.subscribe('/data/filter', update);
+// Event 'entityAdded', triggered after tag is saved in server and returned with attributes from server
+$.subscribe("entityAdded", function(e, annotation) {
+    var records = [];
+    var msg_info = {};
+    dMessage.top(Infinity).some(function(d) {
+        if (d.uid === annotation.anchor) {
+            msg_info.uid = d.uid;
+            msg_info.content = d.content;
+            msg_info.date = d.date;
+            return true;
+        }
+    })
+    annotation.tags.forEach(function(tag) {
+        var record = $.extend({
+            location: {},
+            event: {},
+            person: {},
+            organization: {},
+            resource: {}
+        }, msg_info);
+        record[tag.entity] = $.extend(record, tag);
+        records.push(record);
+    })
+    updateData(records);
+})
+
+function updateData(records) {
+    datafilter.add(records);
+
+}
 
 $(document).ready(function() {
     // show progress bar before data is loaded
@@ -39,22 +70,22 @@ $(document).ready(function() {
         // Various formatters.
         var data = result.data;
         var wktParser = new OpenLayers.Format.WKT();
-        var footprints = [];
+        var locations = [];
 
         data.forEach(function(d, i) {
             d.date  = new Date(d.date);
-	    if (d.footprint) {
-		var fp = d.footprint;
-		if (fp.shape) {
-		    var feature = wktParser.read(fp.shape);
-		    var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
-		    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
-		    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
-		    feature.attributes.id = fp.uid;
-		    feature.attributes.name= fp.name;
-		    fp.shape = feature;
-		 }
-	    }
+            if (d.location) {
+                var fp = d.location;
+                if (fp.shape) {
+                    var feature = wktParser.read(fp.shape);
+                    var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
+                    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
+                    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
+                    feature.attributes.id = fp.uid;
+                    feature.attributes.name= fp.name;
+                    fp.shape = feature;
+                }
+            }
         });
 
         var nestByDate = d3.nest()
@@ -64,15 +95,16 @@ $(document).ready(function() {
         datafilter = crossfilter(data);
         gAll = datafilter.groupAll();
         dDate = datafilter.dimension(function(d) { return d.date; });
-        dFootprint = datafilter.dimension(function(d) {
-            return [d.footprint.uid, d.footprint.name, d.footprint.shape, d.footprint.srid]; });
+        dLocation = datafilter.dimension(function(d) {
+            return [d.location.uid, d.location.name, d.location.shape, d.location.srid]; });
         gDate = dDate.group(d3.time.day);
         dResource = datafilter.dimension(function(d) { 
             var res = d.resource;
             return [res.uid, res.name, res.condition, res.resource_type]; 
         });
-        dEvent    = datafilter.dimension(function(d) { 
-            return [d.uid, d.name, d.types, d.excerpt, d.date];
+        dEvent    = datafilter.dimension(function(d) {
+            var eve = d.event;
+            return [eve.uid, eve.name, eve.types, eve.date];
         });
         dPerson   = datafilter.dimension(function(d) { 
             return [d.person.uid, d.person.name, d.person.gender, d.person.race, d.person.nationality]; 
@@ -230,8 +262,8 @@ function renderAllButMap() {
     }
 }
 
-function highlight(footprint_id) {
-    if (map) map.highlight([footprint_id]);
+function highlight(location_id) {
+    if (map) map.highlight([location_id]);
 //  var eve = null; // the target event
 //  var NoException = {};
 //  try {

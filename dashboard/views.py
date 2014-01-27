@@ -53,8 +53,25 @@ def getData(request):
         e_info['organizations']  = [] 
         e_info['resources']  = [] 
         e_info['persons']  = [] 
-        e_info['footprints']  = [] 
-        e_info['messages']  = [] 
+        e_info['locations']  = [] 
+        e_info['events']  = [] 
+
+	annotations = msg.annotation_set.all()
+	for ann in annotations:
+	    entities = ann.entities.all().select_subclasses()
+	    for entity in entities:
+		if hasattr(entity, 'organization'):
+		    e_info['organizations'].append(entity.getKeyAttr())
+		elif hasattr(entity, 'resource'):
+		    e_info['resources'].append(entity.getKeyAttr())
+		elif hasattr(entity, 'person'):
+		    e_info['persons'].append(entity.getKeyAttr())
+		elif hasattr(entity, 'location'):
+		    e_info['locations'].append(entity.getKeyAttr())
+		elif hasattr(entity, 'event'):
+		    e_info['events'].append(entity.getKeyAttr())
+
+
 #
 #        for mes in event.message_set.all():
 #            e_info['messages'].append(mes.getKeyAttr())
@@ -67,8 +84,8 @@ def getData(request):
 #                e_info['resources'].append(entity.getKeyAttr())
 #            elif hasattr(entity, 'person'):
 #                e_info['persons'].append(entity.getKeyAttr())
-#            elif hasattr(entity, 'footprint'):
-#                e_info['footprints'].append(entity.getKeyAttr())
+#            elif hasattr(entity, 'location'):
+#                e_info['locations'].append(entity.getKeyAttr())
 
         response['data'] += flatten(e_info)
 
@@ -93,14 +110,14 @@ def flatten(dic):
                 if len(dic['resources']) != 0 and resource == {}:
                     continue
                 rec['resource'] = resource
-                for fp in dic['footprints']+[{}]:
-                    if len(dic['footprints']) != 0 and fp == {}:
+                for fp in dic['locations']+[{}]:
+                    if len(dic['locations']) != 0 and fp == {}:
                         continue
-                    rec['footprint'] = fp
-                    for mes in dic['messages']+[{}]:
-                        if len(dic['messages']) != 0 and mes == {}:
+                    rec['location'] = fp
+                    for event in dic['events']+[{}]:
+                        if len(dic['events']) != 0 and event == {}:
                             continue
-                        rec['message'] = mes
+                        rec['event'] = event
                         res.append(copy.deepcopy(rec))
     return res
 
@@ -133,3 +150,25 @@ def prepareNetwork(request):
         return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
     return
 
+def entity_attr(request):
+    if request.method == "POST":
+	entity = request.POST.get("entity", "")
+	attr	= request.POST.get("attr", "")
+	id  = request.POST.get("row_id", 0)
+	id = str(id)
+	val = request.POST.get("value", "")
+	if not entity or not attr or not id: 
+	    return 
+	try:
+	    ent = Entity.objects.filter(id=id).select_subclasses()[0]
+	except Entity.DoesNotExist:
+	    print "entity not exist for editing"
+	    return
+	else:
+	    if not hasattr(ent, entity) :
+		return 
+	    if not hasattr(ent, attr):
+		return
+	    setattr(ent, attr, val)
+	    ent.save()
+	    return HttpResponse(val)

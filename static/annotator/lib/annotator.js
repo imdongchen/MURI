@@ -221,7 +221,7 @@ Annotator = (function(_super) {
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             r = _ref[_i];
             try {
-                normedRanges.push(Range.sniff(r).normalize(root));
+                normedRanges.push(Range.sniff(r).normalize(root, annotation.anchor));
             } catch (_error) {
                 e = _error;
                 if (e instanceof Range.RangeError) {
@@ -234,11 +234,25 @@ Annotator = (function(_super) {
         annotation.quote = [];
         annotation.ranges = [];
         annotation.highlights = [];
+        annotation.anchor = 0; // assuming it is the id of "message"
+        // Originally the code catches the xpath start and end; now I change it to anchor to message id.
+        // Therefore I now record message id and startOffset and endOffset
+        if (this.selectedRanges) {
+            var message_id_cell = $(this.selectedRanges[0].commonAncestor).parent().children()[0];
+            annotation.anchor = $(message_id_cell).html();
+        }
+
         for (_j = 0, _len1 = normedRanges.length; _j < _len1; _j++) {
             normed = normedRanges[_j];
             annotation.quote.push($.trim(normed.text()));
             annotation.ranges.push(normed.serialize(this.wrapper[0], '.annotator-hl'));
-            $.merge(annotation.highlights, this.highlightRange(normed));
+            var cssClass = 'annotator-hl ';
+            if (annotation.tags) {
+                cssClass += $.map(annotation.tags, function(tag) {
+                    return 'annotator-hl-' + tag['entity']
+                }).join(' ')
+            }
+            $.merge(annotation.highlights, this.highlightRange(normed, cssClass));
         }
         annotation.quote = annotation.quote.join(' / ');
         $(annotation.highlights).data('annotation', annotation);
@@ -460,7 +474,7 @@ Annotator = (function(_super) {
             $(annotation.highlights).removeClass('annotator-hl-temporary');
             // here add color code for tags
             for (var i = 0; i < annotation.tags.length; i++) {
-                var tagcss = 'annotator-hl-' + annotation.tags[i];
+                var tagcss = 'annotator-hl-' + annotation.tags[i]['entity'];
                 $(annotation.highlights).addClass(tagcss)
             }
             return _this.publish('annotationCreated', [annotation]);

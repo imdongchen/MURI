@@ -9,73 +9,127 @@ $(document).ready(function () {
     // workbench dialogue
     $("#workbench_btn").click(function() {
         viz_panels.push(
-	    $("<div>").dialog($.extend({
-		"title": "Workbench",
-	    }, container_options))
-	    .vizworkbench()
-	);
+            $("<div>").dialog($.extend({
+                "title": "Workbench",
+            }, container_options))
+            .vizworkbench()
+        );
     });
     // map dialogue
     $("#map_btn").click(function() {
         viz_panels.push(
-	    $("<div>").dialog($.extend({
-		"title": "Map",
-	    }, container_options))
-	    .vizmap({
-		dimension: dFootprint,
-	    })
-	);
+            $("<div>").dialog($.extend({
+                "title": "Map",
+            }, container_options))
+            .vizmap({
+                dimension: dLocation
+            })
+        );
     });
     // timeline dialogue
     $("#timeline_btn").click(function() {
-	viz_panels.push(
-	    $("<div>").dialog($.extend({}, container_options, {
-		"title": "Timeline",
-		"width": 1000,
-		"height": 200,
-	    }))
-	    .viztimeline({
-		dimension: dDate,
-	    })
-	);
+        viz_panels.push(
+            $("<div>").dialog($.extend({}, container_options, {
+                "title": "Timeline",
+                "width": 1000,
+                "height": 200,
+            }))
+            .viztimeline({
+                dimension: dDate,
+            })
+        );
     });
     $("#message_table_btn").click(function() {
-	var table = 
-	    $("<table>").dialog($.extend({}, container_options, {
-		"title": "Messages",
-	    }))
-	    .viztable({
-            "dimension": dMessage,
-            "columns": ['ID', 'Content', 'Date'],
-            "hasMenu": true
-        });
-	viz_panels.push( table
-	);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                "title": "Messages"
+            }))
+            .viztable({
+                "dimension": dMessage,
+                "columns": ['ID', 'Content', 'Date'],
+                "taggable": true
+            });
+        viz_panels.push( table );
     });
     // Location dialogue
     $("#location_table_btn").click(function() {
-        showDialogs(["location_table"]);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                    "title": "Locations"
+                }))
+                .viztable({
+                    "dimension": dLocation,
+                    "columns": ['ID', 'Name'],
+                    "editable": true,
+                    "data": "location"
+                });
+        viz_panels.push( table );
     });
     // Resource dialogue
     $("#resource_table_btn").click(function() {
-        showDialogs(["resource_table"]);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                    "title": "Resources"
+                }))
+                .viztable({
+                    "dimension": dResource,
+                    "columns": ['ID', 'Name', 'Condition', 'Type'],
+                    "editable": true,
+                    "data": "resource"
+                });
+        viz_panels.push( table );
     });
     // People dialogue
     $("#person_table_btn").click(function() {
-        showDialogs(["person_table"]);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                    "title": "Persons"
+                }))
+                .viztable({
+                    "dimension": dPerson,
+                    "columns": ['ID', 'Name', 'Gender', 'Race', 'Nationality'],
+                    "editable": true,
+                    "data": "person"
+                });
+        viz_panels.push( table );
     });
     // Organization dialogue
     $("#organization_table_btn").click(function() {
-        showDialogs(["organization_table"]);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                    "title": "Organizations"
+                }))
+                .viztable({
+                    "dimension": dOrganization,
+                    "columns": ['ID', 'Name', 'Type', 'Nationality', 'Ethnicity', 'religion'],
+                    "editable": true,
+                    "data": "organization"
+                });
+        viz_panels.push( table );
     });
     // Event dialogue
     $("#event_table_btn").click(function() {
-        showDialogs(["event_table"]);
+        var table =
+            $("<table>").dialog($.extend({}, container_options, {
+                    "title": "Events"
+                }))
+                .viztable({
+                    "dimension": dEvent,
+                    "columns": ['ID', 'Name', 'Type', 'Date'],
+                    "editable": true,
+                    "data": "event"
+                });
+        viz_panels.push( table );
     });
-    // Message dialogue
     // Network dialogue
     $("#network_btn").click(function() {
-        showDialogs(["network"]);
+        var network =
+            $("<div>").dialog($.extend({}, container_options, {
+                    "title": "Network"
+                }))
+                .viznetwork({
+                });
+        viz_panels.push( network );
     });
 });
 

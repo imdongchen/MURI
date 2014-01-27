@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', index),
     url(r'^data$', getData),
+    url(r'^entity/attributes$', entity_attr),
     url(r'^events/all$', queryEvent),
     url(r'^network$', prepareNetwork),
     # url(r'^$', 'eventviewer.views.home', name='home'),

@@ -21,10 +21,12 @@ class Annotation(models.Model):
 	    'startOffset': self.startOffset,
 	    'endOffset'  : self.endOffset
 	}]
-	ann['anchor_id']   = self.message.id
+	ann['anchor']   = self.message.id
 	ann['tags'] = []
-	for ent in self.entities.select_subclasses():
+	for ent in self.entities.all().select_subclasses():
 	    ann['tags'].append(ent.getKeyAttr())
-	print ann
 	return ann
+
+    def __unicode__(self):
+	return self.entities.all()[0].name
 
