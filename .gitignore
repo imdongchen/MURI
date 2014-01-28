@@ -24,7 +24,6 @@ data/
 pip-log.txt
 /dashboard/migrations/
 /logs/
-/.idea/
 /workbench/migrations/
 /annotation/migrations/
 

@@ -117,18 +117,12 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             }
         });
 
-        this.element.addClass("viztable");
-        this.element.addClass("viz");
-        this.element.data("entity", this.options.data);
-        this._super("_create");
-        this.update();
-
         if (this.options.taggable) {
             this._setupAnnotator();
         }
 
+        var table = this.table;
         if (this.options.editable) {
-            var table = this.table;
             $('td', this.table.fnGetNodes()).editable("entity/attributes", {
                 tooltip: "Double click to edit",
                 cancel: "Cancel",
@@ -152,6 +146,53 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             })
         }
 
+        var self = this;
+        this.element.subscribe("table/updated", function() {
+            table.$('tr').click(function(e) {
+                if ( $(this).hasClass('row_selected') ) {
+                    $(this).removeClass('row_selected');
+                } else {
+                    if (! e.shiftKey) {
+                        table.$('tr.row_selected').removeClass('row_selected');
+                    }
+                    document.getSelection().removeAllRanges(); // disable text selection when shift+clik
+                    $(this).addClass('row_selected');
+                }
+                var selected_rows = table.$('tr.row_selected');
+                if (selected_rows.length == 0) {
+                    self.options.dimension.filterAll();
+                } else {
+                    records_id = [];
+                    self.table.$('tr.row_selected').each(function(idx, $row) {
+                        row = self.table.fnGetData($row);
+                        records_id.push(row[0]);
+                    });
+                    var count = 0;
+                    var cc = 0;
+                    self.options.dimension.filter(function(d) {
+                        if (d[0] !== undefined) {
+                            cc++;
+
+                        }
+                        for (var i = 0; i < records_id.length; i++) {
+                            if (d[0] === records_id[i]) {
+                                count++;
+                                return true;
+                            }
+                        }
+                    });
+
+                }
+                $.publish('/data/filter', self.element.attr("id"));
+            });
+        })
+
+        this.element.addClass("viztable");
+        this.element.addClass("viz");
+        this.element.data("entity", this.options.data);
+        this.element.data("viz", "vizViztable");
+        this._super("_create");
+        this.update();
 
 
         function mySelectEventHandler(nodes) {
@@ -214,48 +255,17 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             if (d.value !== 0 && d.key[0] !== undefined) {
                 row = [];
                 for (var i = 0, len = d.key.length; i < len; i++) {
-                    row.push([d.key[i]]);
+                    row.push(d.key[i]);
                 }
                 data.push(row);
             }
         });
         this.table.fnClearTable();
         this.table.fnAddData(data);
+        this.element.publish("table/updated");
 
 
-        var self = this;
-        this.table.$('tr').click(function(e) {
-            if ( $(this).hasClass('row_selected') ) {
-                $(this).removeClass('row_selected');
-            } else {
-                if (! e.shiftKey) {
-                    self.table.$('tr.row_selected').removeClass('row_selected');
-                }
-                document.getSelection().removeAllRanges(); // disable text selection when shift+clik
-                $(this).addClass('row_selected');
-            }
-            var selected_rows = self.table.$('tr.row_selected');
-            if (selected_rows.length == 0) {
-                self.options.dimension.filterAll();
-            } else {
-                records_id = [];
-                self.table.$('tr.row_selected').each(function(idx, $row) {
-                    row = self.table.fnGetData($row);
-                    records_id.push(row[0]);
-                });
-                var count = 0;
-                self.options.dimension.filter(function(d) {
-                    for (var i = 0; i < records_id.length; i++) {
-                        if (d[0] === records_id[i]) {
-                            count++;
-                            return true;
-                        }
-                    }
-                });
 
-            }
-            $.publish('/data/filter');
-        });
     },
     // get the selected text as plain format
     _selectionGet: function() {

@@ -4,7 +4,7 @@ $.widget("viz.vizcontainer", $.ui.dialogExtend, {
         "closable" :    true,
         "maximizable" : true,
         "minimizable" : true,
-        "minimizeLocation" : "left",
+        "minimizeLocation" : "right",
         "collapsable" : true,
         "dblclick" : "collapse",
         "close" : function(){

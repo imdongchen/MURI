@@ -1,10 +1,10 @@
 $.widget("viz.viznetwork", $.viz.vizcontainer, {
     options: {
-        dimension: null
+        dimension: null,
     },
     _create: function() {
-        this.width  = 800;
-        this.height = 500;
+        this.width  = 200;
+        this.height = 200;
 
         var shiftKey = null;
 
@@ -12,7 +12,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             this.shiftKey = d3.event.shiftKey || d3.event.metaKey;
         }
 
-        this.svg = d3.select(this.element[0])
+        var svg = d3.select(this.element)
             .on("keydown.brush", keyflip)
             .on("keyup.brush", keyflip)
             .each(function() { this.focus(); })
@@ -23,7 +23,9 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .append('svg:g')
             .call(d3.behavior.zoom().on("zoom", redraw))
             .append('svg:g');
-        var svg = this.svg;
+
+        var node = svg.selectAll(".node");
+        var link = svg.selectAll(".link");
 
         this.force = d3.layout.force()
             .nodes([])
@@ -33,27 +35,21 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .size([this.width, this.height])
             .on("tick", tick);
 
-        var force = this.force;
-
-        var self = this;
+        var nodes = force.nodes();
+        var links = force.links();
 
         function redraw() {
             svg.attr("transform",
             "translate(" + d3.event.translate + ")"
             + " scale(" + d3.event.scale + ")");
         }
-
         function tick() {
-            self.svg.selectAll(".link")
-                .attr("x1", function(d) {
-                    return d.source.x;
-                })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; })
-            self.svg.selectAll(".node")
-                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-        };
+            link.attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; })
+            node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        }
 
         var brush = svg.append("g")
             .datum(function() { return {selected: false, previouslySelected: false}; })
@@ -77,112 +73,69 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 d3.select(this).call(d3.event.target);
             })
 	    );
-
-        this._super("_create");
-        this.element.addClass("viznetwork");
-        this.element.addClass("viz");
-        this.element.data("viz", "vizViznetwork")
-        this.update();
-    },
-
-    _tick: function() {
-        this.svg.selectAll("link")
-            .link.attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; })
-        this.svg.selectAll("node")
-            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
     },
 
     update: function() {
-        /* get the id of all entities in filtered messages
-	    var entities_id = [];
-	    dMessage.top(Infinity).forEach(function(p, i) {
-            for (var key in p) {
-                var obj = p[key];
-                if (obj.hasOwnProperty("uid")) {
-                    entities_id.push(obj.uid)
-                }
-            }
-
+	    events_id = []
+	    dimension.top(Infinity).forEach(function(p, i) {
+            events_id.push(p.uid);
 	    });
-        end */
-        /* get the id of filtered messages */
-        var messages_id = [];
-        dMessage.group().top(Infinity).forEach(function(p, i) {
-            if (p.key[0] !== undefined && p.value !== 0) {
-                messages_id.push(p.key[0])
-            }
-        })
 
+	    entities = ['person, organization'];
 	    // New code, request data on the fly
     //        var request = d3.xhr('http://localhost:8000/network');
     //        request.post({events_id: events_id, entities: entities}, function(d) 
 	    data = {};
-        data['entities'] = ['person, organization'];
-	    data['messages_id'] = messages_id;
-        var self = this;
-        var svg = this.svg;
-        var force = this.force;
+	    data['events_id'] = events_id;
 	    $.get("network", data, function(d) {
-            var link = self.svg.selectAll(".link")
-                .data([])
-                .exit()
-                .remove();
-            var node = self.svg.selectAll(".node")
-                .data([])
-                .exit()
-                .remove();
-            self.force.nodes([]).links([]);
-
-            self.force.nodes(d.nodes)
+            link = link.data([]);
+            link.exit().remove();
+            node = node.data([]);
+            node.exit().remove();
+            this.force.nodes(d.nodes)
                 .links(d.links);
             //
             //    link = link.data(links, function(d) { return d.source.id + "-" + d.target.id; });
-            link = link.data(self.force.links())
-                .enter().append("line").attr("class", "link")
-                .style("stroke", "#FF0000");
+            link = link.data(d.links);
+            link.enter().append("line").attr("class", "link")
+              .style("stroke", "#FF0000");
 
             //   node = node.data(nodes, function(d) { return d.id;});
-            node = node.data(self.force.nodes())
-                .enter().append("g")
-                .attr("class", "node")
-                .call(self.force.drag)
-                .on("mouseover", mouseover)
-                .on("mouseout", mouseout)
-                .on("mousedown", function(d) {
-                    d.fixed = true;
-                    d3.select(this).classed("sticky", true);
-                    if (shiftKey) d3.select(this).classed("selected", d.selected = !d.selected);
-                    else node.classed("selected", function(p) { return p.selected = d === p; });
+            node = node.data(d.nodes);
+            node.enter().append("g")
+              .attr("class", "node")
+              .call(force.drag)
+              .on("mouseover", mouseover)
+              .on("mouseout", mouseout)
+              .on("mousedown", function(d) {
+                d.fixed = true;
+                d3.select(this).classed("sticky", true);
+                if (shiftKey) d3.select(this).classed("selected", d.selected = !d.selected);
+                else node.classed("selected", function(p) { return p.selected = d === p; });
                });
 
             node.append("image")
-                .attr("xlink:href", function(d) {
-                    if (d.id.toString().charAt(0) === 'm') {
-                        return "{{STATIC_URL}}dashboard/img/msg.png";
-                    }
-                    if (d.entity == 'organization') {
-                        return "{{STATIC_URL}}dashboard/img/organization.png";
-                    }
-                    else if (d.entity === 'person') {
-                        return "{{STATIC_URL}}dashboard/img/person.png";
-                    }
-                    else if (d.entity === 'event') {
-                        return "{{STATIC_URL}}dashboard/img/event.png";
-                    }
-                    else if (d.entity === 'location') {
-                        return "{{STATIC_URL}}dashboard/img/footprint.png";
-                    }
-                    else if (d.entity === 'resource') {
-                        return "{{STATIC_URL}}dashboard/img/resource.png";
+              .attr("xlink:href", function(d) {
+                  if (d.node == 'organization') {
+                  return "{{STATIC_URL}}dashboard/img/organization.png";
                   }
-                })
-                .attr("x", -12)
-                .attr("y", -12)
-                .attr("width", 36)
-                .attr("height", 36);
+                  else if (d.node === 'person') {
+                  return "{{STATIC_URL}}dashboard/img/person.png";
+                  }
+                  else if (d.node === 'event') {
+                  return "{{STATIC_URL}}dashboard/img/event.png";
+                  }
+                  else if (d.node === 'footprint') {
+                  return "{{STATIC_URL}}dashboard/img/footprint.png";
+                  }
+                  else if (d.node === 'resource') {
+                  return "{{STATIC_URL}}dashboard/img/resource.png";
+                  }
+              })
+               .attr("x", -12)
+               .attr("y", -12)
+               .attr("width", 36)
+               .attr("height", 36);
             //    node.append("rect")
             //       .attr("x", -12)
             //       .attr("y", -12)
@@ -197,10 +150,16 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
               .text(function(d) { return d.name });
             node.append("svg:title").text(function(d) {
                 var res = '';
-                for (var key in d) {
-                    res += key;
-                    if (d[key] === null || d[key] === "") res += ":\tUnknown\n";
-                    else res += ":\t" + d[key] + "\n";
+                res += "Name: " + d.name;
+                if (d.type == 'group') {
+                res += "\nDescription: " + d.desc;
+                res += "\nType: " + d.category;
+                }
+                else if (d.type == 'person') {
+                res += "\nAlias: " + d.alias;
+                res += "\nBirth: " + d.birth;
+                res += "\nprofession: " + d.prof;
+                res += "\nLiving? " + d.living;
                 }
                 return res;
             });
@@ -210,7 +169,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         //            force.charge(-10 / k)
         //                .gravity(100 * k)
 
-            self.force.start();
+            this.force.start();
 	    });
 	    // end new code request data on the fly
 
@@ -237,7 +196,6 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
     destroy: function() {
     },
 });
-
 SIIL.Network = function(div) {
     this.width  = 200;
     this.height = 200;
@@ -280,7 +238,7 @@ SIIL.Network = function(div) {
             "translate(" + d3.event.translate + ")"
             + " scale(" + d3.event.scale + ")");
     }
-    function tick() {
+function tick() {
         link.attr("x1", function(d) { return d.source.x; })
           .attr("y1", function(d) { return d.source.y; })
           .attr("x2", function(d) { return d.target.x; })
@@ -325,7 +283,6 @@ SIIL.Network = function(div) {
         data = {};
         data['events_id'] = events_id;
         $.post("network", data, function(d) {
-
             link = link.data([]);
             link.exit().remove();
             node = node.data([]);

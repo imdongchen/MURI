@@ -237,7 +237,7 @@ Annotator = (function(_super) {
         annotation.anchor = 0; // assuming it is the id of "message"
         // Originally the code catches the xpath start and end; now I change it to anchor to message id.
         // Therefore I now record message id and startOffset and endOffset
-        if (this.selectedRanges) {
+        if (this.selectedRanges && this.selectedRanges.length > 0) {
             var message_id_cell = $(this.selectedRanges[0].commonAncestor).parent().children()[0];
             annotation.anchor = $(message_id_cell).html();
         }

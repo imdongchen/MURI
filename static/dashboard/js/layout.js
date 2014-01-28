@@ -5,6 +5,10 @@ $(document).ready(function () {
         "modal" : false,
         "resizable" : true,
         "draggable" : true,
+        "close": function() {
+            $(this).dialog('destroy').remove()
+            $.publish("/viz/close", [$(this).attr("id")])
+        }
     };
     // workbench dialogue
     $("#workbench_btn").click(function() {

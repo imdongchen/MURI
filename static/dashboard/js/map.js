@@ -3,9 +3,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         dimension : null,
     },
     _create: function() {
-        this.element.addClass("vizmap");
-        this.element.addClass("viz");
-        
+
         this.map = null;
         this.layers = [];
 
@@ -92,10 +90,15 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         this.map = map;
         this.linelayer = linelayer;
         this.pointlayer = pointlayer;
+
         this.mapControls = mapControls;
 
-        this._super("_create");
         this.update();
+
+        this.element.addClass("vizmap");
+        this.element.addClass("viz");
+        this.element.data("viz", "vizVizmap")
+        this._super("_create");
     },
     update: function() {
         var linelayer = this.linelayer;
@@ -415,6 +418,5 @@ SIIL.Map = function(div) {
 
     this.destroy = function() {
         map.destroy();
-        this = null;
     };
 };

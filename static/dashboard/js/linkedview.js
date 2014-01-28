@@ -28,7 +28,29 @@ var locationTable = null;
 
 var viz_panels = [];
 
+// enable sub/pub within individual elements
+$.each({
+    trigger  : 'publish',
+    on       : 'subscribe',
+    off      : 'unsubscribe'
+}, function ( key, val) {
+    jQuery.fn[val] = function() {
+        this[key].apply(this, Array.prototype.slice.call(arguments));
+    };
+});
+
 $.subscribe('/data/filter', update);
+
+$.subscribe("/viz/close", function(e, panel_id) {
+    // remove the viz panel from viz_panels
+    for (var i = 0; i < viz_panels.length; i++) {
+        var panel = viz_panels[i];
+        if (panel.attr("id") === panel_id) {
+            viz_panels.splice(i, 1);
+            break;
+        }
+    }
+})
 // Event 'entityAdded', triggered after tag is saved in server and returned with attributes from server
 $.subscribe("entityAdded", function(e, annotation) {
     var records = [];
@@ -57,7 +79,6 @@ $.subscribe("entityAdded", function(e, annotation) {
 
 function updateData(records) {
     datafilter.add(records);
-
 }
 
 $(document).ready(function() {
@@ -137,19 +158,34 @@ $(document).ready(function() {
 });
 
 function update() {
-    var panels = ["viz-viztimeline", "viz-viztable", "viz-vizmap", "viz-viznetwork"];
+//    var panels = ["viz-viztimeline", "viz-viztable", "viz-vizmap", "viz-viznetwork"];
     var len = arguments.length;
-    if (len > 1) {
 	// first argument is event object, ignore it
-	// other arguments are viz panels to be excluded for update
-	for (var j = 0; j < panels.length; j ++) {
-	    for (var i = 1; i < len; i++) {
-		$(":"+panels[j]).not(":"+arguments[i]).each(function() {
-		    this.update();
-		});
+	// other arguments are the id of viz panels to be excluded for update
+    for (var j = 0; j < viz_panels.length; j++) {
+        var panel = viz_panels[j];
+        if ($.makeArray(arguments).indexOf(panel.attr("id")) < 0) {
+            var viz = panel.data("viz");
+            panel.data(viz).update();
+        }
+    }
+    /*
+	for (var j = 0; j < viz_panels.length; j++) {
+        if (len === 1) {
+            for (var i = 1; i < len; i++) {
+                $(":"+viz_panels[j]).each(function() {
+                    this.update();
+                });
+            }
+        } else {
+            for (var i = 1; i < len; i++) {
+                $(":"+viz_panels[j]).not(":"+arguments[i]).each(function() {
+                    this.update();
+                });
+            }
 	    }
 	}
-    }
+	*/
 };
 
 //

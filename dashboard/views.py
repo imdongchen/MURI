@@ -122,30 +122,39 @@ def flatten(dic):
     return res
 
 def prepareNetwork(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
         response = {}
         response['nodes'] = []
         response['links'] = []
-        node_types = request.POST.getlist('entities[]', None)
-        events_id = request.POST.getlist('events_id[]', None)
+        node_types = request.GET.getlist('entities[]', None)
+        filter_id = request.GET.getlist('messages_id[]', None)
 
-        if node_types == None or events_id == None:
+        if node_types == None or filter_id == None:
             return
 
         graph   = nx.DiGraph()
 
-        events = Entity.objects.filter(id__in=events_id)
-        linked_entities = list(events.select_subclasses())
+        msgs = Message.objects.filter(id__in=filter_id)
+	for msg in msgs:
+	    annotations = msg.annotation_set.all()
+	    if len(annotations) > 0:
+		graph.add_node('m'+str(msg.id), msg.getKeyAttr())
+		for ann in annotations:
+		    entities = ann.entities.all().select_subclasses()
+		    for ent in entities:
+			graph.add_node(ent.id, ent.getKeyAttr())
+			graph.add_edge('m'+str(msg.id), ent.id)
+#       linked_entities = list(events.select_subclasses())
 
-        for eve in events:
-            entities = list(chain(eve.findTargets(), eve.findSources()))
-            linked_entities += entities
-        for entity in linked_entities:
-            graph.add_node(entity.id, entity.getKeyAttr())
+#       for eve in events:
+#           entities = list(chain(eve.findTargets(), eve.findSources()))
+#           linked_entities += entities
+#       for entity in linked_entities:
+#           graph.add_node(entity.id, entity.getKeyAttr())
 
-        relations = Relationship.objects.filter( Q(source__in=linked_entities) & Q(target__in=linked_entities) )
-        for relation in relations:
-            graph.add_edge(relation.source.id, relation.target.id, relation.getAllAttr())
+#       relations = Relationship.objects.filter( Q(source__in=linked_entities) & Q(target__in=linked_entities) )
+#       for relation in relations:
+#           graph.add_edge(relation.source.id, relation.target.id, relation.getAllAttr())
 
         return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
     return

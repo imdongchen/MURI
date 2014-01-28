@@ -8,32 +8,31 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                 .dimension(this.options.dimension)
                 .group(this.options.dimension.group())
                 .round(d3.time.day.round)
-              .x(d3.time.scale()
-                .domain([new Date(2010, 0, 1), new Date(2010, 5, 1)])
-                .rangeRound([0, 10 * 90]))
+                .x(d3.time.scale()
+                    .domain([new Date(2010, 0, 1), new Date(2010, 5, 1)])
+                    .rangeRound([0, 10 * 90]))
                 .filter([new Date(2010, 1, 1), new Date(2010, 2, 1)])
-            ];
+        ];
 
         // Given our array of charts, which we assume are in the same order as the
         // .chart elements in the DOM, bind the charts to the DOM and render them.
         // We also listen to the chart's brush events to update the display.
         d3.selectAll(this.element)
-          .data(charts)
-          .each(function(chart) { chart.on("brush", function() {
-	      $.publish('/data/filter', ['visnetwork']);
-	  }).on("brushend", function(){
-	      $.publish('data/filter');
-	  }); })
-          .each(this.render);
+            .data(charts)
+            .each(function(chart) {
+                chart.on("brush", function() {
+                    $.publish('/data/filter', ['viznetwork']);
+                }).on("brushend", function(){
+                    $.publish('/data/filter');
+                });
+            })
+            .each(this.render);
 
-        this._super("_create");
-	this.element.addClass("viztimeline");
-	this.element.addClass("viz");
 
-    //    renderAll();
+        //    renderAll();
 
-    //     d3.selectAll("#total")
-    //      .text(datafilter.size());
+        //     d3.selectAll("#total")
+        //      .text(datafilter.size());
 
         window.filter = function(filters) {
             filters.forEach(function(d, i) { charts[i].filter(d); });
@@ -61,7 +60,7 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
 
             function chart(div) {
                 var width = x.range()[1],
-                  height = y.range()[0];
+                    height = y.range()[0];
 
                 y.domain([0, group.top(1)[0].value]);
 
@@ -72,36 +71,36 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                     // Create the skeletal chart.
                     if (g.empty()) {
                         div.select(".title").append("a")
-                          .attr("href", "javascript:reset(" + id + ")")
-                          .attr("class", "reset")
-                          .text("reset")
-                          .style("display", "none");
+                            .attr("href", "javascript:reset(" + id + ")")
+                            .attr("class", "reset")
+                            .text("reset")
+                            .style("display", "none");
 
                         g = div.append("svg")
-                          .attr("width", width + margin.left + margin.right)
-                          .attr("height", height + margin.top + margin.bottom)
-                        .append("g")
-                          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top + margin.bottom)
+                            .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
                         g.append("clipPath")
-                          .attr("id", "clip-" + id)
-                        .append("rect")
-                          .attr("width", width)
-                          .attr("height", height);
+                            .attr("id", "clip-" + id)
+                            .append("rect")
+                            .attr("width", width)
+                            .attr("height", height);
 
                         g.selectAll(".bar")
-                          .data(["background", "foreground"])
-                        .enter().append("path")
-                          .attr("class", function(d) { return d + " bar"; })
-                          .datum(group.all());
+                            .data(["background", "foreground"])
+                            .enter().append("path")
+                            .attr("class", function(d) { return d + " bar"; })
+                            .datum(group.all());
 
                         g.selectAll(".foreground.bar")
-                          .attr("clip-path", "url(#clip-" + id + ")");
+                            .attr("clip-path", "url(#clip-" + id + ")");
 
                         g.append("g")
-                          .attr("class", "axis")
-                          .attr("transform", "translate(0," + height + ")")
-                          .call(axis);
+                            .attr("class", "axis")
+                            .attr("transform", "translate(0," + height + ")")
+                            .call(axis);
 
                         // Initialize the brush component with pretty resize handles.
                         var gBrush = g.append("g").attr("class", "brush").call(brush);
@@ -115,135 +114,140 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                         g.selectAll(".brush").call(brush);
                         div.select(".title a").style("display", brush.empty() ? "none" : null);
                         if (brush.empty()) {
-                        g.selectAll("#clip-" + id + " rect")
-                            .attr("x", 0)
-                            .attr("width", width);
+                            g.selectAll("#clip-" + id + " rect")
+                                .attr("x", 0)
+                                .attr("width", width);
                         } else {
-                        var extent = brush.extent();
-                        g.selectAll("#clip-" + id + " rect")
-                            .attr("x", x(extent[0]))
-                            .attr("width", x(extent[1]) - x(extent[0]));
+                            var extent = brush.extent();
+                            g.selectAll("#clip-" + id + " rect")
+                                .attr("x", x(extent[0]))
+                                .attr("width", x(extent[1]) - x(extent[0]));
                         }
                     }
 
                     g.selectAll(".bar").attr("d", barPath);
-                                  });
+                });
 
-              function barPath(groups) {
-                var path = [],
-                    i = -1,
-                    n = groups.length,
-                    d;
-                while (++i < n) {
-                  d = groups[i];
-                  path.push("M", x(d.key), ",", height, "V", y(d.value), "h9V", height);
+                function barPath(groups) {
+                    var path = [],
+                        i = -1,
+                        n = groups.length,
+                        d;
+                    while (++i < n) {
+                        d = groups[i];
+                        path.push("M", x(d.key), ",", height, "V", y(d.value), "h9V", height);
+                    }
+                    return path.join("");
                 }
-                return path.join("");
-              }
 
-              function resizePath(d) {
-                var e = +(d == "e"),
-                    x = e ? 1 : -1,
-                    y = height / 3;
-                return "M" + (.5 * x) + "," + y
-                    + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
-                    + "V" + (2 * y - 6)
-                    + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
-                    + "Z"
-                    + "M" + (2.5 * x) + "," + (y + 8)
-                    + "V" + (2 * y - 8)
-                    + "M" + (4.5 * x) + "," + (y + 8)
-                    + "V" + (2 * y - 8);
-              }
+                function resizePath(d) {
+                    var e = +(d == "e"),
+                        x = e ? 1 : -1,
+                        y = height / 3;
+                    return "M" + (.5 * x) + "," + y
+                        + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
+                        + "V" + (2 * y - 6)
+                        + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
+                        + "Z"
+                        + "M" + (2.5 * x) + "," + (y + 8)
+                        + "V" + (2 * y - 8)
+                        + "M" + (4.5 * x) + "," + (y + 8)
+                        + "V" + (2 * y - 8);
+                }
             }
 
             brush.on("brushstart.chart", function() {
-              var div = d3.select(this.parentNode.parentNode.parentNode);
-              div.select(".title a").style("display", null);
+                var div = d3.select(this.parentNode.parentNode.parentNode);
+                div.select(".title a").style("display", null);
             });
 
             brush.on("brush.chart", function() {
-              var g = d3.select(this.parentNode),
-                  extent = brush.extent();
-              if (round) g.select(".brush")
-                  .call(brush.extent(extent = extent.map(round)))
-                .selectAll(".resize")
-                  .style("display", null);
-              g.select("#clip-" + id + " rect")
-                  .attr("x", x(extent[0]))
-                  .attr("width", x(extent[1]) - x(extent[0]));
-              dimension.filterRange(extent);
+                var g = d3.select(this.parentNode),
+                    extent = brush.extent();
+                if (round) g.select(".brush")
+                    .call(brush.extent(extent = extent.map(round)))
+                    .selectAll(".resize")
+                    .style("display", null);
+                g.select("#clip-" + id + " rect")
+                    .attr("x", x(extent[0]))
+                    .attr("width", x(extent[1]) - x(extent[0]));
+                dimension.filterRange(extent);
             });
 
             brush.on("brushend.chart", function() {
-              if (brush.empty()) {
-                var div = d3.select(this.parentNode.parentNode.parentNode);
-                div.select(".title a").style("display", "none");
-                div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
-                dimension.filterAll();
-              }
+                if (brush.empty()) {
+                    var div = d3.select(this.parentNode.parentNode.parentNode);
+                    div.select(".title a").style("display", "none");
+                    div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
+                    dimension.filterAll();
+                }
             });
 
             chart.margin = function(_) {
-              if (!arguments.length) return margin;
-              margin = _;
-              return chart;
+                if (!arguments.length) return margin;
+                margin = _;
+                return chart;
             };
 
             chart.x = function(_) {
-              if (!arguments.length) return x;
-              x = _;
-              axis.scale(x);
-              brush.x(x);
-              return chart;
+                if (!arguments.length) return x;
+                x = _;
+                axis.scale(x);
+                brush.x(x);
+                return chart;
             };
 
             chart.y = function(_) {
-              if (!arguments.length) return y;
-              y = _;
-              return chart;
+                if (!arguments.length) return y;
+                y = _;
+                return chart;
             };
 
             chart.dimension = function(_) {
-              if (!arguments.length) return dimension;
-              dimension = _;
-              return chart;
+                if (!arguments.length) return dimension;
+                dimension = _;
+                return chart;
             };
 
             chart.filter = function(_) {
-              if (_) {
-                brush.extent(_);
-                dimension.filterRange(_);
-              } else {
-                brush.clear();
-                dimension.filterAll();
-              }
-              brushDirty = true;
-              return chart;
+                if (_) {
+                    brush.extent(_);
+                    dimension.filterRange(_);
+                } else {
+                    brush.clear();
+                    dimension.filterAll();
+                }
+                brushDirty = true;
+                return chart;
             };
 
             chart.group = function(_) {
-              if (!arguments.length) return group;
-              group = _;
-              return chart;
+                if (!arguments.length) return group;
+                group = _;
+                return chart;
             };
 
             chart.round = function(_) {
-              if (!arguments.length) return round;
-              round = _;
-              return chart;
+                if (!arguments.length) return round;
+                round = _;
+                return chart;
             };
 
             return d3.rebind(chart, brush, "on");
         }
+        this._super("_create");
+        this.element.addClass("viztimeline");
+        this.element.addClass("viz");
+        this.element.data("viz", "vizViztimeline")
     },
     update: function() {
-	d3.selectAll(this.element).each(this.render);
+        d3.selectAll(this.element).each(this.render);
     },
     // Renders the specified chart or list.
     render: function(method) {
-	this.element.call(method); // I don't understand, what method is being called?
+        // I don't understand, what method is being called?
+        d3.select(this).call(method)
     },
     destroy: function() {
-    },
+    }
 });
