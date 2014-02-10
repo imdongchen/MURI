@@ -285,7 +285,7 @@ Range.SerializedRange = (function() {
                 // I should replace it with jquery to get the element
 //                node = Range.nodeFromXPath(this[p], root);
                 $.makeArray($(root).find("tr")).some(function(tr) {
-                    if ($($(tr).children()[0]).html() == anchor) { // the id column
+                    if ($(tr).data("id") === anchor) { // the id column
                         node = $(tr).children()[1]; //the content column
                         return true;
                     }

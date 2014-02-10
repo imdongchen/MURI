@@ -6,8 +6,8 @@ $(document).ready(function () {
         "resizable" : true,
         "draggable" : true,
         "close": function() {
-            $(this).dialog('destroy').remove()
-            $.publish("/viz/close", [$(this).attr("id")])
+            $(this).dialog('destroy').remove();
+            $.publish("/viz/close", [$(this).attr("id")]);
         }
     };
     // workbench dialogue
@@ -119,7 +119,7 @@ $(document).ready(function () {
                 }))
                 .viztable({
                     "dimension": dEvent,
-                    "columns": ['ID', 'Name', 'Type', 'Date'],
+                    "columns": ['ID', 'Name', 'Types', 'Date'],
                     "editable": true,
                     "data": "event"
                 });

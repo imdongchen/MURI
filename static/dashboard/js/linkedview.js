@@ -136,12 +136,11 @@ $(document).ready(function() {
         });
         dMessage  = datafilter.dimension(function(d) {
             var mes = d;
-            return [mes.uid, mes.content, mes.date] 
+            return [mes.uid, mes.content, mes.date]
         });
         //
         // show requested dialogs
         var dialogs = $.trim($("#display_dialogs").text()).split(",");
-        console.log(dialogs);
         showDialogs(dialogs);
 
         $("#progressbar").remove();

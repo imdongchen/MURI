@@ -167,6 +167,7 @@ def entity_attr(request):
 	id = str(id)
 	val = request.POST.get("value", "")
 	if not entity or not attr or not id: 
+	    print "Warning: request params incorrect"
 	    return 
 	try:
 	    ent = Entity.objects.filter(id=id).select_subclasses()[0]
@@ -175,8 +176,12 @@ def entity_attr(request):
 	    return
 	else:
 	    if not hasattr(ent, entity) :
+		print "lala"
 		return 
 	    if not hasattr(ent, attr):
+		print ent
+		print attr
+		print "haha"
 		return
 	    setattr(ent, attr, val)
 	    ent.save()

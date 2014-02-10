@@ -3,14 +3,15 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         dimension: null
     },
     _create: function() {
-        this.width  = 800;
-        this.height = 500;
+        this.width  = this.element.width();
+        this.height = this.element.height();
 
         var shiftKey = null;
 
         var keyflip = function() {
             this.shiftKey = d3.event.shiftKey || d3.event.metaKey;
         }
+        shiftKey = this.shiftKey;
 
         this.svg = d3.select(this.element[0])
             .on("keydown.brush", keyflip)
@@ -21,7 +22,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         //        .attr("height", this.height)
             .attr("pointer-events", "all")
             .append('svg:g')
-            .call(d3.behavior.zoom().on("zoom", redraw))
+//            .call(d3.behavior.zoom().on("zoom", redraw))
             .append('svg:g');
         var svg = this.svg;
 
@@ -39,21 +40,26 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
         function redraw() {
             svg.attr("transform",
-            "translate(" + d3.event.translate + ")"
-            + " scale(" + d3.event.scale + ")");
+                "translate(" + d3.event.translate + ")"
+                    + " scale(" + d3.event.scale + ")");
         }
 
-        function tick() {
+        function tick(e) {
+            // Push sources up and targets down to form a weak tree.
+            var k = 6 * e.alpha;
+
             self.svg.selectAll(".link")
                 .attr("x1", function(d) {
                     return d.source.x;
                 })
-                .attr("y1", function(d) { return d.source.y; })
+                .attr("y1", function(d) { return d.source.y -= k; })
                 .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; })
+                .attr("y2", function(d) { return d.target.y += k; })
             self.svg.selectAll(".node")
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
         };
+
+        var node = this.svg.selectAll(".node")
 
         var brush = svg.append("g")
             .datum(function() { return {selected: false, previouslySelected: false}; })
@@ -93,6 +99,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr("y2", function(d) { return d.target.y; })
         this.svg.selectAll("node")
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    },
+    _redraw: function() {
     },
 
     update: function() {
@@ -142,7 +150,16 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             //    link = link.data(links, function(d) { return d.source.id + "-" + d.target.id; });
             link = link.data(self.force.links())
                 .enter().append("line").attr("class", "link")
-                .style("stroke", "#FF0000");
+                .style("stroke", "#FF0000")
+                .on("contextmenu", function(data, index) {
+                    var position = d3.mouse(this)
+                    d3.select("#network_contextmenu")
+                        .style('position', 'absolute')
+                        .style('left', position[0] + "px")
+                        .style('top', position[1] + "px")
+                        .style('display', 'block');
+                    d3.event.preventDefault();
+                })
 
             //   node = node.data(nodes, function(d) { return d.id;});
             node = node.data(self.force.nodes())
@@ -154,9 +171,28 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 .on("mousedown", function(d) {
                     d.fixed = true;
                     d3.select(this).classed("sticky", true);
-                    if (shiftKey) d3.select(this).classed("selected", d.selected = !d.selected);
+                    if (self.shiftKey) d3.select(this).classed("selected", d.selected = !d.selected);
                     else node.classed("selected", function(p) { return p.selected = d === p; });
-               });
+               })
+                .on("dblclick", function(d) {
+                    // disable zoom
+                    svg.call(d3.behavior.zoom().on("zoom"), null);
+                    self.mousedown_node = d;
+                    if (self.mousedown_node == self.selected_node) self.selected_node = null;
+                    else self.selected_node = self.mousedown_node;
+                    self.selected_link = null;
+
+                    // reposition drag line
+                    self.drag_line
+                        .attr("class", "link")
+                        .attr("x1", self.mousedown_node.x)
+                        .attr("y1", self.mousedown_node.y)
+                        .attr("x2", self.mousedown_node.x)
+                        .attr("y2", self.mousedown_node.y);
+
+                    redraw();
+
+                });
 
             node.append("image")
                 .attr("xlink:href", function(d) {
@@ -214,23 +250,27 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 	    });
 	    // end new code request data on the fly
 
-	function mouseover() {
-	  d3.select(this).select("image").transition()
-	      .duration(450)
-	      .attr("width", 64)
-	      .attr("height", 64);
-	  highlightFromNetwork(this.__data__.id);
-	}
+        function mouseover() {
+          d3.select(this).select("image").transition()
+              .duration(450)
+              .attr("width", 64)
+              .attr("height", 64);
+          highlightFromNetwork(this.__data__.id);
+        }
 
-	function mouseout() {
-	  d3.select(this).select("image").transition()
-	      .duration(450)
-	       .attr("width", 36)
-	       .attr("height", 36);
-	  unhighlightFromNetwork(this.__data__.id);
-	}
+        function mouseout() {
+          d3.select(this).select("image").transition()
+              .duration(450)
+               .attr("width", 36)
+               .attr("height", 36);
+          unhighlightFromNetwork(this.__data__.id);
+        }
     },
     resize: function() {
+        this.width = this.element.width();
+        this.height = this.element.height();
+        this.svg.attr("width", this.width).attr("height", this.height);
+        this.force.size([this.width, this.height]).resume();
     },
     highlight: function() {
     },

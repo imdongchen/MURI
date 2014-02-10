@@ -8,15 +8,18 @@
       <change type="DELETED" beforePath="$PROJECT_DIR$/dashboard/settings.py.example" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/static/annotator/lib/plugin/store.map" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/annotator/lib/annotator.js" afterPath="$PROJECT_DIR$/static/annotator/lib/annotator.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/dashboard/base.html" afterPath="$PROJECT_DIR$/templates/dashboard/base.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/lib/DataTables-1.9.4/media/css/demo_table_jui.css" afterPath="$PROJECT_DIR$/static/dashboard/lib/DataTables-1.9.4/media/css/demo_table_jui.css" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/layout.js" afterPath="$PROJECT_DIR$/static/dashboard/js/layout.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/linkedview.js" afterPath="$PROJECT_DIR$/static/dashboard/js/linkedview.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/map.js" afterPath="$PROJECT_DIR$/static/dashboard/js/map.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dashboard/models.py" afterPath="$PROJECT_DIR$/dashboard/models.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/dashboard/network.html" afterPath="$PROJECT_DIR$/templates/dashboard/network.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/network.js" afterPath="$PROJECT_DIR$/static/dashboard/js/network.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/annotator/lib/range.js" afterPath="$PROJECT_DIR$/static/annotator/lib/range.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/dashboard/table.html" afterPath="$PROJECT_DIR$/templates/dashboard/table.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/table.js" afterPath="$PROJECT_DIR$/static/dashboard/js/table.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/timeline.js" afterPath="$PROJECT_DIR$/static/dashboard/js/timeline.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/annotator/lib/plugin/tags.js" afterPath="$PROJECT_DIR$/static/annotator/lib/plugin/tags.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dashboard/views.py" afterPath="$PROJECT_DIR$/dashboard/views.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/static/dashboard/js/viscontainer.js" afterPath="$PROJECT_DIR$/static/dashboard/js/viscontainer.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="MURI.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -39,20 +42,13 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="table.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="table.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/static/dashboard/js/table.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="246" column="5" selection-start="8893" selection-end="8893" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="8625">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="map.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/static/dashboard/js/map.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="99" column="42" selection-start="3584" selection-end="3584" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="6420">
-              <folding />
+            <state line="119" column="1" selection-start="4000" selection-end="4000" vertical-scroll-proportion="0.67393124" vertical-offset="981" max-vertical-offset="9660">
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -66,20 +62,13 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="viscontainer.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/static/dashboard/js/viscontainer.js">
+      <file leaf-file-name="jquery.ui.dialog.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-ui-1.10.3/ui/jquery.ui.dialog.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="6" column="34" selection-start="211" selection-end="211" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="450">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="annotator.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/static/annotator/lib/annotator.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="239" column="64" selection-start="9565" selection-end="9565" vertical-scroll-proportion="0.0" vertical-offset="3330" max-vertical-offset="9270">
-              <folding />
+            <state line="499" column="32" selection-start="12508" selection-end="12508" vertical-scroll-proportion="0.0" vertical-offset="6435" max-vertical-offset="12210">
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -87,25 +76,56 @@
       <file leaf-file-name="linkedview.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/static/dashboard/js/linkedview.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="44" column="42" selection-start="1022" selection-end="1022" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="5115">
+            <state line="138" column="29" selection-start="4442" selection-end="4442" vertical-scroll-proportion="0.0" vertical-offset="1125" max-vertical-offset="5100">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="timeline.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/static/dashboard/js/timeline.js">
+      <file leaf-file-name="jquery-1.9.1.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-1.9.1.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="237" column="0" selection-start="8947" selection-end="8947" vertical-scroll-proportion="0.0" vertical-offset="3180" max-vertical-offset="3885">
+            <state line="3344" column="0" selection-start="92619" selection-end="92619" vertical-scroll-proportion="0.0" vertical-offset="49530" max-vertical-offset="144045">
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="workbench.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/static/dashboard/js/workbench.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="87" column="16" selection-start="2944" selection-end="2944" vertical-scroll-proportion="0.0" vertical-offset="240" max-vertical-offset="2445">
+              <folding>
+                <marker date="1389880749000" expanded="false" signature="1386:1406" placeholder="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="workbench.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/templates/dashboard/workbench.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="107" column="13" selection-start="5874" selection-end="5874" vertical-scroll-proportion="-43.333332" vertical-offset="565" max-vertical-offset="1785">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="network.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="network.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/static/dashboard/js/network.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="200" column="30" selection-start="7524" selection-end="7524" vertical-scroll-proportion="0.3664495" vertical-offset="2775" max-vertical-offset="7275">
+            <state line="151" column="60" selection-start="5354" selection-end="5354" vertical-scroll-proportion="0.0" vertical-offset="1680" max-vertical-offset="7875">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="network.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/templates/dashboard/network.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="12" column="29" selection-start="378" selection-end="378" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="315">
               <folding />
             </state>
           </provider>
@@ -114,18 +134,7 @@
       <file leaf-file-name="layout.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/static/dashboard/js/layout.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="9" column="52" selection-start="319" selection-end="319" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2205">
-              <folding>
-                <element signature="n#!!block;n#showDialogs#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="base.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/templates/dashboard/base.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="10" column="8" selection-start="464" selection-end="464" vertical-scroll-proportion="-6.25" vertical-offset="0" max-vertical-offset="585">
+            <state line="35" column="48" selection-start="1022" selection-end="1022" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4665">
               <folding />
             </state>
           </provider>
@@ -149,30 +158,30 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/static/annotator/lib/plugin/tags.js" />
-        <option value="$PROJECT_DIR$/static/annotator/lib/plugin/store.js" />
-        <option value="$PROJECT_DIR$/static/annotator/lib/range.js" />
-        <option value="$PROJECT_DIR$/static/dashboard/css/theme.css" />
-        <option value="$PROJECT_DIR$/static/dashboard/lib/jquery-ui-1.10.3/themes/base/jquery.ui.dialog.css" />
         <option value="$PROJECT_DIR$/static/dashboard/lib/SlickGrid/slick.grid.css" />
-        <option value="$PROJECT_DIR$/templates/dashboard/table.html" />
-        <option value="$PROJECT_DIR$/static/dashboard/js/table.js" />
-        <option value="$PROJECT_DIR$/static/annotator/lib/annotator.js" />
         <option value="$PROJECT_DIR$/static/dashboard/js/timeline.js" />
         <option value="$PROJECT_DIR$/static/dashboard/js/map.js" />
         <option value="$PROJECT_DIR$/static/dashboard/js/viscontainer.js" />
         <option value="$PROJECT_DIR$/templates/dashboard/base.html" />
-        <option value="$PROJECT_DIR$/static/dashboard/js/layout.js" />
-        <option value="$PROJECT_DIR$/static/dashboard/js/linkedview.js" />
+        <option value="$PROJECT_DIR$/templates/dashboard/table.html" />
+        <option value="$PROJECT_DIR$/static/dashboard/lib/DataTables-1.9.4/media/css/demo_table_jui.css" />
+        <option value="$PROJECT_DIR$/static/annotator/lib/annotator.js" />
+        <option value="$PROJECT_DIR$/static/annotator/lib/range.js" />
+        <option value="$PROJECT_DIR$/static/annotator/lib/plugin/tags.js" />
+        <option value="$PROJECT_DIR$/static/dashboard/lib/jquery-1.9.1.js" />
+        <option value="$PROJECT_DIR$/templates/dashboard/network.html" />
         <option value="$PROJECT_DIR$/static/dashboard/js/network.js" />
+        <option value="$PROJECT_DIR$/static/dashboard/js/linkedview.js" />
+        <option value="$PROJECT_DIR$/static/dashboard/js/layout.js" />
+        <option value="$PROJECT_DIR$/static/dashboard/js/table.js" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="535" />
-    <option name="y" value="150" />
-    <option name="width" value="1315" />
-    <option name="height" value="760" />
+    <option name="x" value="-1164" />
+    <option name="y" value="22" />
+    <option name="width" value="1137" />
+    <option name="height" value="1403" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -215,6 +224,24 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="MURI" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="MURI" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="MURI" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="templates" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -308,21 +335,14 @@
   <component name="PropertiesComponent">
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="options.lastSelected" value="editor.preferences.appearance" />
     <property name="recentsLimit" value="5" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.lastSelected" value="editor.preferences.appearance" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../CAnalytics/code/canalytics" />
+    <property name="FullScreen" value="false" />
     <property name="options.searchVisible" value="true" />
+    <property name="options.splitter.details.proportions" value="0.2" />
   </component>
   <component name="RunManager">
-    <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
-      <option name="VMOptions" />
-      <option name="arguments" />
-      <option name="filePath" />
-      <option name="scope" value="ALL" />
-      <option name="testName" />
-      <method />
-    </configuration>
     <configuration default="true" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
       <option name="VMOptions" />
       <option name="arguments" />
@@ -333,15 +353,23 @@
       <option name="showConsoleOnStdOut" value="false" />
       <method />
     </configuration>
+    <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
+      <option name="VMOptions" />
+      <option name="arguments" />
+      <option name="filePath" />
+      <option name="scope" value="ALL" />
+      <option name="testName" />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma" singleton="true" config-file="">
+      <envs />
+      <method />
+    </configuration>
     <configuration default="true" type="JSTestDriver:ConfigurationType" factoryName="JsTestDriver">
       <setting name="configLocationType" value="CONFIG_FILE" />
       <setting name="settingsFile" value="" />
       <setting name="serverType" value="INTERNAL" />
       <setting name="preferredDebugBrowser" value="CHROME" />
-      <method />
-    </configuration>
-    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma" singleton="true" config-file="">
-      <envs />
       <method />
     </configuration>
     <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug" singleton="true">
@@ -363,14 +391,14 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="535" y="150" width="1315" height="760" extended-state="0" />
+    <frame x="-1164" y="22" width="1137" height="1403" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32932332" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.371875" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25779468" sideWeight="0.6706767" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.29815304" sideWeight="0.6706767" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -397,65 +425,44 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/static/dashboard/css/theme.css">
+    <entry file="file://$PROJECT_DIR$/templates/dashboard/table.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="0" selection-start="155" selection-end="155" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="570">
+        <state line="21" column="0" selection-start="1688" selection-end="1688" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="1935">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-ui-1.10.3/themes/base/jquery.ui.dialog.css">
+    <entry file="file://$PROJECT_DIR$/templates/dashboard/base.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="41" column="17" selection-start="766" selection-end="766" vertical-scroll-proportion="0.0" vertical-offset="315" max-vertical-offset="1125">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-dialogextend-2.02/example.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-4.8093586" vertical-offset="2775" max-vertical-offset="4770">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/lib/SlickGrid/slick.grid.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="93" column="17" selection-start="1828" selection-end="1828" vertical-scroll-proportion="0.0" vertical-offset="1065" max-vertical-offset="2445">
+        <state line="10" column="8" selection-start="464" selection-end="464" vertical-scroll-proportion="0.0" vertical-offset="150" max-vertical-offset="585">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/static/annotator/lib/plugin/store.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="103" column="50" selection-start="4105" selection-end="4105" vertical-scroll-proportion="-5.28" vertical-offset="1413" max-vertical-offset="4170">
+        <state line="128" column="23" selection-start="4941" selection-end="4941" vertical-scroll-proportion="0.0" vertical-offset="933" max-vertical-offset="4170">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/templates/dashboard/table.html">
+    <entry file="file://$PROJECT_DIR$/static/annotator/lib/range.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="30" column="94" selection-start="2872" selection-end="2872" vertical-scroll-proportion="-13.125" vertical-offset="135" max-vertical-offset="2025">
+        <state line="264" column="26" selection-start="9314" selection-end="9314" vertical-scroll-proportion="0.0" vertical-offset="3675" max-vertical-offset="5385">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/annotator/lib/plugin/tags.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="103" column="19" selection-start="3742" selection-end="3742" vertical-scroll-proportion="0.0" vertical-offset="795" max-vertical-offset="2310">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/static/annotator/lib/annotator.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="239" column="64" selection-start="9565" selection-end="9565" vertical-scroll-proportion="0.0" vertical-offset="3330" max-vertical-offset="9270">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/map.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="99" column="42" selection-start="3584" selection-end="3584" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="6420">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/viscontainer.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="34" selection-start="211" selection-end="211" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="450">
+        <state line="77" column="30" selection-start="3159" selection-end="3159" vertical-scroll-proportion="0.0" vertical-offset="600" max-vertical-offset="9255">
           <folding />
         </state>
       </provider>
@@ -467,47 +474,74 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/templates/dashboard/base.html">
+    <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-ui-1.10.3/ui/jquery.ui.dialog.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="8" selection-start="464" selection-end="464" vertical-scroll-proportion="-6.25" vertical-offset="0" max-vertical-offset="585">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/linkedview.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="42" selection-start="1022" selection-end="1022" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="5115">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/timeline.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="237" column="0" selection-start="8947" selection-end="8947" vertical-scroll-proportion="0.0" vertical-offset="3180" max-vertical-offset="3885">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/table.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="246" column="5" selection-start="8893" selection-end="8893" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="8625">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/static/dashboard/js/layout.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="52" selection-start="319" selection-end="319" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2205">
+        <state line="499" column="32" selection-start="12508" selection-end="12508" vertical-scroll-proportion="0.0" vertical-offset="6435" max-vertical-offset="12210">
           <folding>
-            <element signature="n#!!block;n#showDialogs#0" expanded="false" />
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/templates/dashboard/workbench.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="107" column="13" selection-start="5874" selection-end="5874" vertical-scroll-proportion="-43.333332" vertical-offset="565" max-vertical-offset="1785">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/dashboard/js/workbench.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="87" column="16" selection-start="2944" selection-end="2944" vertical-scroll-proportion="0.0" vertical-offset="240" max-vertical-offset="2445">
+          <folding>
+            <marker date="1389880749000" expanded="false" signature="1386:1406" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/templates/dashboard/network.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="29" selection-start="378" selection-end="378" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="315">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/dashboard/lib/jquery-1.9.1.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3344" column="0" selection-start="92619" selection-end="92619" vertical-scroll-proportion="0.0" vertical-offset="49530" max-vertical-offset="144045">
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/static/dashboard/js/network.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="200" column="30" selection-start="7524" selection-end="7524" vertical-scroll-proportion="0.3664495" vertical-offset="2775" max-vertical-offset="7275">
+        <state line="151" column="60" selection-start="5354" selection-end="5354" vertical-scroll-proportion="0.0" vertical-offset="1680" max-vertical-offset="7875">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/dashboard/js/linkedview.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="138" column="29" selection-start="4442" selection-end="4442" vertical-scroll-proportion="0.0" vertical-offset="1125" max-vertical-offset="5100">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/dashboard/js/layout.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="35" column="48" selection-start="1022" selection-end="1022" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4665">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/dashboard/js/table.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="119" column="1" selection-start="4000" selection-end="4000" vertical-scroll-proportion="0.67393124" vertical-offset="981" max-vertical-offset="9660">
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

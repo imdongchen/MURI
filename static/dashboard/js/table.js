@@ -116,47 +116,25 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
 
             }
         });
+        // hide the ID column
+//        this.table.fnSetColumnVis(0,false);
 
         if (this.options.taggable) {
             this._setupAnnotator();
         }
 
         var table = this.table;
-        if (this.options.editable) {
-            $('td', this.table.fnGetNodes()).editable("entity/attributes", {
-                tooltip: "Double click to edit",
-                cancel: "Cancel",
-                submit: "Save",
-                event: "dblclick",
-                indicator: '<img src="/static/dashboard/img/wait.gif">',
-                placeholder: "",
-                "callback": function( sValue, y ) {
-                    var aPos = table.fnGetPosition( this );
-                    table.fnUpdate( sValue, aPos[0], aPos[2] );
-                },
-                "submitdata": function ( value, settings ) {
-                    var column = table.fnGetPosition( this )[2];
-                    var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
-                    return {
-                        "row_id": $(this.parentNode.childNodes[0]).html(),
-                        "attr": attr,
-                        "entity": table.data("entity")
-                    };
-                },
-            })
-        }
-
         var self = this;
         this.element.subscribe("table/updated", function() {
-            table.$('tr').click(function(e) {
-                if ( $(this).hasClass('row_selected') ) {
-                    $(this).removeClass('row_selected');
+            table.$('tr').find("td:first").click(function(e) {
+                if ( $(this.parentNode).hasClass('row_selected') ) {
+                    $(this.parentNode).removeClass('row_selected');
                 } else {
                     if (! e.shiftKey) {
                         table.$('tr.row_selected').removeClass('row_selected');
                     }
                     document.getSelection().removeAllRanges(); // disable text selection when shift+clik
-                    $(this).addClass('row_selected');
+                    $(this.parentNode).addClass('row_selected');
                 }
                 var selected_rows = table.$('tr.row_selected');
                 if (selected_rows.length == 0) {
@@ -185,6 +163,31 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
                 }
                 $.publish('/data/filter', self.element.attr("id"));
             });
+
+            if (self.options.editable) {
+                $('td', table.fnGetNodes()).editable("entity/attributes", {
+                    tooltip: "Double click to edit",
+                    cancel: "Cancel",
+                    submit: "Save",
+                    event: "dblclick",
+                    indicator: '<img src="/static/dashboard/img/wait.gif">',
+                    placeholder: "",
+                    "callback": function( sValue, y ) {
+                        var aPos = table.fnGetPosition( this );
+                        table.fnUpdate( sValue, aPos[0], aPos[2] );
+                    },
+                    "submitdata": function ( value, settings ) {
+                        var column = table.fnGetPosition( this )[2];
+                        var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
+                        return {
+                            "row_id": $(this.parentNode).data("id"),
+                            "attr": attr,
+                            "entity": table.data("entity")
+                        };
+                    }
+                })
+            }
+
         })
 
         this.element.addClass("viztable");
@@ -262,6 +265,17 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
         });
         this.table.fnClearTable();
         this.table.fnAddData(data);
+        var _table = this.table;
+        var self = this;
+        this.table.$('tr').each(function(i, row) {
+            var pos = _table.fnGetPosition(this);
+            var data = _table.fnGetData(pos);
+            $(row).data("id", data[0]);
+
+        })
+        this.table.fnGetNodes().forEach(function(row) {
+            var id = row[0]
+        })
         this.element.publish("table/updated");
 
 

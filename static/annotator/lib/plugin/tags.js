@@ -27,8 +27,10 @@ Annotator.Plugin.Tags = (function(_super) {
                 return {'entity': tag};
             })
         },
-        stringifyTags: function(array) {
-            return array.join(" ");
+        stringifyTags: function(array) { //array of tag objects
+            return $.map(array, function(tag) {
+                return tag.entity;
+            }).join(" ")
         }
     };
 
