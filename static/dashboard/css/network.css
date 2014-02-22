@@ -1,4 +1,19 @@
-g.node.selected > rect{
-    stroke-width:1px;
-    stroke: "#0000FF";
+g.selected circle {
+    stroke: #000 !important;
+}
+path.link {
+    fill: none;
+    stroke: #000;
+    stroke-width: 3px;
+    cursor: default;
+}
+path.link.hidden {
+    stroke-width: 0;
+}
+circle.node:hover {
+    stroke-width: 1.5px;
+    cursor: pointer; ;
+}
+path.link.dragline {
+    pointer-events: none;
 }

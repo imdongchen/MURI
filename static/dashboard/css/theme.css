@@ -26,7 +26,9 @@
     text-shadow: 1px 1px 0 #fff;
   }
 
-body {
+html, body {
     font-size: 12px;
+/*    position: relative;
+*/
 }
 
