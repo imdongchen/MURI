@@ -17,3 +17,9 @@ circle.node:hover {
 path.link.dragline {
     pointer-events: none;
 }
+
+.brush .extent {
+    fill-opacity: .1;
+    stroke: #fff;
+    shape-rendering: crispEdges;
+}

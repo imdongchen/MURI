@@ -9,77 +9,29 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.links = [];
         var _this = this;
 
-        var shiftKey = null;
-
-        var keyflip = function() {
-            this.shiftKey = d3.event.shiftKey || d3.event.metaKey;
-        }
-        shiftKey = this.shiftKey;
-
-        this.svg = d3.select(this.element[0])
-            .on("keydown.brush", function() {
-                if(d3.event.shiftKey) {
-                    _this.svg.append("svg:g")
-                        .datum(function() { return {selected: false, previouslySelected: false}; })
-                        .attr("class", "brush")
-                        .call(d3.svg.brush()
-                            .x(d3.scale.identity().domain([0, _this.width]))
-                            .y(d3.scale.identity().domain([0, _this.height]))
-                            .on("brushstart", function(d) {
-                                _this.node.each(function(d) { d.previouslySelected = shiftKey && d.selected; });
-                            })
-                            .on("brush", function() {
-                                var extent = d3.event.target.extent();
-                                _this.node.classed("selected", function(d) {
-                                    return d.selected = d.previouslySelected ^
-                                        (extent[0][0] <= d.x && d.x < extent[1][0]
-                                            && extent[0][1] <= d.y && d.y < extent[1][1]);
-                                });
-                            })
-                            .on("brushend", function() {
-                                d3.event.target.clear();
-                                d3.select(this).call(d3.event.target);
-                            })
-                        )
-                    ;
+        d3.select("body")
+            .on("keydown", function() {
+                if (d3.event.shiftKey) {
+                    _this.mode = "filter";
                 }
+                else if (d3.event.altKey) {
+                    _this.mode = "draw";
+                }
+                else {
+                    _this.mode = "normal";
+                }
+                _this.setMode(_this.mode);
             })
             .on("keyup", function() {
-                if(d3.event.shiftKey) {
-                    _this.svg
-                        .on('keydown.brush', null)
-                }
+                _this.mode = "normal";
+                _this.setMode(_this.mode);
             })
-//            .on("keydown.brush", keyflip)
-//            .on("keyup.brush", keyflip)
+        ;
+
+        this.svg = d3.select(this.element[0])
             .each(function() { this.focus(); })
             .append("svg:svg")
-        //        .attr("width", this.width)
-        //        .attr("height", this.height)
             .attr("pointer-events", "all")
-            .on("mousemove", function() {
-                if(!_this.mousedown_node) return;
-
-                // update drag line
-                _this.drag_line.attr('d', 'M' + _this.mousedown_node.x + ',' + _this.mousedown_node.y + 'L' + d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
-
-                _this.restart();
-            })
-            .on("mouseup", function() {
-                if(_this.mousedown_node) {
-                    // hide drag line
-                    _this.drag_line
-                        .classed('hidden', true)
-                        .style('marker-end', '');
-                }
-
-                // because :active only works in WebKit?
-                _this.svg.classed('active', false);
-
-                // clear mouse event vars
-                _this.resetMouseVars();
-            })
-
         ;
         // define node images
         var images = ['person', 'organization', 'location', 'event', 'message', 'resource']
@@ -112,25 +64,43 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('d', 'M10,-5L0,0L10,5')
             .attr('fill', '#000');
 
-        // add zoom behavior
-        this.svg.call(d3.behavior.zoom().on("zoom", redraw));
-
         this.force = d3.layout.force()
             .nodes(this.nodes)
             .links(this.links)
             .charge(-400)
             .linkDistance(120)
             .size([this.width, this.height])
-            .on("tick", tick);
+            .on("tick", tick)
+        ;
 
-        this.link = this.svg.append('svg:g').selectAll("path");
-        this.node = this.svg.append('svg:g').selectAll("g");
+        // d3 behaviors
+        this.zoom = d3.behavior.zoom();
 
-        function redraw() {
+        this.brush = d3.svg.brush();
+
+        this.drag = this.force.drag();
+
+
+        this.svg = this.svg.append('svg:g')
+            .call(this.zoom.on('zoom', zoomed))
+            .append('g')
+        ;
+
+        function zoomed() {
             _this.svg.attr("transform",
                 "translate(" + d3.event.translate + ")"
                     + " scale(" + d3.event.scale + ")");
         }
+
+        this.svg.append('svg:rect')
+            .attr('width', this.width)
+            .attr('height', this.height)
+            .attr('fill', 'white')
+        ;
+
+
+        this.link = this.svg.selectAll("path");
+        this.node = this.svg.selectAll("g");
 
         function tick(e) {
             // Push sources up and targets down to form a weak tree.
@@ -145,19 +115,14 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                         sourcePadding = d.left ? 17 : 12,
                         targetPadding = d.right ? 17 : 12,
                         sourceX = d.source.x + (sourcePadding * normX),
-                        sourceY = d.source.y - k + (sourcePadding * normY),
+                        sourceY = d.source.y + (sourcePadding * normY),
                         targetX = d.target.x - (targetPadding * normX),
-                        targetY = d.target.y + k - (targetPadding * normY);
+                        targetY = d.target.y - (targetPadding * normY);
 //                    return "M" + sourceX + "," + sourceY + "A" + dist + "," + dist + " 0 0,1 " + targetX + "," + targetY;
                     return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
                 })
             ;
-//                .attr("x1", function(d) {
-//                    return d.source.x;
-//                })
-//                .attr("y1", function(d) { return d.source.y -= k; })
-//                .attr("x2", function(d) { return d.target.x; })
-//                .attr("y2", function(d) { return d.target.y += k; })
+
             _this.node.attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });
@@ -182,19 +147,199 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.update();
     },
 
-    update: function() {
-        /* get the id of all entities in filtered messages
-	    var entities_id = [];
-	    dMessage.top(Infinity).forEach(function(p, i) {
-            for (var key in p) {
-                var obj = p[key];
-                if (obj.hasOwnProperty("uid")) {
-                    entities_id.push(obj.uid)
-                }
+    setMode: function(mode) {
+        this.exitAllModes();
+        switch (mode) {
+            case "normal":
+                this.setNormalMode();
+                break;
+            case "draw":
+                this.setDrawMode();
+                break;
+            case "filter":
+                this.setFilterMode();
+                break;
+        }
+
+    },
+
+    setDrawMode: function() {
+        var _this = this;
+        this.svg.on("mousemove", function(d) {
+            if(!_this.mousedown_node) {
+                return;
+            }
+            _this.drag_line.attr('d', 'M' + _this.mousedown_node.x + ',' + _this.mousedown_node.y + 'L' + d3.mouse(this)[0] + ',' + d3.mouse(this)[1]);
+
+            _this.restart();
+        })
+
+        this.svg.on("mouseup", function() {
+            if(_this.mousedown_node) {
+                // hide drag line
+                _this.drag_line
+                    .classed('hidden', true)
+                    .style('marker-end', '');
             }
 
-	    });
-        end */
+            // because :active only works in WebKit?
+            _this.svg.classed('active', false);
+
+            // clear mouse event vars
+            _this.resetMouseVars();
+        })
+
+        this.node.on("mousedown", function(d) {
+            // select node
+            _this.mousedown_node = d;
+            if(_this.mousedown_node === _this.selected_node) _this.selected_node = null;
+            else _this.selected_node = _this.mousedown_node;
+            _this.selected_link = null;
+
+            // reposition drag line
+            _this.drag_line
+                .style('marker-end', 'url(#end-arrow)')
+                .classed('hidden', false)
+                .attr('d', 'M' + _this.mousedown_node.x + ',' + _this.mousedown_node.y + 'L' + _this.mousedown_node.x + ',' + _this.mousedown_node.y);
+
+            _this.restart();
+        })
+
+        this.node.on("mouseup", function(d) {
+            if(!_this.mousedown_node) return;
+
+            // needed by FF
+            _this.drag_line
+                .classed('hidden', true)
+                .style('marker-end', '');
+
+            // check for drag-to-self
+            _this.mouseup_node = d;
+            if(_this.mouseup_node === _this.mousedown_node) { _this.resetMouseVars(); return; }
+
+            // unenlarge target node
+            d3.select(this).attr('transform', '');
+
+            // add link to graph (update if exists)
+            // NB: links are strictly source < target; arrows separately specified by booleans
+            var source, target, direction;
+            source = _this.mousedown_node;
+            target = _this.mouseup_node;
+
+            var link;
+            link = _this.links.filter(function(l) {
+                return (l.source === source && l.target === target);
+            })[0];
+
+            if(link) {
+
+            } else {
+                link = {source: source, target: target};
+                _this.links.push(link);
+            }
+
+            // select new link
+            _this.selected_link = link;
+            _this.selected_node = null;
+            _this.restart();
+        })
+
+    },
+
+    setFilterMode: function() {
+        var _this = this;
+        var brushX=d3.scale.linear().range([0, this.width]),
+            brushY=d3.scale.linear().range([0, this.height]);
+
+        this.svg.append('g')
+            .attr('class', 'brush')
+            .call(this.brush
+                .on("brushstart", brushstart)
+                .on("brush", brushing)
+                .on("brushend", brushend)
+                .x(brushX)
+                .y(brushY)
+            )
+        ;
+
+        function brushstart() {
+            // do whatever you want on brush start
+        }
+
+        function brushing() {
+            var e = _this.brush.extent();
+            d3.selectAll(".node").classed("selected", function(d) {
+                return d.selected = e[0][0] <= brushX.invert(d.x) && brushX.invert(d.x) <= e[1][0]
+                    && e[0][1] <= brushY.invert(d.y) && brushY.invert(d.y) <= e[1][1];
+            });
+        }
+
+        function brushend() {
+            d3.select(this).call(d3.event.target);
+            var e = _this.brush.extent();
+            // empty brush deselects all nodes
+            if (_this.brush.empty()) {
+                d3.selectAll(".node").attr("class", function(d) {
+                    return d.selected=false;
+                });
+            }
+
+//            vis.selectAll("circle").attr("fill", function(d) {
+//                truth = e[0][0] <= brushX.invert(d.x) && brushX.invert(d.x) <= e[1][0]
+//                    && e[0][1] <= brushY.invert(d.y) && brushY.invert(d.y) <= e[1][1];
+//                if (truth) { d.selected = true; }
+//            });
+        }
+    },
+
+    setNormalMode: function() {
+        var _this = this;
+
+//        this.svg.call(this.zoom
+//            .on("zoom", zoomed)
+//        );
+        this.zoom.on('zoom', zoomed);
+        this.node.call(this.drag
+            .on("dragstart", dragstarted)
+            .on("drag", dragged)
+            .on("dragend", dragend)
+        );
+
+
+        function dragstarted(d) {
+            d3.event.sourceEvent.stopPropagation();
+            d3.select(this).classed("dragging", true);
+        }
+
+        function dragged(d) {
+//            d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+        }
+
+        function dragend(d) {
+            d3.select(this).classed("dragging", false);
+        }
+        function zoomed() {
+            _this.svg.attr("transform",
+                "translate(" + d3.event.translate + ")"
+                    + " scale(" + d3.event.scale + ")");
+        }
+    },
+
+    exitAllModes: function() {
+        // exit draw mode
+        this.svg.on("mousemove", null).on("mouseup", null);
+        this.node.on("mousemove", null).on("mouseup", null).on("mousedown", null);
+        // exit zoom mode
+        this.zoom.on('zoom', null);
+//        this.svg.select('g.zoom').remove();
+        // exit brush mode
+        this.svg.select('.brush').remove();
+        this.svg.on("mousemove.brush", null).on('mousedown.brush', null).on('mouseup.brush', null);
+        // exit drag mode
+        this.node.on('mousedown.drag', null);
+    },
+
+    update: function() {
         /* get the id of filtered messages */
         var messages_id = [];
         dMessage.group().top(Infinity).forEach(function(p, i) {
@@ -203,39 +348,20 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             }
         })
 
-	    // New code, request data on the fly
-    //        var request = d3.xhr('http://localhost:8000/network');
-    //        request.post({events_id: events_id, entities: entities}, function(d) 
+        // request data from server
 	    data = {};
         data['entities'] = ['person, organization'];
 	    data['messages_id'] = messages_id;
         var _this = this;
+
 	    $.get("network", data, function(d) {
             _this.nodes.length = 0;
             Array.prototype.push.apply(_this.nodes, d.nodes);
             _this.links.length = 0;
             Array.prototype.push.apply(_this.links, d.links);
-//            for (var i = 0, len = _this.nodes.length; i < len; i++) {
-//                if (_this._findNode(_this.nodes[i], nodes) == -1) {
-//                    _this.nodes.splice(i, 1);
-//                }
-//            }
-//            for (var i = 0, len = _this.links.length; i < len; i++) {
-//                if (_this._findLink(_this.links[i], links) == -1) {
-//                    _this.links.splice(i, 1);
-//                }
-//            }
-//            for (var i = 0, len = nodes.length; i < len; i++) {
-//                if (_this._findNode(nodes[i], _this.nodes) == -1) {
-//                    _this.nodes.push(nodes[i]);
-//                }
-//            }
-//            for (var i = 0, len = links.length; i < len; i++) {
-//                if (_this._findLink(links[i], _this.links) == -1) {
-//                    _this.links.push(links[i]);
-//                }
-//            }
+
             _this.restart();
+            _this.setMode("normal");
 	    });
     },
 
@@ -283,71 +409,13 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 }
             })
             .on("mouseover", function(d) {
-//                if(!_this.mousedown_node || d === _this.mousedown_node) return;
                 // enlarge target node
-                d3.select(this).attr('transform', 'scale(1.2)');
+                d3.select(this).attr('transform', 'scale(1.5)');
             })
             .on('mouseout', function(d) {
-//               if(!_this.mousedown_node || d === _this.mousedown_node) return;
                 // unenlarge target node
                 d3.select(this).attr('transform', '');
             })
-            .on('mousedown', function(d) {
-                if(d3.event.ctrlKey) return;
-
-                // select node
-                _this.mousedown_node = d;
-                if(_this.mousedown_node === _this.selected_node) _this.selected_node = null;
-                else _this.selected_node = _this.mousedown_node;
-                _this.selected_link = null;
-
-                // reposition drag line
-                _this.drag_line
-                    .style('marker-end', 'url(#end-arrow)')
-                    .classed('hidden', false)
-                    .attr('d', 'M' + _this.mousedown_node.x + ',' + _this.mousedown_node.y + 'L' + _this.mousedown_node.x + ',' + _this.mousedown_node.y);
-
-                _this.restart();
-            })
-            .on('mouseup', function(d) {
-                if(!_this.mousedown_node) return;
-
-                // needed by FF
-                _this.drag_line
-                    .classed('hidden', true)
-                    .style('marker-end', '');
-
-                // check for drag-to-self
-                _this.mouseup_node = d;
-                if(_this.mouseup_node === _this.mousedown_node) { _this.resetMouseVars(); return; }
-
-                // unenlarge target node
-                d3.select(this).attr('transform', '');
-
-                // add link to graph (update if exists)
-                // NB: links are strictly source < target; arrows separately specified by booleans
-                var source, target, direction;
-                source = _this.mousedown_node;
-                target = _this.mouseup_node;
-
-                var link;
-                link = _this.links.filter(function(l) {
-                    return (l.source === source && l.target === target);
-                })[0];
-
-                if(link) {
-
-                } else {
-                    link = {source: source, target: target};
-                    _this.links.push(link);
-                }
-
-                // select new link
-                _this.selected_link = link;
-                _this.selected_node = null;
-                _this.restart();
-            });
-
         ;
 
         g.append("text")
@@ -355,7 +423,9 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr("y", 4)
             .style("text-anchor", "middle")
             .attr("dy", "-.95em")
-            .text(function(d) { return d.name });
+            .text(function(d) { return d.name })
+            .style("-webkit-user-select", "none"); // disable text selection when dragging mouse
+
         g.append("svg:title").text(function(d) {
             var res = '';
             for (var key in d) {

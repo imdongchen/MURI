@@ -87,7 +87,7 @@ $(document).ready(function() {
         value: false
     });
     
-    d3.json("data", function(error, result) {
+    d3.json("data", function(result) {
         // Various formatters.
         var data = result.data;
         var wktParser = new OpenLayers.Format.WKT();
