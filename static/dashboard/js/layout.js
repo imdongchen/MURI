@@ -132,6 +132,7 @@ $(document).ready(function () {
                     "title": "Network"
                 }))
                 .viznetwork({
+                    'dimension': dNetwork
                 });
         viz_panels.push( network );
     });

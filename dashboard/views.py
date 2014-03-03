@@ -134,6 +134,7 @@ def prepareNetwork(request):
 
         graph   = nx.DiGraph()
 
+	# construct network on 'co-occurrance'
         msgs = Message.objects.filter(id__in=filter_id)
 	for msg in msgs:
 	    annotations = msg.annotation_set.all()
@@ -143,7 +144,22 @@ def prepareNetwork(request):
 		    entities = ann.entities.all().select_subclasses()
 		    for ent in entities:
 			graph.add_node(ent.id, ent.getKeyAttr())
-			graph.add_edge('m'+str(msg.id), ent.id)
+			graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
+			targets = ent.findTargets()
+			sources = ent.findSources()
+			for target in targets:
+			    rels = Relationship.objects.filter(source=ent,target=target)
+			    graph.add_node(target.id, target.getKeyAttr())
+			    for rel in rels:
+				graph.add_edge(ent.id, target.id, rel=rel.description)
+			for source in sources:
+			    rels = Relationship.objects.filter(source=source,target=ent)
+			    graph.add_node(source.id, source.getKeyAttr())
+			    for rel in rels:
+				graph.add_edge(source.id, ent.id, rel=rel.description)
+
+	
+
 #       linked_entities = list(events.select_subclasses())
 
 #       for eve in events:
@@ -158,6 +174,34 @@ def prepareNetwork(request):
 
         return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
     return
+
+def network_relation(request):
+    res = {}
+    if request.method == "POST":
+	source = request.POST.get('source', '')
+	target = request.POST.get('target', '')
+	rel    = request.POST.get('rel', '')
+
+	if source == '' or target == '':
+	    return
+	if source[0] == 'm':
+	    source = Message.objects.get(id=int(source[1:]))
+	else: 
+	    source = Entity.objects.get(id=int(source))
+	if target[0] == 'm':
+	    target = Message.objects.get(id=int(target[1:]))
+	else: 
+	    target = Entity.objects.get(id=int(target))
+
+	rel, created = Relationship.objects.get_or_create(source=source, target=target, description=rel)
+	rel.save()
+	res['source'] = source.id
+	res['target'] = target.id
+	res['rel'] = rel.description
+
+	return HttpResponse(json.dumps(res), mimetype='application/json')
+
+
 
 def entity_attr(request):
     if request.method == "POST":

@@ -1,9 +1,10 @@
-g.selected circle {
-    stroke: #000 !important;
+circle.selected {
+    stroke: #3276b1 !important;
+    stroke-width: 2px;
 }
 path.link {
     fill: none;
-    stroke: #000;
+    stroke: #ccc;
     stroke-width: 3px;
     cursor: default;
 }
@@ -23,3 +24,14 @@ path.link.dragline {
     stroke: #fff;
     shape-rendering: crispEdges;
 }
+
+#relation_form {
+    display: none;
+    z-index: 999;
+    width: 150px;
+    position: absolute;
+}
+#relation {
+    width: 100px;
+}
+

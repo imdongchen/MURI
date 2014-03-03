@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^entity/attributes$', entity_attr),
     url(r'^events/all$', queryEvent),
     url(r'^network$', prepareNetwork),
+    url(r'^network/relation$', network_relation),
     # url(r'^$', 'eventviewer.views.home', name='home'),
     # url(r'^eventviewer/', include('eventviewer.foo.urls')),
 

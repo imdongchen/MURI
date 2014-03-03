@@ -51,7 +51,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('orient', 'auto')
             .append('svg:path')
             .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', '#000');
+            .attr('fill', '#ccc');
 
         this.svg.append('svg:defs').append('svg:marker')
             .attr('id', 'start-arrow')
@@ -62,7 +62,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('orient', 'auto')
             .append('svg:path')
             .attr('d', 'M10,-5L0,0L10,5')
-            .attr('fill', '#000');
+            .attr('fill', '#ccc');
 
         this.force = d3.layout.force()
             .nodes(this.nodes)
@@ -82,15 +82,9 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
 
         this.svg = this.svg.append('svg:g')
-            .call(this.zoom.on('zoom', zoomed))
+            .call(this.zoom)
             .append('g')
         ;
-
-        function zoomed() {
-            _this.svg.attr("transform",
-                "translate(" + d3.event.translate + ")"
-                    + " scale(" + d3.event.scale + ")");
-        }
 
         this.svg.append('svg:rect')
             .attr('width', this.width)
@@ -222,7 +216,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
             // add link to graph (update if exists)
             // NB: links are strictly source < target; arrows separately specified by booleans
-            var source, target, direction;
+            var source, target;
             source = _this.mousedown_node;
             target = _this.mouseup_node;
 
@@ -241,6 +235,26 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             // select new link
             _this.selected_link = link;
             _this.selected_node = null;
+
+            // pop up relationship form
+            _this.element.append($('#relation_form')
+                .show().focus()
+                .css('top', (_this.mouseup_node.y + _this.mousedown_node.y)/2.0)
+                .css('left', (_this.mouseup_node.x + _this.mousedown_node.x)/2.0)
+            );
+            $('#relation_form form').submit(function() {
+                var rel = $('#relation').val();
+                link.rel = rel;
+                $.post('network/relation', {
+                    source: link.source.id,
+                    target: link.target.id,
+                    rel: link.rel
+                }, function(data) {
+                    console.log(data);
+                })
+                $(this).trigger('reset').parent().hide();
+            });
+
             _this.restart();
         })
 
@@ -268,10 +282,32 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
         function brushing() {
             var e = _this.brush.extent();
+            var nodes_id = [];
             d3.selectAll(".node").classed("selected", function(d) {
-                return d.selected = e[0][0] <= brushX.invert(d.x) && brushX.invert(d.x) <= e[1][0]
+                d.selected = e[0][0] <= brushX.invert(d.x) && brushX.invert(d.x) <= e[1][0]
                     && e[0][1] <= brushY.invert(d.y) && brushY.invert(d.y) <= e[1][1];
+                if (d.selected) nodes_id.push(d.id);
+                return d.selected;
             });
+            if (nodes_id.length > 0) {
+                _this.options.dimension.filter(function(d) {
+                    for (var i = 0, len = nodes_id.length; i < len; i++) {
+                        var ent = '' + nodes_id[i];
+                        if (ent.charAt(0) === 'm') {
+                            if (ent == 'm' + d[0]) {
+                                return true;
+                            }
+                        } else {
+                            ent = parseInt(ent);
+                            if (d.indexOf(ent) > 0) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+                $.publish('/data/filter', _this.element.attr("id"))
+            }
         }
 
         function brushend() {
@@ -279,9 +315,11 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             var e = _this.brush.extent();
             // empty brush deselects all nodes
             if (_this.brush.empty()) {
-                d3.selectAll(".node").attr("class", function(d) {
+                d3.selectAll(".node").classed("selected", function(d) {
                     return d.selected=false;
                 });
+                _this.options.dimension.filterAll();
+                $.publish('/data/filter', _this.element.attr("id"))
             }
 
 //            vis.selectAll("circle").attr("fill", function(d) {
@@ -342,7 +380,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
     update: function() {
         /* get the id of filtered messages */
         var messages_id = [];
-        dMessage.group().top(Infinity).forEach(function(p, i) {
+        this.options.dimension.group().top(Infinity).forEach(function(p, i) {
             if (p.key[0] !== undefined && p.value !== 0) {
                 messages_id.push(p.key[0])
             }
@@ -388,6 +426,9 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                     .style('display', 'block');
                 d3.event.preventDefault();
             })
+        ;
+        this.link.append('svg:title')
+            .text(function(d) { return d.rel; })
         ;
         this.link.exit().remove();
 

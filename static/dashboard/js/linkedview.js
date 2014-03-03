@@ -7,6 +7,7 @@ var dDate   // date dimension
   , dEvent
   , dResource
   , dMessage
+  , dNetwork
   , gAll    // group for all
   ;
 
@@ -138,6 +139,9 @@ $(document).ready(function() {
             var mes = d;
             return [mes.uid, mes.content, mes.date]
         });
+        dNetwork  = datafilter.dimension(function(d) {
+            return [d.uid, d.location.uid, d.resource.uid, d.person.uid, d.event.uid, d.organization.uid]
+        });
         //
         // show requested dialogs
         var dialogs = $.trim($("#display_dialogs").text()).split(",");
@@ -157,8 +161,6 @@ $(document).ready(function() {
 });
 
 function update() {
-//    var panels = ["viz-viztimeline", "viz-viztable", "viz-vizmap", "viz-viznetwork"];
-    var len = arguments.length;
 	// first argument is event object, ignore it
 	// other arguments are the id of viz panels to be excluded for update
     for (var j = 0; j < viz_panels.length; j++) {
@@ -187,6 +189,7 @@ function update() {
 	*/
 };
 
+// All codes below are no longer used
 //
 //
 

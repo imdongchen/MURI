@@ -7,9 +7,10 @@
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/network.css' %}">
 {% endblock %}
 
-<div id="network" class="hidden">
+<div id="relation_form">
+    <form>
+        <input id="relation" placeholder="Relation">
+        <input type="submit" value="OK">
+    </form>
 </div>
 
-<ul id="network_contextmenu" >
-    <li><a href="#copylink">Report relationship</a>
-</ul>
