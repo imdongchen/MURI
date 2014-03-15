@@ -10,7 +10,8 @@ Annotator.Plugin.Tags = (function(_super) {
     function Tags() {
         this.setAnnotationTags = __bind(this.setAnnotationTags, this);
         this.updateField = __bind(this.updateField, this);
-        this.updateSelectField = __bind(this.updateSelectField, this);
+        this.updateTagField = __bind(this.updateTagField, this);
+        this.updateAttrField = __bind(this.updateAttrField, this);
         _ref = Tags.__super__.constructor.apply(this, arguments);
         return _ref;
     }
@@ -35,6 +36,7 @@ Annotator.Plugin.Tags = (function(_super) {
     };
 
     Tags.prototype.field = null;
+    Tags.prototype.attrField = null;
 
     Tags.prototype.input = null;
 
@@ -42,14 +44,19 @@ Annotator.Plugin.Tags = (function(_super) {
         if (!Annotator.supported()) {
             return;
         }
-        this.field = this.annotator.editor.addField({
-            label: Annotator._t('Add some tags here') + '\u2026',
-            load: this.updateField,
-            submit: this.setAnnotationTags
-        });
+        // this.field = this.annotator.editor.addField({
+        //     label: Annotator._t('Add some tags here') + '\u2026',
+        //     load: this.updateField,
+        //     submit: this.setAnnotationTags
+        // });
         this.annotator.editor.addField({
-            type: 'select',
-            load: this.updateSelectField,
+            type: 'selectize-entity',
+            load: this.updateTagField,
+        })
+        this.attrField = this.annotator.editor.addField({
+            type: 'custom',
+            html_content: '<div>\n    <p class="annotator-title">Entity attributes</p>\n\n</div>',
+            load: this.updateAttrField
         })
         this.annotator.viewer.addField({
             load: this.updateViewer
@@ -72,6 +79,10 @@ Annotator.Plugin.Tags = (function(_super) {
         return this.options.stringifyTags(array);
     };
 
+    Tags.prototype.capitalizeFirstLetter = function(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    };
+
     Tags.prototype.updateField = function(field, annotation) {
         var value;
         value = '';
@@ -81,20 +92,83 @@ Annotator.Plugin.Tags = (function(_super) {
         return this.input.val(value);
     };
 
-    Tags.prototype.updateSelectField = function(field, annotation) {
-        var options = '<option disabled selected>Choose a tag...</option><option value="event">Event</option>\n<option value="person">Person</option>\n<option value="resource">Resource</option>\n<option value="location">Location</option>\n<option value="organization">Organization</option>\n        '
-        var $select = $(field).find('select');
-        $select.html(options);
-        var $input = this.input;
-        $select.off("change")
-        $select.change(function(){
-            var value = $(this).find('option:selected').val();
-            if ($input.val() === '') {
-                $input.val(value)
-            } else {
-                $input.val($input.val()+ ', ' +value);
-            }
+    Tags.prototype.updateTagField = function(field, annotation) {
+        var $select = $(field).find('.selectize-entity').selectize({
+            maxItems: null,
+            valueField: 'value',
+            labelField: 'title',
+            searchField: 'title',
+            options: [
+                {value: 'person', title: 'Person'},
+                {value: 'organization', title: 'Organization'},
+                {value: 'resource', title: 'Resource'},
+                {value: 'location', title: 'Location'},
+                {value: 'event', title: 'Event'}
+            ],
+            placeholder: 'Tag as an entity...',
+            create: false
         });
+        $select[0].selectize.clear();
+        onChange(field, annotation, this.updateAttrField);
+
+        function onChange(field, annotation, dochange) {
+            $(field).find('.selectize-entity').on('change', function() {
+                if ($(this).val() && $(this).val().indexOf('location') > -1) {
+                    // search for mgrs string and update attribute
+                    var node = annotation.highlights[0].parentNode;
+                    if (!node) {
+                        console.log(annotation)
+                    }
+                    var latlon = [];
+                    if (!$(node).data('location')) {
+                        var text = node.innerText;
+                        var mgrs = text.match(/\/\/MGRSCOORD:([0-9A-Za-z ]+)\/\//)
+                        if (mgrs) {
+                            USNGtoLL(mgrs[1], latlon);
+                            $(node).data("location", latlon);
+                        }
+                    }
+                    latlon = $(node).data('location');
+                    if (latlon.length === 2 ) {
+                        if (!annotation.attr) annotation.attr = {};
+                        annotation.attr.location = latlon;
+                        dochange($(field).next(), annotation);
+                    }
+                }
+            });
+        }
+    };
+
+
+
+    Tags.prototype.updateAttrField = function(field, annotation) {
+        var $content = $($(field).children()[0])
+        $content.find(".annotator-attribute-group").remove();
+        $content.append($('<div class="annotator-attribute-group">\n    <div class="annotator-attribute">\n        <select placeholder="Attribute...">\n            <option value="">Attribute...</option>\n            <option value="1">Color</option>\n            <option value="2">Name<option>\n            <option value="3">Age</option>\n        </select>\n    </div>\n    <div class="annotator-value" style="">\n        <input placeholder="Value...">\n    </div>\n    <div class="annotator-add-btn">\n        <button type="button" class="btn btn-default">\n            <span class="glyphicon glyphicon-plus"></span>\n        </button>\n    </div>\n</div>'))
+        if (annotation.attr) {
+            for (attr in annotation.attr) {
+                if (annotation.attr.hasOwnProperty(attr)) {
+                    var $group = $content.children().last();
+                    $group.find('select').append('<option selected value="' + attr + '">' + this.capitalizeFirstLetter(attr) + '</option>');
+                    $group.find('input').val(annotation.attr[attr].toString());
+                    $group.find('.annotator-add-btn').hide();
+                    $content.append($('<div class="annotator-attribute-group">\n    <div class="annotator-attribute">\n        <select placeholder="Attribute...">\n            <option value="">Attribute...</option>\n            <option value="1">Color</option>\n            <option value="2">Name<option>\n            <option value="3">Age</option>\n        </select>\n    </div>\n    <div class="annotator-value" style="">\n        <input placeholder="Value...">\n    </div>\n    <div class="annotator-add-btn">\n        <button type="button" class="btn btn-default">\n            <span class="glyphicon glyphicon-plus"></span>\n        </button>\n    </div>\n</div>'))
+                }
+
+            }
+        }
+        initializeAttrGroup();
+
+        function initializeAttrGroup() {
+            $(field).find('.annotator-attribute select').selectize({
+                create: true
+            });
+            $(field).find('.annotator-add-btn button').click(function() {
+                $($(field).children()[0]).append($('<div class="annotator-attribute-group">\n    <div class="annotator-attribute">\n        <select placeholder="Attribute...">\n            <option value="">Attribute...</option>\n            <option value="">Attribute...</option>\n            <option value="1">Color</option>\n            <option value="2">Name<option>\n            <option value="3">Age</option>\n        </select>\n    </div>\n    <div class="annotator-value" style="">\n        <input placeholder="Value...">\n    </div>\n    <div class="annotator-add-btn">\n        <button type="button" class="btn btn-default">\n            <span class="glyphicon glyphicon-plus"></span>\n        </button>\n    </div>\n</div>'))
+                $(this).parent().hide(); //hide add button last row
+                initializeAttrGroup();
+            })
+        }
     }
 
     Tags.prototype.setAnnotationTags = function(field, annotation) {

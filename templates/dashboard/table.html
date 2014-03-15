@@ -16,6 +16,8 @@
 <script src="{% static 'annotator/lib/plugin/store.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'annotator/lib/plugin/tags.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'annotator/css/annotator.css' %}">
+<script src="{% static 'dashboard/lib/selectize.js/dist/js/standalone/selectize.min.js' %}"></script>
+<link rel="stylesheet" type="ext/css" href="{% static 'dashboard/lib/selectize.js/dist/css/selectize.css' %}">
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/DataTables-1.9.4/media/js/jquery.dataTables.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/DataTables-1.9.4/plugin/ColReorderWithResize.js' %}"></script>
 <!--        <link rel="stylesheet" type="text/css" href="lib/DataTables-1.9.4/media/css/jquery.dataTables.css"> -->
@@ -25,99 +27,6 @@
 <script type="text/javascript" src="http://www.appelsiini.net/download/jquery.jeditable.mini.js"></script>
 
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/js/table.js' %}"></script>
+<script type="text/javascript" language="javascript" src="{% static 'dashboard/js/usng.js' %}"></script>
 {% endblock %}
 
-<table id="location_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Frequency</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<table id="message_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Content</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<table id="event_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<table id="person_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Gender</th>
-            <th>Race</th>
-            <th>Nationality</th>
-            <th>Frequency</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<table id="organization_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Nationality</th>
-            <th>Ethnicity</th>
-            <th>Religion</th>
-            <th>Frequency</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<table id="resource_table" class="hidden">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Condition</th>
-            <th>Type</th>
-            <th>Frequency</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-
-<ul id="message_tag_menu" class="ui-helper-hidden" style="z-index:999;">
-    <li class="ui-state-disabled"><a href="#">Tag as: </a>
-    <li>----
-    <li><a href="#person">Person</a>
-    <li><a href="#organization">Organization</a>
-    <li><a href="#location">Location</a>
-    <li><a href="#event">Event</a>
-    <li><a href="#resource">Resource</a>
-	<ul>
-            <li><a href="#equipment">Equipment</a>
-            <li><a href="#weapon">Weapon</a>
-            <li><a href="#vehicle">Vehicle</a>
-            <li><a href="#facility">Facility</a>
-            <li><a href="#document">Document</a>
-        </ul>
-</ul>

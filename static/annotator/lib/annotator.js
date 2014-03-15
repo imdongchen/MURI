@@ -98,16 +98,17 @@ Annotator = (function(_super) {
 
     Annotator.prototype._setupEditor = function() {
         this.editor = new Annotator.Editor();
-        this.editor.hide().on('hide', this.onEditorHide).on('save', this.onEditorSubmit).addField({
-            type: 'textarea',
-            label: _t('Comments') + '\u2026',
-            load: function(field, annotation) {
-                return $(field).find('textarea').val(annotation.text || '');
-            },
-            submit: function(field, annotation) {
-                return annotation.text = $(field).find('textarea').val();
-            }
-        });
+        this.editor.hide().on('hide', this.onEditorHide).on('save', this.onEditorSubmit);
+//        .addField({
+//            type: 'textarea',
+//            label: _t('Comments') + '\u2026',
+//            load: function(field, annotation) {
+//                return $(field).find('textarea').val(annotation.text || '');
+//            },
+//            submit: function(field, annotation) {
+//                return annotation.text = $(field).find('textarea').val();
+//            }
+//        });
         this.editor.element.appendTo(this.wrapper);
         return this;
     };

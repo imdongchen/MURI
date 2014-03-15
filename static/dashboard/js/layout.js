@@ -5,6 +5,7 @@ $(document).ready(function () {
         "modal" : false,
         "resizable" : true,
         "draggable" : true,
+        "closeOnEscape": false,
         "close": function() {
             $(this).dialog('destroy').remove();
             $.publish("/viz/close", [$(this).attr("id")]);
@@ -36,10 +37,10 @@ $(document).ready(function () {
             $("<div>").dialog($.extend({}, container_options, {
                 "title": "Timeline",
                 "width": 1000,
-                "height": 200,
+                "height": 200
             }))
             .viztimeline({
-                dimension: dDate,
+                dimension: dDate
             })
         );
     });

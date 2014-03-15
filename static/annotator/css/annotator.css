@@ -9,7 +9,7 @@
 	text-align: left;
 	margin: 0;
 	padding: 0;
-	background: none;
+/*	background: none; */
 	-webkit-transition: none;
 	-moz-transition: none;
 	-o-transition: none;
@@ -21,6 +21,41 @@
 	color: rgb(144, 144, 144);
 }
 
+.annotator-value {
+    width:45%;
+    float:left
+}
+.annotator-value input {
+    line-height: 22px !important;
+    padding: 1px !important;
+    border-radius: 3px !important;
+    background: #fff !important;
+    border: 1px solid #d0d0d0 !important;
+    width: 100%;
+}
+.annotator-attribute {
+    width: 45%;
+    float: left;
+    margin-right: 2px;
+    clear: both;
+}
+.annotator-add-btn {
+    width: 5%;
+    float:left;
+}
+.annotator-add-btn button {
+    line-height: 22px;
+}
+.annotator-add-btn span {
+    text-align: center !important;
+    font-size: 20px;
+}
+.annotator-title {
+    font-size: 13px;
+    color: rgb(82,82,82);
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
 /* Images
 -------------------------------------------------------------------- */
 
@@ -322,8 +357,8 @@
 
 .annotator-editor .annotator-item input,
 .annotator-editor .annotator-item textarea {
-	display: block;
-	min-width: 100%;
+	/*display: block;*/
+	/*min-width: 100%;*/
 	padding: 10px 8px;
 	border: none;
 	margin: 0;
@@ -391,6 +426,7 @@
 .annotator-filter,
 .annotator-filter .annotator-filter-navigation button,
 .annotator-editor .annotator-controls {
+    clear: both;
 	text-align: right;
 	padding: 3px;
 	border-top: 1px solid rgb(212,212,212);
