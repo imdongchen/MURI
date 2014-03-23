@@ -72,6 +72,11 @@ $.subscribe("entityAdded", function(e, annotation) {
             organization: {},
             resource: {}
         }, msg_info);
+        if (tag.entity === 'location') {
+            if (tag.shape) {
+                tag.shape = toOLGeometry(tag)
+            }
+        }
         record[tag.entity] = $.extend(record, tag);
         records.push(record);
     })
@@ -80,6 +85,18 @@ $.subscribe("entityAdded", function(e, annotation) {
 
 function updateData(records) {
     datafilter.add(records);
+//    $.publish('/data/filter')
+}
+
+function toOLGeometry(location) {
+    var wktParser = new OpenLayers.Format.WKT();
+    var feature = wktParser.read(location.shape);
+    var origin_prj = new OpenLayers.Projection("EPSG:" + location.srid);
+    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
+    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
+    feature.attributes.id = location.uid;
+    feature.attributes.name= location.name;
+    return feature;
 }
 
 $(document).ready(function() {
@@ -99,13 +116,7 @@ $(document).ready(function() {
             if (d.location) {
                 var fp = d.location;
                 if (fp.shape) {
-                    var feature = wktParser.read(fp.shape);
-                    var origin_prj = new OpenLayers.Projection("EPSG:" + fp.srid);
-                    var dest_prj   = new OpenLayers.Projection("EPSG:900913");
-                    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
-                    feature.attributes.id = fp.uid;
-                    feature.attributes.name= fp.name;
-                    fp.shape = feature;
+                    fp.shape = toOLGeometry(fp);
                 }
             }
         });

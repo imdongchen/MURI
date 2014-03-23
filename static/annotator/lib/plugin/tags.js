@@ -12,21 +12,18 @@ Annotator.Plugin.Tags = (function(_super) {
         this.updateField = __bind(this.updateField, this);
         this.updateTagField = __bind(this.updateTagField, this);
         this.updateAttrField = __bind(this.updateAttrField, this);
+        this.setTagAttributes = __bind(this.setTagAttributes, this);
         _ref = Tags.__super__.constructor.apply(this, arguments);
         return _ref;
     }
 
     Tags.prototype.options = {
-        parseTags: function(string) {
-            var tags;
-            string = $.trim(string);
-            tags = [];
-            if (string) {
-                tags = string.split(', ');
+        parseTags: function(tags) {
+            if (tags && tags.length > 0) {
+                return $.map(tags, function(tag){
+                    return {'entity': tag};
+                })
             }
-            return $.map(tags, function(tag){
-                return {'entity': tag};
-            })
         },
         stringifyTags: function(array) { //array of tag objects
             return $.map(array, function(tag) {
@@ -52,11 +49,13 @@ Annotator.Plugin.Tags = (function(_super) {
         this.annotator.editor.addField({
             type: 'selectize-entity',
             load: this.updateTagField,
+            submit: this.setAnnotationTags
         })
         this.attrField = this.annotator.editor.addField({
             type: 'custom',
             html_content: '<div>\n    <p class="annotator-title">Entity attributes</p>\n\n</div>',
-            load: this.updateAttrField
+            load: this.updateAttrField,
+            submit: this.setTagAttributes
         })
         this.annotator.viewer.addField({
             load: this.updateViewer
@@ -71,8 +70,8 @@ Annotator.Plugin.Tags = (function(_super) {
         return this.input = $(this.field).find(':input');
     };
 
-    Tags.prototype.parseTags = function(string) {
-        return this.options.parseTags(string);
+    Tags.prototype.parseTags = function(tags) {
+        return this.options.parseTags(tags);
     };
 
     Tags.prototype.stringifyTags = function(array) {
@@ -105,7 +104,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 {value: 'location', title: 'Location'},
                 {value: 'event', title: 'Event'}
             ],
-            placeholder: 'Tag as an entity...',
+            placeholder: 'Select an entity...',
             create: false
         });
         $select[0].selectize.clear();
@@ -172,7 +171,26 @@ Annotator.Plugin.Tags = (function(_super) {
     }
 
     Tags.prototype.setAnnotationTags = function(field, annotation) {
-        return annotation.tags = this.parseTags(this.input.val());
+        return annotation.tags = this.parseTags($(field).find('.selectize-entity').val());
+    };
+
+    Tags.prototype.setTagAttributes = function(field, annotation) {
+        // assume setAnnotationTags are run first
+        // so that by this time annotation has tags already
+        if (annotation.tags) {
+            for (var i = 0; i < annotation.tags.length; i ++) {
+                var tag = annotation.tags[i];
+                $(field).find('.annotator-attribute-group').each(function() {
+                    var attr = $(this).find('.annotator-attribute select').val();
+                    var val = $(this).find('.annotator-value input').val();
+                    if (attr && val) {
+                        attr = Annotator.Util.escape(attr);
+                        val = Annotator.Util.escape(val);
+                        tag[attr] = val;
+                    }
+                })
+            }
+        }
     };
 
     Tags.prototype.updateViewer = function(field, annotation) {

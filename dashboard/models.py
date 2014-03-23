@@ -6,25 +6,26 @@ from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.GeometryField"])
 
 # Create your models here.
+class Attribute(models.Model):
+    attr = models.CharField(max_length=255)
+    val  = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = (("attr", "val"),)
+
+    def __unicode__(self):
+	return self.attr + ' : ' + self.val
+
 class Entity(models.Model):
     name          = models.CharField(max_length=100, blank=True)
-    security_info = models.CharField(max_length=50, blank=True)
-    date_as_of    = models.DateTimeField(null=True, blank=True)
-    date_first_info    = models.DateTimeField(null=True, blank=True)
-    affiliation   = models.CharField(max_length=100, blank=True)
-    allegiance    = models.CharField(max_length=50, null=True, blank=True)
-    intelligence_evaluation = models.CharField(max_length=50, null=True, blank=True)
-    guid          = models.CharField(max_length=50, null=True, blank=True)
-    description   = models.CharField(max_length=500, null=True, blank=True)
-    date_begin    = models.DateTimeField(null=True, blank=True)
-    date_end      = models.DateTimeField(null=True, blank=True)
     entity_type    = models.CharField(max_length=50, null=True, blank=True)
+    attributes	  = models.ManyToManyField(Attribute, blank=True, null=True)
 
     objects = InheritanceManager()
 
     def __unicode__(self):
         return self.name
-    
+
     def findTargets(self):
         res = []
         targets_id = list(Relationship.objects.filter(source=self).values_list("target"))
@@ -38,6 +39,7 @@ class Entity(models.Model):
         for sou in sources_id:
             res.append(sou[0])
         return Entity.objects.filter(id__in=res).select_subclasses()
+
 
 class Message(models.Model):
     uid = models.CharField(max_length=10)
@@ -54,7 +56,7 @@ class Message(models.Model):
         return attr
 
 class Location(Entity):
-    shape = models.GeometryField(null=True, blank=True)
+    location = models.GeometryField(null=True, blank=True)
     imprecision = models.FloatField(null=True, blank=True)
 
     objects = models.GeoManager()
@@ -62,21 +64,24 @@ class Location(Entity):
     def _get_geom_type(self):
         return self.location.geom_type
 
+    def save(self, *args, **kwargs):
+	"""auto fill entity_type"""
+	self.entity_type = 'Location'
+	super(Location, self).save(*args, **kwargs)
+    
+
     def getKeyAttr(self):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['entity'] = 'location'
-        if self.shape:
-            attr['shape'] = self.shape.wkt
-            attr['srid'] = self.shape.srid
+        if self.location:
+            attr['shape'] = self.location.wkt
+            attr['srid'] = self.location.srid
         return attr
 
     def getAllAttr(self):
         attr = self.getKeyAttr()
-        attr['affiliation'] = self.affiliation
-        attr['allegiance'] = self.allegiance
-        attr['intelligence_evaluation'] = self.intelligence_evaluation
         return attr
 
 class Person(Entity):
@@ -97,6 +102,11 @@ class Person(Entity):
     marital_status = models.CharField(max_length=10, null=True, blank=True)
     religion     = models.CharField(max_length=50, null=True, blank=True)
     status       = models.CharField(max_length=50, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+	"""auto fill entity_type"""
+	self.entity_type = 'Person'
+	super(Person, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}
@@ -126,6 +136,11 @@ class Organization(Entity):
     registration_country = models.CharField(max_length=50, null=True, blank=True)
     registration_state    = models.CharField(max_length=50, null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+	"""auto fill entity_type"""
+	self.entity_type = 'Organization'
+	super(Organization, self).save(*args, **kwargs)
+
     def getKeyAttr(self):
         attr = {}
         attr['uid'] = self.id
@@ -147,14 +162,16 @@ class Event(Entity):
     nationality= models.CharField(max_length=50, null=True, blank=True)
     purpose  = models.CharField(max_length=500, null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+	"""auto fill entity_type"""
+	self.entity_type = 'Event'
+	super(Event, self).save(*args, **kwargs)
+
     def getKeyAttr(self):
         attr = {}
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['types'] = self.types
-        attr['date']    = '' 
-        if self.date_begin != None: 
-            attr['date']  = self.date_begin.strftime('%m/%d/%Y') 
         attr['entity'] = 'event'
         return attr
 
@@ -197,6 +214,11 @@ class Resource(Entity):
     resource_type    = models.CharField(max_length=50, null=True, blank=True)
 
     objects = InheritanceManager()
+
+    def save(self, *args, **kwargs):
+	"""auto fill entity_type"""
+	self.entity_type = 'Resource'
+	super(Resource, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}

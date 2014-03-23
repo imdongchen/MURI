@@ -16,7 +16,7 @@ $.widget("viz.vizcontainer", $.ui.dialogExtend, {
         this._super("_create");
     },
     update: function() {
-	alert ("base");
+        alert ("base");
     },
     destroy: function() {
         this._super("destroy");

@@ -4,6 +4,7 @@ from models import Annotation
 import json
 from django.views.decorators.http import require_GET
 from django.http import HttpResponse
+from django.contrib.gis.geos import fromstr
 
 def get_or_create_annotation(request):
     if request.method == 'GET':
@@ -44,6 +45,20 @@ def get_or_create_annotation(request):
 		    obj, created = Resource.objects.get_or_create(name=quote)
 		if tag['entity'] == 'organization':
 		    obj, created = Organization.objects.get_or_create(name=quote)
+		for attr in tag: 
+		    if attr != 'entity':
+			fields = obj._meta.get_all_field_names()
+			if attr in fields:
+			    if tag['entity'] == 'location' and attr == 'location':
+				latlon = tag[attr].split(',')
+				location = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
+				obj.location = location
+			    else:
+				setattr(obj,attr, tag[attr])
+			else:
+			    attribute, created_attr = Attribute.objects.get_or_create(attr=attr, val=tag[attr])
+			    obj.attributes.add(attribute)
+		obj.save()
 		annotation = Annotation.objects.create(startOffset=ranges[0]['startOffset'], endOffset=ranges[0]['endOffset'], message=message, start=ranges[0]['start'], end=ranges[0]['end'])
 		annotation.entities.add(obj)
 		annotation.save()
