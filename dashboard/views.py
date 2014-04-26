@@ -198,6 +198,7 @@ def network_relation(request):
 	res['source'] = source.id
 	res['target'] = target.id
 	res['rel'] = rel.description
+	res['id'] = rel.id
 
 	return HttpResponse(json.dumps(res), mimetype='application/json')
 

@@ -7,18 +7,19 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
         data: ""
     },
     _create: function() {
-        var thead = '<thead><tr>';
+        var thead = '<table style="width: 100%;"><thead><tr>';
         for (var i = 0, len = this.options.columns.length; i < len; i++) {
             thead += '<th>' + this.options.columns[i] + '</th>';
         }
-        thead += '</tr></thead>';
+        thead += '</tr></thead></table>';
         $(thead).appendTo(this.element);
 
         var _this = this;
-        this.table = this.element.dataTable({
+        this.table = this.element.find('table').dataTable({
             "bJQueryUI": true,
             "bDestroy": true,
-            'sScrollY': '100%',
+            'sScrollY': _this.element.height()-80,
+            'bPaginate': false,
             //      , "aoColumns": [
             //             {"sWidth": "1%"} , // column 1 will be hidden
             //             {"sWidth": "19%"} ,
@@ -27,30 +28,30 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
             //        ],
             // for multi select with ctrl and shift
             "sRowSelect": "multi",
-            "sDom": "RlfrtipS",
-            "fnPreRowSelect": function(e, nodes, isSelect) {
-                if (e) {
-                    var mySelectList = null,
-                        myDeselectList = null;
-                    if (e.shiftKey && nodes.length == 1) {
-                        myDeselectList = this.fnGetSelected();
-                        mySelectList = myGetRangeOfRows(cgTableObject, myLastSelection, nodes[0]);
-                    } else {
-                        myLastSelection = nodes[0];
-                        if (!e.ctrlKey) {
-                            myDeselectList = this.fnGetSelected();
-                            if (!isSelect) {
-                                mySelectList = nodes;
-                            }
-                        }
-                    }
-                }
-                return true;
-            },
-            "fnRowSelected":   mySelectEventHandler,
-            "fnRowDeselected": mySelectEventHandler,
-            //      , "aaData": d
-            //        "sPaginationType": "full_numbers"
+            "sDom": "Rlfrtip", // enable column resizing
+//            "fnPreRowSelect": function(e, nodes, isSelect) {
+//                if (e) {
+//                    var mySelectList = null,
+//                        myDeselectList = null;
+//                    if (e.shiftKey && nodes.length == 1) {
+//                        myDeselectList = this.fnGetSelected();
+//                        mySelectList = myGetRangeOfRows(cgTableObject, myLastSelection, nodes[0]);
+//                    } else {
+//                        myLastSelection = nodes[0];
+//                        if (!e.ctrlKey) {
+//                            myDeselectList = this.fnGetSelected();
+//                            if (!isSelect) {
+//                                mySelectList = nodes;
+//                            }
+//                        }
+//                    }
+//                }
+//                return true;
+//            },
+//            "fnRowSelected":   mySelectEventHandler,
+//            "fnRowDeselected": mySelectEventHandler,
+//            //      , "aaData": d
+//            //        "sPaginationType": "full_numbers"
             "fnDrawCallback": function(oSettings) {
                 var ele =  this.closest(".ui-dialog");
                 if (ele.data("annotator")) {
@@ -83,6 +84,11 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
                 var selected_rows = table.$('tr.row_selected');
                 if (selected_rows.length == 0) {
                     self.options.dimension.filterAll();
+
+                    activitylog({
+                        operation: 'defilter',
+                        data: JSON.stringify({'window_type': 'table'})
+                    })
                 } else {
                     records_id = [];
                     self.table.$('tr.row_selected').each(function(idx, $row) {
@@ -98,9 +104,14 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
                             }
                         }
                     });
+                    activitylog({
+                        operation: 'filter',
+                        data: JSON.stringify({'window_type': 'table', 'filter_by': records_id})
+                    })
 
                 }
                 $.publish('/data/filter', self.element.attr("id"));
+
             });
 
             if (self.options.editable) {
@@ -121,13 +132,19 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
                         return {
                             "row_id": $(this.parentNode).data("id"),
                             "attr": attr,
-                            "entity": table.data("entity")
+                            "entity": self.element.data("entity")
                         };
                     }
                 })
             }
 
         })
+
+        this.element.on("dialogresizestop", function() {
+            this.element.css("width", "auto");
+            this.element.parents('.ui-dialog').css("height", 'auto');
+            this.element.find('.dataTables_scrollBody').css('height', (this.element.height() - 80))
+        }.bind(this));
 
         this.element.addClass("viztable");
         this.element.addClass("viz");
@@ -217,7 +234,7 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
         })
         this.element.publish("table/updated");
 
-
+        $('body').highlight("Rashid")
 
     },
     // get the selected text as plain format

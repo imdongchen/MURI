@@ -82,7 +82,8 @@ Annotator.Editor = (function(_super) {
             type: 'input',
             label: '',
             load: function() {},
-            submit: function() {}
+            submit: function() {},
+            init: function() {}
         }, options);
         input = null;
         element = $('<li class="annotator-item" />');
@@ -97,9 +98,6 @@ Annotator.Editor = (function(_super) {
                 break;
             case 'select':
                 input = $('<select />');
-                break;
-            case 'selectize-entity':
-                input = $('<select class="selectize-entity" multiple />');
                 break;
             case 'custom':
                 input = $(options.html_content);
@@ -118,6 +116,7 @@ Annotator.Editor = (function(_super) {
                 html: field.label
             }));
         }
+        field.init(field.element, this.annotation);
         this.element.find('ul:first').append(element);
         this.fields.push(field);
         return field.element;

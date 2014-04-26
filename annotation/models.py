@@ -1,5 +1,7 @@
 from django.db import models
 from dashboard.models import Message, Entity
+from django.contrib.auth.models import User
+import datetime
 
 # Create your models here.
 class Annotation(models.Model):
@@ -11,6 +13,8 @@ class Annotation(models.Model):
     endOffset   = models.IntegerField()
     message	= models.ForeignKey(Message)
     entities	= models.ManyToManyField(Entity)
+    created_by  = models.ForeignKey(User, blank=True, null=True)
+    created_at  = models.DateTimeField(default=datetime.datetime.now)
 
     def serialize(self):
 	ann = {}

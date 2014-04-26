@@ -24,7 +24,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
             {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
         );
 
-        map.addLayers([gphy, gmap, ghyb, gsat]);
+        map.addLayers([ghyb, gphy, gmap, gsat]);
 
         var pointlayer = new OpenLayers.Layer.Vector("Points", {
             styleMap: new OpenLayers.StyleMap({
@@ -105,6 +105,9 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         // update map when dialog resized or dragged
         this.element.on("dialogresizestop", function() {
             this.map.updateSize();
+            var ele = this.element;
+            ele.css('width', 'auto');
+            ele.parent().css("height", 'auto');
         }.bind(this));
         this.element.on("dialogdragstop", function() {
             this.map.updateSize();
@@ -198,6 +201,10 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
 
         if (selectedFeas.length == 0) {
             this.options.dimension.filterAll();
+            activitylog({
+                operation: 'defilter',
+                data: JSON.stringify({'window_type': 'map'})
+            })
         } else {
             // filter event data by above feature ids
             this.options.dimension.filter(function(fp) { // fp is an array [id, name, shape, srid]
@@ -211,6 +218,10 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
                 }
                 return false;
             });
+            activitylog({
+                operation: 'filter',
+                data: JSON.stringify({'window_type': 'map', 'filter_by': selectedFeas})
+            })
         }
         $.publish('/data/filter', this.element.attr("id"))
     },

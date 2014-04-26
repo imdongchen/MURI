@@ -249,8 +249,12 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                     source: link.source.id,
                     target: link.target.id,
                     rel: link.rel
-                }, function(data) {
-                    console.log(data);
+                }, function(d) {
+                    console.log(d);
+                    activitylog({
+                        operation: 'create relationship',
+                        data: JSON.stringify({'window_type': 'network', 'id': d.id})
+                    })
                 })
                 $(this).trigger('reset').parent().hide();
             });
@@ -320,6 +324,21 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 });
                 _this.options.dimension.filterAll();
                 $.publish('/data/filter', _this.element.attr("id"))
+
+                activitylog({
+                    operation: 'defilter',
+                    data: JSON.stringify({'window_type': 'network'})
+                })
+            }
+            else {
+                var nodes_id = [];
+                d3.selectAll('.node.selected').each(function(d) {
+                    nodes_id.push(d.id)
+                })
+                activitylog({
+                    operation: 'filter',
+                    data: JSON.stringify({'window_type': 'network', 'filter_by': nodes_id})
+                })
             }
 
 //            vis.selectAll("circle").attr("fill", function(d) {
@@ -347,6 +366,11 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         function dragstarted(d) {
             d3.event.sourceEvent.stopPropagation();
             d3.select(this).classed("dragging", true);
+
+            activitylog({
+                operation: 'relayout network',
+                data: JSON.stringify({'window_type': 'network'})
+            })
         }
 
         function dragged(d) {

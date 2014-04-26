@@ -10,6 +10,7 @@ var dDate   // date dimension
   , dNetwork
   , gAll    // group for all
   ;
+var dataset = [];
 
 var formatNumber = d3.format(",d"),
   formatChange = d3.format("+,d"),
@@ -42,7 +43,7 @@ $.each({
 
 $.subscribe('/data/filter', update);
 
-$.subscribe("/viz/close", function(e, panel_id) {
+$.subscribe("/viz/close", function(e, panel_id, panel_title) {
     // remove the viz panel from viz_panels
     for (var i = 0; i < viz_panels.length; i++) {
         var panel = viz_panels[i];
@@ -51,6 +52,10 @@ $.subscribe("/viz/close", function(e, panel_id) {
             break;
         }
     }
+    activitylog({
+        operation: 'close window',
+        data: JSON.stringify({'window_type': panel_title})
+    })
 })
 // Event 'entityAdded', triggered after tag is saved in server and returned with attributes from server
 $.subscribe("entityAdded", function(e, annotation) {
@@ -81,6 +86,10 @@ $.subscribe("entityAdded", function(e, annotation) {
         records.push(record);
     })
     updateData(records);
+    activitylog({
+        operation: 'add annotation',
+        data: JSON.stringify({'id': annotation.id})
+    })
 })
 
 function updateData(records) {
@@ -153,10 +162,6 @@ $(document).ready(function() {
         dNetwork  = datafilter.dimension(function(d) {
             return [d.uid, d.location.uid, d.resource.uid, d.person.uid, d.event.uid, d.organization.uid]
         });
-        //
-        // show requested dialogs
-        var dialogs = $.trim($("#display_dialogs").text()).split(",");
-        showDialogs(dialogs);
 
         $("#progressbar").remove();
 

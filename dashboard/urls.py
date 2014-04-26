@@ -24,4 +24,6 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^workbench/', include('workbench.urls')),
     url(r'^annotation/', include('annotation.urls')),
+    url(r'^account/', include('users.urls')),
+    url(r'^logs/', include('activitylog.urls')),
 )

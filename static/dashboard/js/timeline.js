@@ -3,15 +3,25 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
         dimension: null
     },
     _create: function() {
+        var width = this.element.width();
+        var height = this.element.height();
+        var margin = {top: 10, right: 15, bottom: 30, left: 20};
+
         var charts = [
             barChart()
                 .dimension(this.options.dimension)
                 .group(this.options.dimension.group())
                 .round(d3.time.day.round)
+                .margin(margin)
                 .x(d3.time.scale()
-                    .domain([new Date(2010, 0, 1), new Date(2010, 5, 1)])
-                    .rangeRound([0, 10 * 90]))
-                .filter([new Date(2010, 1, 1), new Date(2010, 2, 1)])
+                    .domain([this.options.dimension.bottom(1)[0].date, this.options.dimension.top(1)[0].date])
+//                    .domain([d3.min(dates), d3.max(dates)])
+                    .rangeRound([margin.left, width - margin.left - margin.right])
+                )
+                .y(d3.scale.linear()
+                    .rangeRound([height - margin.top - margin.bottom, 0])
+                )
+//                .filter([new Date(2010, 1, 1), new Date(2010, 2, 1)])
         ];
 
         // Given our array of charts, which we assume are in the same order as the
@@ -47,11 +57,12 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
         function barChart() {
             if (!barChart.id) barChart.id = 0;
 
-            var margin = {top: 10, right: 10, bottom: 20, left: 10},
+            var margin = {top: 10, right: 10, bottom: 10, left: 30},
                 x,
-                y = d3.scale.linear().range([100, 0]),
+                y,
                 id = barChart.id++,
-                axis = d3.svg.axis().orient("bottom"),
+                xAxis = d3.svg.axis().orient("bottom"),
+                yAxis = d3.svg.axis().orient("left"),
                 brush = d3.svg.brush(),
                 brushDirty,
                 dimension,
@@ -63,6 +74,10 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                     height = y.range()[0];
 
                 y.domain([0, group.top(1)[0].value]);
+                yAxis.scale(y)
+                    .tickFormat(d3.format("d"))
+                    .ticks(5)
+
 
                 div.each(function() {
                     var div = d3.select(this),
@@ -77,8 +92,8 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                             .style("display", "none");
 
                         g = div.append("svg")
-                            .attr("width", width + margin.left + margin.right)
-                            .attr("height", height + margin.top + margin.bottom)
+                            .attr("width", width + margin.left + margin.right - 10)
+                            .attr("height", height + margin.top + margin.bottom - 10)
                             .append("g")
                             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -98,10 +113,14 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                             .attr("clip-path", "url(#clip-" + id + ")");
 
                         g.append("g")
-                            .attr("class", "axis")
-                            .attr("transform", "translate(0," + height + ")")
-                            .call(axis);
+                            .attr("class", "x axis")
+                            .attr("transform", "translate(0" + "," + height + ")")
+                            .call(xAxis);
 
+                        g.append("g")
+                            .attr("class", "y axis")
+                            .attr("transform", "translate(" + margin.left + ",0)" )
+                            .call(yAxis);
                         // Initialize the brush component with pretty resize handles.
                         var gBrush = g.append("g").attr("class", "brush").call(brush);
                         gBrush.selectAll("rect").attr("height", height);
@@ -125,7 +144,8 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                         }
                     }
 
-                    g.selectAll(".bar").attr("d", barPath);
+                    g.selectAll(".bar").transition().attr("d", barPath);
+                    g.selectAll(".y.axis").transition().call(yAxis);
                 });
 
                 function barPath(groups) {
@@ -180,6 +200,17 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
                     div.select(".title a").style("display", "none");
                     div.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
                     dimension.filterAll();
+
+                    activitylog({
+                        operation: 'defilter',
+                        data: JSON.stringify({'window_type': 'timeline'})
+                    })
+                } else {
+                    var extent = brush.extent();
+                    activitylog({
+                        operation: 'filter',
+                        data: JSON.stringify({'window_type': 'timeline', 'filter_by': extent})
+                    })
                 }
             });
 
@@ -192,7 +223,7 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
             chart.x = function(_) {
                 if (!arguments.length) return x;
                 x = _;
-                axis.scale(x);
+                xAxis.scale(x);
                 brush.x(x);
                 return chart;
             };
@@ -235,6 +266,15 @@ $.widget("viz.viztimeline", $.viz.vizcontainer, {
 
             return d3.rebind(chart, brush, "on");
         }
+
+        // update map when dialog resized or dragged
+        this.element.on("dialogresizestop", function() {
+            this.update();
+            var ele = this.element;
+            ele.css('width', 'auto');
+            ele.parent().css("height", 'auto');
+        }.bind(this));
+
         this._super("_create");
         this.element.addClass("viztimeline");
         this.element.addClass("viz");

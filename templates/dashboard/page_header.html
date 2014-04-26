@@ -6,17 +6,75 @@
 {% endcompress %}
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/page_header.css' %}">
 {% endblock %}
-
-<div id='user_greeting'>
-    <span> Hello,&nbsp; </span>
-    <a href="#">BCT Unit! </a>
-    <a id="logout" href="#">Log out</a>
+{% if user.is_authenticated %}
+        <div id="user_greeting">
+            <span> Hello,&nbsp; </span>
+            <div style="display: inline" class="btn-group">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{user.username}}! <span style="font-size:10px;">▼</span></a>
+                <ul class="dropdown-menu mydropdown-menu" role="menu">
+                    <li><a id="profile_btn" href="#">Profile</a> </li>
+                    <li><a id="activity_btn" href="#">Activities</a> </li>
+                    <li><a id='logout_btn' href="{% url 'users.views.logout' %}">Log out</a> </li>
+                </ul>
+            </div>
+        </div>
+{% else %}
+<div id='user_login'>
+    <nav>
+        <ul>
+            <li id="login">
+                <a id="login-trigger" href="#">
+                    Log in <span>▼</span>
+                </a>
+                <div id="login-content" class="content">
+                    <form action='{% url "users.views.login" %}' method="post">
+                        <fieldset id="inputs">
+                            <input id="username" name="username" placeholder="Your user name" required>
+                            <input id="password" type="password" name="password" placeholder="Password" required>
+                        </fieldset>
+                        <fieldset id="actions">
+                            <input type="submit" id="submit" value="Log in">
+                            <label><input type="checkbox" checked="checked"> Keep me signed in</label>
+                        </fieldset>
+                    </form>
+                </div>
+            </li>
+            <li id="signup">
+                <a id='signup-trigger' href="#">
+                    Sign Up <span>▼</span>
+                </a>
+                <div id="signup-content" class="content">
+                    <form action='{% url "users.views.register" %}' method="post">
+                        <fieldset id="inputs">
+                            <input id="username" name="username" placeholder="Your user name" required>
+                            <input id="email" type="email" name="email" placeholder="Your email address" required>
+                            <input id="password" type="password" name="password" placeholder="Password" required>
+                        </fieldset>
+                        <fieldset id="actions">
+                            <input type="submit" id="submit" value="Sign up">
+                        </fieldset>
+                    </form>
+                </div>
+            </li>
+        </ul>
+    </nav>
 </div>
-<button type="button" id="workbench_btn" class="btn btn-primary">Workbench</button>
-<nav class="blue">
+{% endif %}
+
+<nav id='viz_nav' class="blue">
     <ul class="clear">
-        <li><a id="timeline_btn" href="#">Timeline</a></li>
-        <li><a id="map_btn" href="#" >Map</a></li>
+        <li><label class='logo' ><img src="{% static 'dashboard/img/logo-tran.png' %}" style="height:37px;"></label></li>
+        <li><a id="datasource_btn" href="#">Data</a>
+            <ul>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadA" value="threadA"> SYNCOIN A: Bio-Wpns </label> </a></li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadB" value="threadB"> SYNCOIN B: Bathist Resurgence </label></a> </li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadC" value="threadC"> SYNCOIN C: Iranian Special Group </label></a> </li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadD" value="threadD"> SYNCOIN D: Sectarian Conflict </label></a> </li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadE" value="threadE"> SYNCOIN E: Sunni Criminal </label></a> </li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadF" value="threadF"> SYNCOIN F: Rashid IED Cell </label></a> </li>
+                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="all" value="all"> Select All </label></a> </li>
+            </ul>
+        </li>
         <li><a href="#">Table</a>
             <ul>
                 <li><a id="message_table_btn" href="#">Messages</a></li>
@@ -27,7 +85,31 @@
                 <li><a id="location_table_btn" href="#">Locations</a></li>
             </ul>
         </li>
+        <li><a id="timeline_btn" href="#">Timeline</a></li>
+        <li><a id="map_btn" href="#" >Map</a></li>
         <li><a id="network_btn" href="#">Network</a></li>
+        <li><a id="workbench_btn" href="#">Workbench</a></li>
     </ul>
 </nav>
 
+<!--<div class="btn-group"> &lt;!&ndash; group container for buttons merging &ndash;&gt;-->
+    <!--<div class="btn btn-group">  &lt;!&ndash; button and dropdown group in one &ndash;&gt;-->
+        <!--<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">-->
+            <!--Messages-->
+            <!--<span class="caret"></span>-->
+        <!--</button>-->
+        <!--<ul class="dropdown-menu">-->
+            <!--<li><a id="message_table_btn" href="#">Messages</a></li>-->
+            <!--<li><a id="event_table_btn"  href="#">Events</a></li>-->
+            <!--<li><a id="person_table_btn" href="#">People</a></li>-->
+            <!--<li><a id="resource_table_btn" href="#">Resources</a></li>-->
+            <!--<li><a id="location_table_btn" href="#">Locations</a></li>-->
+            <!--<li><a id="organization_table_btn" href="#">Organizations</a></li>-->
+        <!--</ul>-->
+    <!--</div>-->
+    <!--<div class="btn btn-group">-->
+        <!--<button id='timeline_btn' class="btn btn-primary dropdown-toggle" data-toggle="dropdown">-->
+            <!--Timeline-->
+        <!--</button>-->
+    <!--</div>-->
+<!--</div>-->

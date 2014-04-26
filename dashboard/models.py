@@ -78,6 +78,9 @@ class Location(Entity):
         if self.location:
             attr['shape'] = self.location.wkt
             attr['srid'] = self.location.srid
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -116,6 +119,10 @@ class Person(Entity):
         attr['race'] = self.race
         attr['nationality'] = self.nationality
         attr['entity'] = 'person'
+	attr['attr'] = {}
+	for a in self.attributes.all():
+	    attr['attr'][a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -150,6 +157,9 @@ class Organization(Entity):
         attr['ethnicity'] = self.ethnicity
         attr['religion'] = self.religion
         attr['entity'] = 'organization'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -161,6 +171,7 @@ class Event(Entity):
     category = models.CharField(max_length=100, null=True, blank=True)
     nationality= models.CharField(max_length=50, null=True, blank=True)
     purpose  = models.CharField(max_length=500, null=True, blank=True)
+    date  = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
 	"""auto fill entity_type"""
@@ -173,6 +184,12 @@ class Event(Entity):
         attr['name'] = self.name
         attr['types'] = self.types
         attr['entity'] = 'event'
+        attr['date'] = ''
+        if self.date != None: 
+            attr['date']  = self.date.strftime('%m/%d/%Y') 
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -197,6 +214,9 @@ class Unit(Entity):
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['entity'] = 'unit'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -227,6 +247,9 @@ class Resource(Entity):
         attr['condition'] = self.condition
         attr['entity'] = 'resource'
         attr['resource_type'] = self.resource_type
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -246,6 +269,9 @@ class Equipment(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.equipment'
         attr['resource_type'] = 'equipment'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -267,6 +293,9 @@ class Weapon(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.weapon'
         attr['resource_type'] = 'weapon'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -295,6 +324,9 @@ class Vehicle(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.vehicle'
         attr['resource_type'] = 'vehicle'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -320,6 +352,9 @@ class Facility(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.facility'
         attr['resource_type'] = 'facility'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
@@ -347,6 +382,9 @@ class Document(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.document'
         attr['resource_type'] = 'document'
+	for a in self.attributes.all():
+	    attr[a.attr] = a.val
+
         return attr
 
     def getAllAttr(self):
