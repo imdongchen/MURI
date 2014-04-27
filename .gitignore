@@ -31,3 +31,4 @@ run_gunicorn.sh
 # IDE configuration file
 /.idea/
 run_gunicorn.sh
+/static_deploy/*
