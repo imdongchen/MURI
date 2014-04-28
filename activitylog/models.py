@@ -4,7 +4,7 @@ from datetime import datetime
 
 # Create your models here.
 class Activity(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True, blank=True)
     operation = models.CharField(max_length=200)
     data = models.TextField(null=True, blank=True) # json format
     time = models.DateTimeField(default=datetime.now)

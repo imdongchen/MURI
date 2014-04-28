@@ -10,7 +10,11 @@ from django.http import QueryDict
 def get_or_create_annotation(request):
     if request.method == 'GET':
 	annotations = []
-	anns = Annotation.objects.all()
+	if request.user:
+	    anns = Annotation.objects.filter(created_by=request.user)
+	else:
+	    anns = Annotation.objects.all()
+
 	for ann in anns:
 	    annotations.append(ann.serialize())
 	return HttpResponse(json.dumps(annotations), mimetype='application/json')
