@@ -10,7 +10,7 @@ from django.http import QueryDict
 def get_or_create_annotation(request):
     if request.method == 'GET':
 	annotations = []
-	if request.user:
+	if request.user.is_authenticated():
 	    anns = Annotation.objects.filter(created_by=request.user)
 	else:
 	    anns = Annotation.objects.all()

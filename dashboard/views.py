@@ -56,7 +56,12 @@ def getData(request):
         e_info['locations']  = [] 
         e_info['events']  = [] 
 
-	annotations = msg.annotation_set.all()
+	annotations = []
+	if request.user.is_authenticated():
+	    annotations = msg.annotation_set.filter(created_by=request.user)
+	else:
+	    annotations = msg.annotation_set.all()
+
 	for ann in annotations:
 	    entities = ann.entities.all().select_subclasses()
 	    for entity in entities:
@@ -136,8 +141,12 @@ def prepareNetwork(request):
 
 	# construct network on 'co-occurrance'
         msgs = Message.objects.filter(id__in=filter_id)
+	annotations = []
 	for msg in msgs:
-	    annotations = msg.annotation_set.all()
+	    if request.user.is_authenticated():
+		annotations = msg.annotation_set.filter(created_by=request.user)
+	    else:
+		annotations = msg.annotation_set.all()
 	    if len(annotations) > 0:
 		graph.add_node('m'+str(msg.id), msg.getKeyAttr())
 		for ann in annotations:
