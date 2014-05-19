@@ -8,6 +8,6 @@ function activitylog(oper) {
         data: oper.data
     }
     $.post('{% url "activitylog.views.activitylog" %}', log, function(error, result) {
-
+        
     })
 }

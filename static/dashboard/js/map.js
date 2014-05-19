@@ -7,6 +7,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         this.layers = [];
 
         var map = new OpenLayers.Map(this.element.attr("id"));
+//        this.element.css("overflow", "hidden")
         var gphy = new OpenLayers.Layer.Google(
             "Google Physical",
             {type: google.maps.MapTypeId.TERRAIN}

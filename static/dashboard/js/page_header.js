@@ -1,4 +1,8 @@
 $(function() {
+    window.user = null;
+    if (var u = $('#username').val()) {
+        window.user = u;
+    }
     // navigation bar
     $("nav ul li").hover(function() {
             $(this).addClass("active");
@@ -8,7 +12,7 @@ $(function() {
                 $(this).removeClass("active");
         }
     );
-    
+
     // Requried: Addtional styling elements
     $('nav ul li ul li:first-child').prepend('<li class="arrow"></li>');
     $('nav ul li:first-child').addClass('first');

@@ -40,6 +40,8 @@ Annotator.Plugin.Tags = (function(_super) {
     Tags.prototype.input = null;
 
     Tags.prototype.pluginInit = function() {
+        var self = this;
+
         if (!Annotator.supported()) {
             return;
         }
@@ -48,20 +50,51 @@ Annotator.Plugin.Tags = (function(_super) {
         //     load: this.updateField,
         //     submit: this.setAnnotationTags
         // });
-        this.annotator.editor.addField({
+        this.tagField = this.annotator.editor.addField({
             type: 'custom',
             html_content: '<select class="selectize-entity" multiple />',
             init: this.initTagField,
             load: this.updateTagField,
             submit: this.setAnnotationTags
-        })
+        });
         this.attrField = this.annotator.editor.addField({
             type: 'custom',
             html_content: '<div>\n    <p class="annotator-title">Entity attributes</p>\n\n</div>',
             init: this.initAttrField,
             load: this.updateAttrField,
             submit: this.setTagAttributes
-        })
+        });
+
+        this.subscribe('/tag/changed', function(value) {
+            if (value && value.indexOf('location') > -1) {
+                if (self.annotation) {
+                    // search for mgrs string and update attribute
+                    var node = self.annotation.highlights[0].parentNode;
+                    if (!node) {
+                        console.log(annotation)
+                    }
+                    var latlon = [];
+                    if (!$(node).data('location')) {
+                        var text = node.innerText;
+                        var mgrs = text.match(/\/\/MGRSCOORD:([0-9A-Za-z ]+)\/\//)
+                        if (mgrs) {
+                            USNGtoLL(mgrs[1], latlon); // function from usng.js
+                            $(node).data("location", latlon);
+                        }
+                    }
+                    latlon = $(node).data('location');
+                    if (latlon.length === 2 ) {
+                        if (!self.annotation.tags) self.annotation.tags = [];
+                        self.annotation.tags.push({
+                            entity: 'location',
+                            location: latlon
+                        });
+                        self.updateAttrField(self.attrField, self.annotation);
+                    }
+                }
+            }
+        });
+
         this.annotator.viewer.addField({
             load: this.updateViewer
         });
@@ -96,7 +129,8 @@ Annotator.Plugin.Tags = (function(_super) {
         return this.input.val(value);
     };
 
-    Tags.prototype.initTagField = function(field, annotation) {
+    Tags.prototype.initTagField = function(field) {
+        var self = this;
         this.tagselect = $(field).find('.selectize-entity')
             .selectize({
                 maxItems: null,
@@ -112,40 +146,17 @@ Annotator.Plugin.Tags = (function(_super) {
                     {value: 'event', title: 'Event'}
                 ],
                 placeholder: 'Select an entity...',
-                create: false
+                create: false,
+                onChange: function(value) {
+                    self.publish('/tag/changed', [value]);
+                }
             }
         );
-        onChange(field, annotation, this.updateAttrField);
-
-        function onChange(field, annotation, dochange) {
-            $(field).find('.selectize-entity').on('change', function() {
-                if ($(this).val() && $(this).val().indexOf('location') > -1) {
-                    // search for mgrs string and update attribute
-                    var node = annotation.highlights[0].parentNode;
-                    if (!node) {
-                        console.log(annotation)
-                    }
-                    var latlon = [];
-                    if (!$(node).data('location')) {
-                        var text = node.innerText;
-                        var mgrs = text.match(/\/\/MGRSCOORD:([0-9A-Za-z ]+)\/\//)
-                        if (mgrs) {
-                            USNGtoLL(mgrs[1], latlon); // function from usng.js
-                            $(node).data("location", latlon);
-                        }
-                    }
-                    latlon = $(node).data('location');
-                    if (latlon.length === 2 ) {
-                        if (!annotation.attr) annotation.attr = {};
-                        annotation.attr.location = latlon;
-                        dochange($(field).next(), annotation);
-                    }
-                }
-            });
-        }
     }
 
     Tags.prototype.updateTagField = function(field, annotation) {
+        this.annotation = annotation;
+
         var selectize = this.tagselect[0].selectize;
         selectize.clear();
         if (annotation.tags) {
@@ -172,7 +183,7 @@ Annotator.Plugin.Tags = (function(_super) {
     }
 
     Tags.prototype.updateAttrField = function(field, annotation) {
-        var $content = $($(field).children()[0])
+        var $content = $($(field).children()[0]);
         $content.find(".annotator-attribute-group").remove();
         $content.append($('<div class="annotator-attribute-group">\n    <div class="annotator-attribute">\n        <select placeholder="Attribute...">\n            <option value="">Attribute...</option>\n            </select>\n    </div>\n    <div class="annotator-value" style="">\n        <input placeholder="Value...">\n    </div>\n    <div class="annotator-add-btn">\n        <button type="button" class="btn btn-default">\n            <span class="glyphicon glyphicon-plus"></span>\n        </button>\n    </div>\n</div>'))
         if (annotation.tags) {
@@ -207,7 +218,10 @@ Annotator.Plugin.Tags = (function(_super) {
     }
 
     Tags.prototype.setAnnotationTags = function(field, annotation) {
-        return annotation.tags = this.parseTags($(field).find('.selectize-entity').val());
+        if (! annotation.tags) {
+            annotation.tags = [];
+        }
+        annotation.tags.push(this.parseTags($(field).find('.selectize-entity').val()));
     };
 
     Tags.prototype.setTagAttributes = function(field, annotation) {

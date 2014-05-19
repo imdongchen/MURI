@@ -24,6 +24,7 @@ data/
 pip-log.txt
 run_gunicorn.sh
 /dashboard/migrations/
+/activitylog/migrations/
 /logs/
 /workbench/migrations/
 /annotation/migrations/

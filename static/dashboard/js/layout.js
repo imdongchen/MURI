@@ -49,7 +49,8 @@ $(document).ready(function () {
         );
     });
     $("#message_table_btn").click(function() {
-        var table =
+        var table;
+        table =
             $("<div>").dialog($.extend({}, container_options, {
                 "title": "Messages"
             }))
@@ -57,7 +58,8 @@ $(document).ready(function () {
                 "dimension": dMessage,
                 "columns": ['ID', 'Content', 'Date'],
                 "taggable": true
-            });
+            })
+        ;
         viz_panels.push( table );
         activitylog({
             operation: 'open window',
@@ -170,4 +172,3 @@ $(document).ready(function () {
         })
     });
 });
-

@@ -52,14 +52,14 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
 //            "fnRowDeselected": mySelectEventHandler,
 //            //      , "aaData": d
 //            //        "sPaginationType": "full_numbers"
-            "fnDrawCallback": function(oSettings) {
-                var ele =  this.closest(".ui-dialog");
-                if (ele.data("annotator")) {
-                    ele.annotator("destroy");
-                    _this._setupAnnotator();
-                }
-
-            }
+            // "fnDrawCallback": function(oSettings) {
+            //     // var ele =  this.closest(".ui-dialog");
+            //     // if (ele.data("annotator")) {
+            //     //     ele.annotator("destroy");
+            //     //     _this._setupAnnotator();
+            //     // }
+            //
+            // }
         });
         // hide the ID column
 //        this.table.fnSetColumnVis(0,false);

@@ -113,7 +113,7 @@ $(document).ready(function() {
     $("#progressbar").progressbar({
         value: false
     });
-    
+
     d3.json("data", function(result) {
         // Various formatters.
         var data = result.data;
@@ -140,20 +140,20 @@ $(document).ready(function() {
         dLocation = datafilter.dimension(function(d) {
             return [d.location.uid, d.location.name, d.location.shape, d.location.srid]; });
         gDate = dDate.group(d3.time.day);
-        dResource = datafilter.dimension(function(d) { 
+        dResource = datafilter.dimension(function(d) {
             var res = d.resource;
-            return [res.uid, res.name, res.condition, res.resource_type]; 
+            return [res.uid, res.name, res.condition, res.resource_type];
         });
         dEvent    = datafilter.dimension(function(d) {
             var eve = d.event;
             return [eve.uid, eve.name, eve.types, eve.date];
         });
-        dPerson   = datafilter.dimension(function(d) { 
-            return [d.person.uid, d.person.name, d.person.gender, d.person.race, d.person.nationality]; 
+        dPerson   = datafilter.dimension(function(d) {
+            return [d.person.uid, d.person.name, d.person.gender, d.person.race, d.person.nationality];
         });
         dOrganization = datafilter.dimension(function(d) {
             var org = d.organization;
-            return [org.uid, org.name, org.types, org.nationality, org.ethnicity, org.religion]; 
+            return [org.uid, org.name, org.types, org.nationality, org.ethnicity, org.religion];
         });
         dMessage  = datafilter.dimension(function(d) {
             var mes = d;
