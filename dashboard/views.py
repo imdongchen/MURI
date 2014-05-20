@@ -17,16 +17,16 @@ def index(request):
     dialogs = []
     if (len(bbox) != 0):
         dialogs.append("map")
-    if (len(time) != 0): 
+    if (len(time) != 0):
         dialogs.append("timeline")
-    if (len(message_ids) != 0): 
+    if (len(message_ids) != 0):
         dialogs.append("message_table")
 
     return render(request, 'dashboard/index.html', Context({"dialogs": dialogs}))
 
 def queryEvent(request):
     response = {}
-    response['aaData'] = [] # this field name is required by client 
+    response['aaData'] = [] # this field name is required by client
     events = Event.objects.all().order_by('date')
     for event in events:
         date_begin = ""
@@ -50,11 +50,11 @@ def getData(request):
         e_info = msg.getKeyAttr()
 
 
-        e_info['organizations']  = [] 
-        e_info['resources']  = [] 
-        e_info['persons']  = [] 
-        e_info['locations']  = [] 
-        e_info['events']  = [] 
+        e_info['organizations']  = []
+        e_info['resources']  = []
+        e_info['persons']  = []
+        e_info['locations']  = []
+        e_info['events']  = []
 
 	annotations = []
 	if request.user.is_authenticated():
@@ -167,7 +167,7 @@ def prepareNetwork(request):
 			    for rel in rels:
 				graph.add_edge(source.id, ent.id, rel=rel.description)
 
-	
+
 
 #       linked_entities = list(events.select_subclasses())
 
@@ -195,11 +195,11 @@ def network_relation(request):
 	    return
 	if source[0] == 'm':
 	    source = Message.objects.get(id=int(source[1:]))
-	else: 
+	else:
 	    source = Entity.objects.get(id=int(source))
 	if target[0] == 'm':
 	    target = Message.objects.get(id=int(target[1:]))
-	else: 
+	else:
 	    target = Entity.objects.get(id=int(target))
 
 	rel, created = Relationship.objects.get_or_create(source=source, target=target, description=rel)
@@ -220,9 +220,9 @@ def entity_attr(request):
 	id  = request.POST.get("row_id", 0)
 	id = str(id)
 	val = request.POST.get("value", "")
-	if not entity or not attr or not id: 
+	if not entity or not attr or not id:
 	    print "Warning: request params incorrect"
-	    return 
+	    return
 	try:
 	    ent = Entity.objects.filter(id=id).select_subclasses()[0]
 	except Entity.DoesNotExist:
@@ -231,7 +231,7 @@ def entity_attr(request):
 	else:
 	    if not hasattr(ent, entity) :
 		print "lala"
-		return 
+		return
 	    if not hasattr(ent, attr):
 		print ent
 		print attr

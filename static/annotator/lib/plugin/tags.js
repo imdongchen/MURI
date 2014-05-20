@@ -50,12 +50,23 @@ Annotator.Plugin.Tags = (function(_super) {
         //     load: this.updateField,
         //     submit: this.setAnnotationTags
         // });
+        this.titleField = this.annotator.editor.addField({
+            type: 'custom',
+            html_content: '<label>Name: </label><input class="tag_name"></input>',
+            load: this.updateTitleField
+        });
         this.tagField = this.annotator.editor.addField({
             type: 'custom',
             html_content: '<select class="selectize-entity" multiple />',
             init: this.initTagField,
             load: this.updateTagField,
             submit: this.setAnnotationTags
+        });
+        this.applyAllField = this.annotator.editor.addField({
+            type: 'checkbox',
+            label: Annotator._t('Apply to all data'),
+            load: this.updateApplyAllField,
+            submit: this.applyToAll
         });
         this.attrField = this.annotator.editor.addField({
             type: 'custom',
@@ -120,13 +131,8 @@ Annotator.Plugin.Tags = (function(_super) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     };
 
-    Tags.prototype.updateField = function(field, annotation) {
-        var value;
-        value = '';
-        if (annotation.tags) {
-            value = this.stringifyTags(annotation.tags);
-        }
-        return this.input.val(value);
+    Tags.prototype.updateTitleField = function(field, annotation) {
+        $(field).find('input.tag_name').val(annotation.quote);
     };
 
     Tags.prototype.initTagField = function(field) {
@@ -152,7 +158,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 }
             }
         );
-    }
+    };
 
     Tags.prototype.updateTagField = function(field, annotation) {
         this.annotation = annotation;
@@ -162,7 +168,18 @@ Annotator.Plugin.Tags = (function(_super) {
         if (annotation.tags) {
             selectize.addItem(annotation.tags.map(function(t) {return t.entity; }));
         }
-    }
+    };
+
+    Tags.prototype.updateApplyAllField = function(field, annotation) {
+        var a = 1;
+    };
+
+    Tags.prototype.applyToAll = function(field, annotation) {
+        if ($(field).find(':checkbox').prop('checked')) {
+            // find this annotated text throughout data and tag it
+        }
+
+    };
 
 
     Tags.prototype.initAttrField = function(field, annotation) {
@@ -180,7 +197,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 initializeAttrGroup();
             })
         }
-    }
+    };
 
     Tags.prototype.updateAttrField = function(field, annotation) {
         var $content = $($(field).children()[0]);
@@ -215,13 +232,13 @@ Annotator.Plugin.Tags = (function(_super) {
                 initializeAttrGroup();
             })
         }
-    }
+    };
 
     Tags.prototype.setAnnotationTags = function(field, annotation) {
         if (! annotation.tags) {
             annotation.tags = [];
         }
-        annotation.tags.push(this.parseTags($(field).find('.selectize-entity').val()));
+        Array.prototype.push.apply(annotation.tags, this.parseTags($(field).find('.selectize-entity').val()));
     };
 
     Tags.prototype.setTagAttributes = function(field, annotation) {

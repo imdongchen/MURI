@@ -7,4 +7,3 @@ urlpatterns = patterns('',
     url(r'^annotations/(\d+)$', process_annotation),
     url(r'^annotation/tag$', tag),
 )
-
