@@ -125,7 +125,7 @@ Annotator.Editor = (function(_super) {
     Editor.prototype.checkOrientation = function() {
         var controls, list;
         Editor.__super__.checkOrientation.apply(this, arguments);
-        list = this.element.find('ul');
+        list = this.element.find('ul.annotator-listing');
         controls = this.element.find('.annotator-controls');
         if (this.element.hasClass(this.classes.invert.y)) {
             controls.insertBefore(list);

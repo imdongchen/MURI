@@ -19,6 +19,8 @@
 <script type="text/javascript" src="{% static 'dashboard/js/activitylog.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/linkedview.js' %}"></script>
 {% endcompress %}
+
+<script language='javascript'>var STATIC_URL = "{{ STATIC_URL|escapejs }}";</script>
 {% endblock %}
 
 {% block page-header %}

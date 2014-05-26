@@ -1,6 +1,6 @@
 $(function() {
     window.user = null;
-    
+
     // navigation bar
     $("nav ul li").hover(function() {
             $(this).addClass("active");

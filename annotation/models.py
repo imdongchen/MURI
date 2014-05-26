@@ -17,20 +17,19 @@ class Annotation(models.Model):
     created_at  = models.DateTimeField(default=datetime.datetime.now)
 
     def serialize(self):
-	ann = {}
-	ann['id']     = self.id
-	ann['ranges'] = [{
-	    'start': self.start,
-	    'end'  : self.end,
-	    'startOffset': self.startOffset,
-	    'endOffset'  : self.endOffset
-	}]
-	ann['anchor']   = self.message.id
-	ann['tags'] = []
-	for ent in self.entities.all().select_subclasses():
-	    ann['tags'].append(ent.getKeyAttr())
-	return ann
+        ann = {}
+        ann['id']     = self.id
+        ann['ranges'] = [{
+            'start': self.start,
+            'end'  : self.end,
+            'startOffset': self.startOffset,
+            'endOffset'  : self.endOffset
+        }]
+        ann['anchor']   = self.message.id
+        ann['tags'] = []
+        for ent in self.entities.all().select_subclasses():
+            ann['tags'].append(ent.getKeyAttr())
+        return ann
 
     def __unicode__(self):
-	return self.entities.all()[0].name
-
+        return self.entities.all()[0].name

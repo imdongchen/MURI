@@ -10,7 +10,9 @@ Annotator.Plugin.Store = (function(_super) {
     Store.prototype.events = {
         'annotationCreated': 'annotationCreated',
         'annotationDeleted': 'annotationDeleted',
-        'annotationUpdated': 'annotationUpdated'
+        'annotationUpdated': 'annotationUpdated',
+        '/annotations/created': 'annotationsCreated',
+        '/annotations/updated': 'annotationsUpdated',
     };
 
     Store.prototype.options = {
@@ -55,6 +57,32 @@ Annotator.Plugin.Store = (function(_super) {
         }
     };
 
+    Store.prototype.annotationsCreated = function(annotations) {
+        var to_create = [];
+        var _this = this;
+
+        for (var i = 0, len = annotations.length; i < len; i++) {
+            var annotation = annotations[i];
+            if (__indexOf.call(this.annotations, annotation) < 0) {
+                this.registerAnnotation(annotation);
+                to_create.push(annotation);
+            } else {
+                return this.updateAnnotation(annotation, {});
+            }
+        }
+        this._apiRequest('create', to_create, function(data) {
+            if (data.length == 0 || data[0].id == null || to_create.length !==  data.length) {
+                console.warn(Annotator._t("Warning: No ID returned from server for annotation "), annotation);
+            }
+            for (var i = 0, len = data.length; i< len; i++) {
+                _this.updateAnnotation(to_create[i], data[i]);
+                _this.annotator.setupAnnotation(to_create[i]);
+            }
+            Annotator.showNotification(Annotator._t("Added " + data.length + " new annotations!"), Annotator.Notification.SUCCESS);
+            $.publish("/entity/added", [to_create]);
+        });
+    };
+
     Store.prototype.annotationCreated = function(annotation) {
         var _this = this;
         if (__indexOf.call(this.annotations, annotation) < 0) {
@@ -63,11 +91,26 @@ Annotator.Plugin.Store = (function(_super) {
                 if (data.id == null) {
                     console.warn(Annotator._t("Warning: No ID returned from server for annotation "), annotation);
                 }
-                return _this.updateAnnotation(annotation, data);
+                _this.updateAnnotation(annotation, data);
+                $.publish("/entity/added", [[annotation]]);
             });
         } else {
             return this.updateAnnotation(annotation, {});
         }
+    };
+
+    Store.prototype.annotationsUpdated = function(annotation) {
+        var to_update = [];
+        for (var i = 0, len = this.annotations.length; i < len; i++) {
+            var ann = this.annotations[i];
+            if (ann.quote === annotation.quote) {
+                ann.tags = annotation.tags;
+                to_update.push(ann);
+            }
+        }
+        this._apiRequest('update', to_update[0], function(data) {
+            Annotator.showNotification(Annotator._t("Updated " + to_update.length + " annotations!"), Annotator.Notification.SUCCESS);
+        });
     };
 
     Store.prototype.annotationUpdated = function(annotation) {
@@ -83,7 +126,8 @@ Annotator.Plugin.Store = (function(_super) {
         var _this = this;
         if (__indexOf.call(this.annotations, annotation) >= 0) {
             return this._apiRequest('destroy', annotation, (function() {
-                return _this.unregisterAnnotation(annotation);
+                _this.unregisterAnnotation(annotation);
+                // $.publish('/entity/deleted', [[annotaion]]);
             }));
         }
     };
@@ -101,7 +145,6 @@ Annotator.Plugin.Store = (function(_super) {
             console.error(Annotator._t("Trying to update unregistered annotation!"));
         } else {
             $.extend(annotation, data);
-            $.publish("entityAdded", [annotation]);
         }
         return $(annotation.highlights).data('annotation', annotation);
     };
@@ -229,13 +272,28 @@ Annotator.Plugin.Store = (function(_super) {
     };
 
     Store.prototype._dataFor = function(annotation) {
-        var data, highlights;
-        highlights = annotation.highlights;
-        delete annotation.highlights;
-        $.extend(annotation, this.options.annotationData);
-        data = JSON.stringify(annotation);
-        if (highlights) {
-            annotation.highlights = highlights;
+        var data = '', highlights;
+        if (annotation.constructor === Object) {
+            highlights = annotation.highlights;
+            delete annotation.highlights;
+            $.extend(annotation, this.options.annotationData);
+            data = JSON.stringify(annotation);
+            if (highlights) {
+                annotation.highlights = highlights;
+            }
+        } else if (annotation.constructor === Array) {
+            for (var i = 0, len = annotation.length; i < len; i++) {
+                highlights = [];
+                highlights.push(annotation[i].highlights);
+                delete annotation[i].highlights;
+            }
+            data = JSON.stringify(annotation);
+//            data = JSON.stringify(annotation); // somehow this does not work. Maybe JSON.stringify cannot be applied to deep objects?
+            if (highlights) {
+                for (var i = 0, len = annotation.length; i < len; i++) {
+                    annotation[i].highlights = highlights[i];
+                }
+            }
         }
         return data;
     };

@@ -56,25 +56,25 @@ def getData(request):
         e_info['locations']  = []
         e_info['events']  = []
 
-	annotations = []
-	if request.user.is_authenticated():
-	    annotations = msg.annotation_set.filter(created_by=request.user)
-	else:
-	    annotations = msg.annotation_set.all()
+        annotations = []
+        if request.user.is_authenticated():
+            annotations = msg.annotation_set.filter(created_by=request.user)
+        else:
+            annotations = msg.annotation_set.all()
 
-	for ann in annotations:
-	    entities = ann.entities.all().select_subclasses()
-	    for entity in entities:
-		if hasattr(entity, 'organization'):
-		    e_info['organizations'].append(entity.getKeyAttr())
-		elif hasattr(entity, 'resource'):
-		    e_info['resources'].append(entity.getKeyAttr())
-		elif hasattr(entity, 'person'):
-		    e_info['persons'].append(entity.getKeyAttr())
-		elif hasattr(entity, 'location'):
-		    e_info['locations'].append(entity.getKeyAttr())
-		elif hasattr(entity, 'event'):
-		    e_info['events'].append(entity.getKeyAttr())
+        for ann in annotations:
+            entities = ann.entities.all().select_subclasses()
+            for entity in entities:
+                if hasattr(entity, 'organization'):
+                    e_info['organizations'].append(entity.getKeyAttr())
+                elif hasattr(entity, 'resource'):
+                    e_info['resources'].append(entity.getKeyAttr())
+                elif hasattr(entity, 'person'):
+                    e_info['persons'].append(entity.getKeyAttr())
+                elif hasattr(entity, 'location'):
+                    e_info['locations'].append(entity.getKeyAttr())
+                elif hasattr(entity, 'event'):
+                    e_info['events'].append(entity.getKeyAttr())
 
 
 #
@@ -99,15 +99,15 @@ def getData(request):
 def flatten(dic):
     res = []
     for person in dic['persons']+[{}]:
-	rec = {}
-	rec['uid'] = dic['uid']
-	rec['date'] = dic['date']
-	rec['content'] = dic['content']
+        rec = {}
+        rec['uid'] = dic['uid']
+        rec['date'] = dic['date']
+        rec['content'] = dic['content']
 
         if len(dic['persons']) != 0 and person == {}:
             continue
-	rec['person'] = person
-	for org in dic['organizations']+[{}]:
+        rec['person'] = person
+        for org in dic['organizations']+[{}]:
             if len(dic['organizations']) != 0 and org == {}:
                 continue
             rec['organization'] = org
@@ -139,33 +139,33 @@ def prepareNetwork(request):
 
         graph   = nx.DiGraph()
 
-	# construct network on 'co-occurrance'
+    # construct network on 'co-occurrance'
         msgs = Message.objects.filter(id__in=filter_id)
-	annotations = []
-	for msg in msgs:
-	    if request.user.is_authenticated():
-		annotations = msg.annotation_set.filter(created_by=request.user)
-	    else:
-		annotations = msg.annotation_set.all()
-	    if len(annotations) > 0:
-		graph.add_node('m'+str(msg.id), msg.getKeyAttr())
-		for ann in annotations:
-		    entities = ann.entities.all().select_subclasses()
-		    for ent in entities:
-			graph.add_node(ent.id, ent.getKeyAttr())
-			graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
-			targets = ent.findTargets()
-			sources = ent.findSources()
-			for target in targets:
-			    rels = Relationship.objects.filter(source=ent,target=target)
-			    graph.add_node(target.id, target.getKeyAttr())
-			    for rel in rels:
-				graph.add_edge(ent.id, target.id, rel=rel.description)
-			for source in sources:
-			    rels = Relationship.objects.filter(source=source,target=ent)
-			    graph.add_node(source.id, source.getKeyAttr())
-			    for rel in rels:
-				graph.add_edge(source.id, ent.id, rel=rel.description)
+        annotations = []
+        for msg in msgs:
+            if request.user.is_authenticated():
+                annotations = msg.annotation_set.filter(created_by=request.user)
+            else:
+                annotations = msg.annotation_set.all()
+            if len(annotations) > 0:
+                graph.add_node('m'+str(msg.id), msg.getKeyAttr())
+                for ann in annotations:
+                    entities = ann.entities.all().select_subclasses()
+                    for ent in entities:
+                        graph.add_node(ent.id, ent.getKeyAttr())
+                        graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
+                        targets = ent.findTargets()
+                        sources = ent.findSources()
+                        for target in targets:
+                            rels = Relationship.objects.filter(source=ent,target=target)
+                            graph.add_node(target.id, target.getKeyAttr())
+                            for rel in rels:
+                                graph.add_edge(ent.id, target.id, rel=rel.description)
+                        for source in sources:
+                            rels = Relationship.objects.filter(source=source,target=ent)
+                            graph.add_node(source.id, source.getKeyAttr())
+                            for rel in rels:
+                                graph.add_edge(source.id, ent.id, rel=rel.description)
 
 
 
@@ -187,56 +187,53 @@ def prepareNetwork(request):
 def network_relation(request):
     res = {}
     if request.method == "POST":
-	source = request.POST.get('source', '')
-	target = request.POST.get('target', '')
-	rel    = request.POST.get('rel', '')
+        source = request.POST.get('source', '')
+        target = request.POST.get('target', '')
+        rel    = request.POST.get('rel', '')
 
-	if source == '' or target == '':
-	    return
-	if source[0] == 'm':
-	    source = Message.objects.get(id=int(source[1:]))
-	else:
-	    source = Entity.objects.get(id=int(source))
-	if target[0] == 'm':
-	    target = Message.objects.get(id=int(target[1:]))
-	else:
-	    target = Entity.objects.get(id=int(target))
+        if source == '' or target == '':
+            return
+        if source[0] == 'm':
+            source = Message.objects.get(id=int(source[1:]))
+        else:
+            source = Entity.objects.get(id=int(source))
+        if target[0] == 'm':
+            target = Message.objects.get(id=int(target[1:]))
+        else:
+            target = Entity.objects.get(id=int(target))
 
-	rel, created = Relationship.objects.get_or_create(source=source, target=target, description=rel)
-	rel.save()
-	res['source'] = source.id
-	res['target'] = target.id
-	res['rel'] = rel.description
-	res['id'] = rel.id
+        rel, created = Relationship.objects.get_or_create(source=source, target=target, description=rel)
+        rel.save()
+        res['source'] = source.id
+        res['target'] = target.id
+        res['rel'] = rel.description
+        res['id'] = rel.id
 
-	return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
 
 def entity_attr(request):
     if request.method == "POST":
-	entity = request.POST.get("entity", "")
-	attr	= request.POST.get("attr", "")
-	id  = request.POST.get("row_id", 0)
-	id = str(id)
-	val = request.POST.get("value", "")
-	if not entity or not attr or not id:
-	    print "Warning: request params incorrect"
-	    return
-	try:
-	    ent = Entity.objects.filter(id=id).select_subclasses()[0]
-	except Entity.DoesNotExist:
-	    print "entity not exist for editing"
-	    return
-	else:
-	    if not hasattr(ent, entity) :
-		print "lala"
-		return
-	    if not hasattr(ent, attr):
-		print ent
-		print attr
-		print "haha"
-		return
-	    setattr(ent, attr, val)
-	    ent.save()
-	    return HttpResponse(val)
+        entity = request.POST.get("entity", "")
+        attr	= request.POST.get("attr", "")
+        id  = request.POST.get("row_id", 0)
+        id = str(id)
+        val = request.POST.get("value", "")
+        if not entity or not attr or not id:
+            print "Warning: request params incorrect"
+            return
+        try:
+            ent = Entity.objects.filter(id=id).select_subclasses()[0]
+        except Entity.DoesNotExist:
+            print "entity not exist for editing"
+            return
+        else:
+            if not hasattr(ent, entity) :
+                print "lala"
+                return
+            if not hasattr(ent, attr):
+                return
+            setattr(ent, attr, val)
+            ent.save()
+            return HttpResponse(val)

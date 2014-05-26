@@ -53,6 +53,8 @@ Annotator = (function(_super) {
         this.onEditorSubmit = __bind(this.onEditorSubmit, this);
         this.onEditorHide = __bind(this.onEditorHide, this);
         this.showEditor = __bind(this.showEditor, this);
+        this.onCreateAllAnnotations= __bind(this.onCreateAllAnnotations, this);
+        this.onUpdateAllAnnotations = __bind(this.onUpdateAllAnnotations, this);
         Annotator.__super__.constructor.apply(this, arguments);
         this.plugins = {};
         if (!Annotator.supported()) {
@@ -235,11 +237,10 @@ Annotator = (function(_super) {
         annotation.quote = [];
         annotation.ranges = [];
         annotation.highlights = [];
-        annotation.anchor = 0; // assuming it is the id of "message"
         // Originally the code catches the xpath start and end; now I change it to anchor to message id.
         // Therefore I now record message id and startOffset and endOffset
         if (this.selectedRanges && this.selectedRanges.length > 0) {
-            annotation.anchor = $(this.selectedRanges[0].commonAncestor).parent().data("id");
+            annotation.anchor = annotation.anchor || $(this.selectedRanges[0].commonAncestor).parent().data("id");
         }
 
         for (_j = 0, _len1 = normedRanges.length; _j < _len1; _j++) {
@@ -485,9 +486,11 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cancel);
+            _this.unsubscribe('/annotation/applyall', _this.onCreateAllAnnotations);
             return _this.unsubscribe('annotationEditorSubmit', save);
         };
         this.subscribe('annotationEditorHidden', cancel);
+        this.subscribe('/annotation/applyall', this.onCreateAllAnnotations);
         this.subscribe('annotationEditorSubmit', save);
         return this.showEditor(annotation, position);
     };
@@ -502,9 +505,11 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cleanup);
+            _this.unsubscribe('/annotation/applyall', _this.onUpdateAllAnnotations);
             return _this.unsubscribe('annotationEditorSubmit', update);
         };
         this.subscribe('annotationEditorHidden', cleanup);
+        this.subscribe('/annotation/applyall', this.onUpdateAllAnnotations);
         this.subscribe('annotationEditorSubmit', update);
         this.viewer.hide();
         return this.showEditor(annotation, offset);
@@ -513,6 +518,65 @@ Annotator = (function(_super) {
     Annotator.prototype.onDeleteAnnotation = function(annotation) {
         this.viewer.hide();
         return this.deleteAnnotation(annotation);
+    };
+
+    Annotator.prototype.onCreateAllAnnotations = function(annotation) {
+        // find this annotated text throughout data and tag it
+        // step 1: find all quotes
+        // step 2: create annotation instances
+        // step 3: register annotations and send request
+        this.unsubscribe('annotationEditorSubmit');
+        var existing_anns = this.plugins.Store.annotations;
+        var annotations = [];
+
+        var root = this.wrapper[0];
+        $(root).find('tr').each(matchAnnotation);
+
+        this.publish('/annotations/created', [annotations])
+
+        function matchAnnotation(i, row) {
+            var cell = row.children[1];
+            var re = new RegExp(annotation.quote, 'g');
+            var match;
+            while (match = re.exec($(cell).text())) {
+                var new_ann = {};
+                new_ann.ranges = [{}];
+                new_ann.highlights = annotation.highlights;
+                new_ann.tags = annotation.tags;
+                new_ann.quote = annotation.quote;
+                new_ann.ranges[0].start = '';
+                new_ann.ranges[0].end = ''; //start and end is not important
+                new_ann.ranges[0].startOffset = match.index;
+                new_ann.ranges[0].endOffset = match.index + match[0].length;
+                new_ann.anchor = $(row).data("id");
+
+                var existed = false;
+                for (var k = 0, len = existing_anns.length; k < len; k++) {
+                    var ann = existing_anns[k];
+                    if (ann.anchor === new_ann.anchor && ann.ranges[0].start === new_ann.ranges[0].start) {
+                        // annotation existed
+                        // todo: what if a different tag?
+                        existed = true;
+                        break;
+                    }
+                }
+                // if annotation does not exist, add it
+                if (! existed) {
+                    $(new_ann.highlights).removeClass('annotator-hl-temporary');
+                    for (var i = 0; i < new_ann.tags.length; i++) {
+                        var tagcss = 'annotator-hl-' + new_ann.tags[i]['entity'];
+                        $(new_ann.highlights).addClass(tagcss)
+                    }
+                    annotations.push(new_ann);
+                }
+            }
+        };
+    };
+
+    Annotator.prototype.onUpdateAllAnnotations = function(annotation) {
+        this.unsubscribe('annotationEditorSubmit');
+        // let store plugin to deal with it
+        this.publish('/annotations/updated', [annotation]);
     };
 
     return Annotator;

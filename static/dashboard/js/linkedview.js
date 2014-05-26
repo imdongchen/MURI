@@ -57,44 +57,50 @@ $.subscribe("/viz/close", function(e, panel_id, panel_title) {
         data: JSON.stringify({'window_type': panel_title})
     })
 })
-// Event 'entityAdded', triggered after tag is saved in server and returned with attributes from server
-$.subscribe("entityAdded", function(e, annotation) {
+// triggered after tag is saved in server and returned with attributes from server
+$.subscribe("/entity/added", function(e, annotations) {
     var records = [];
-    var msg_info = {};
-    dMessage.top(Infinity).some(function(d) {
-        if (d.uid === annotation.anchor) {
-            msg_info.uid = d.uid;
-            msg_info.content = d.content;
-            msg_info.date = d.date;
-            return true;
-        }
-    })
-    annotation.tags.forEach(function(tag) {
-        var record = $.extend({
-            location: {},
-            event: {},
-            person: {},
-            organization: {},
-            resource: {}
-        }, msg_info);
-        if (tag.entity === 'location') {
-            if (tag.shape) {
-                tag.shape = toOLGeometry(tag)
+    for (var i = 0, len = annotations.length; i < len; i++) {
+        var annotation = annotations[i];
+        var msg_info = {};
+        dMessage.top(Infinity).some(function(d) {
+            if (d.uid === annotation.anchor) {
+                msg_info.uid = d.uid;
+                msg_info.content = d.content;
+                msg_info.date = d.date;
+                return true;
             }
-        }
-        record[tag.entity] = $.extend(record, tag);
-        records.push(record);
-    })
+        })
+        annotation.tags.forEach(function(tag) {
+            var record = $.extend({
+                location: {},
+                event: {},
+                person: {},
+                organization: {},
+                resource: {}
+            }, msg_info);
+            if (tag.entity === 'location') {
+                if (tag.shape) {
+                    tag.shape = toOLGeometry(tag)
+                }
+            }
+            record[tag.entity] = $.extend(record, tag);
+            records.push(record);
+        })
+    }
     updateData(records);
-    activitylog({
-        operation: 'add annotation',
-        data: JSON.stringify({'id': annotation.id})
-    })
+})
+
+$.subscribe('/entity/deleted', function(e, annotations) {
+    for (var i = 0, len = annotations.length; i < len; i++) {
+        var annotation = annotations[i];
+        
+    }
 })
 
 function updateData(records) {
     datafilter.add(records);
-//    $.publish('/data/filter')
+    $.publish('/data/filter', [$(".messageTable").attr("id")])
 }
 
 function toOLGeometry(location) {
@@ -204,150 +210,3 @@ function update() {
 	}
 	*/
 };
-
-// All codes below are no longer used
-//
-//
-
-// Whenever the brush moves, re-render everything.
-function renderAll() {
-    if (map) {
-        map.update();
-    }
-    renderAllButMap();
-}
-
-function renderAllExcept(charts) {
-    var toDraw = [];
-    var all = ['map', 'locationTable', 'timeline', 'network', 'personTable', 'messageTable', 'resourceTable', 'eventTable','organizationTable'];
-    for (var i = 0, len = all.length; i < len; i++) {
-        if (charts.indexOf(all[i]) === -1) {
-            toDraw.push(all[i])
-        }
-    }
-    for (var i = 0, len = toDraw.length; i < len; i++) {
-        switch (toDraw[i]) {
-            case "map":
-                if (map) map.update();
-                break;
-            case "timeline":
-                if (timeline) timeline.each(render);
-                break;
-            case "network":
-                if (network) network.update();
-                break;
-            case "personTable":
-                if (personTable) personTable.update();
-                break;
-            case "messageTable":
-                if (messageTable) messageTable.update();
-                break;
-            case "locationTable":
-                if (locationTable) locationTable.update();
-                break;
-            case "resourceTable":
-                if (resourceTable) resourceTable.update();
-                break;
-            case "eventTable":
-                if (eventTable) eventTable.update();
-                break;
-            case "organizationTable":
-                if (organizationTable) organizationTable.update();
-                break;
-        }
-    }
-
-}
-
-function renderAllButNetwork() {
-    if (map) {
-        map.update();
-    }
-    if(timeline) {
-        timeline.each(render);
-    }
-    if (eventTable) {
-        eventTable.update();
-    }
-    if (locationTable) {
-        locationTable.update();
-    }
-    if (messageTable) {
-        messageTable.update();
-    }
-    if (resourceTable) {
-        resourceTable.update();
-    }
-    if (organizationTable) {
-        organizationTable.update();
-    }
-    if (personTable) {
-        personTable.update();
-    }
-    if (network) {
-        network.update();
-    }
-}
-
-function renderAllButMap() {
-    if (timeline) {
-        timeline.each(render);
-    }
-    if (messageTable) {
-        messageTable.update();
-    }
-    if (resourceTable) {
-        resourceTable.update();
-    }
-    if (locationTable) {
-        locationTable.update();
-    }
-    if (eventTable) {
-        eventTable.update();
-    }
-    if (organizationTable) {
-        organizationTable.update();
-    }
-    if (personTable) {
-        personTable.update();
-    }
-    if (network) {
-        network.update();
-    }
-}
-
-function highlight(location_id) {
-    if (map) map.highlight([location_id]);
-//  var eve = null; // the target event
-//  var NoException = {};
-//  try {
-//      // NoException: dirty trick to do 'break' in forEach
-//      dDate.top(Infinity).forEach(function(p, i) {
-//          if (p.id == event_id) {
-//              eve = p;
-//              throw NoException;
-//          }
-//      });
-//  } catch(e) {
-//      if (e !== NoException) throw e;
-//      var footprints_id = [];
-//      for (var i = 0; i < eve.footprints.length; i++) {
-//          footprints_id.push(eve.footprints[i].id);
-//      }
-//      if (map) {
-//          map.highlight(footprints_id);
-//      }
-//  }
-}
-
-function highlightFromNetwork(ids) {
-    for (var i = 0, len = ids.length; i < len; i++) {
-        dDate.top(Infinity).forEach(function(p, i) {
-        });
-    }
-}
-
-function unhighlightFromNetwork(ids) {
-    for (var i = 0, len = ids.length; i < len; i++) {
-    }
-}

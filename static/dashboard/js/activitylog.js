@@ -7,7 +7,7 @@ function activitylog(oper) {
         operation: oper.operation,
         data: oper.data
     }
-    $.post('{% url "activitylog.views.activitylog" %}', log, function(error, result) {
-        
+    $.post('logs/activitylog', log, function(error, result) {
+
     })
 }

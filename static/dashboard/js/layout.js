@@ -57,7 +57,8 @@ $(document).ready(function () {
             .viztable({
                 "dimension": dMessage,
                 "columns": ['ID', 'Content', 'Date'],
-                "taggable": true
+                "taggable": true,
+                "data": "message"
             })
         ;
         viz_panels.push( table );

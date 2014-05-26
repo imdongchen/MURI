@@ -38,7 +38,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         for (var i = 0; i < images.length; i++) {
             this.svg.append('svg:defs')
                 .append('svg:pattern').attr('id', 'img-'+images[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
-                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', '{{STATIC_URL}}dashboard/img/' + images[i] + '.png');
+                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + images[i] + '.png');
         }
 
         // define arrow markers for links

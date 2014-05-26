@@ -7,19 +7,27 @@ from models import *
 def activitylog(request):
     res = {}
     if request.method == 'POST':
-	if request.user.is_authenticated():
-	    activity = Activity.objects.create(
-		user = request.user,
-		operation = request.POST['operation'],
-		data = request.POST['data']
-	    )
-	else:
-	    activity = Activity.objects.create(
-		operation = request.POST['operation'],
-		data = request.POST['data']
-	    )
-	activity.save()
-	return HttpResponse(json.dumps(res), mimetype='application/json')
+        log = {
+            'operation': request.POST['operation'],
+            'data'    : request.POST['data']
+        }
+        serverlog(request, log)
+        return HttpResponse(json.dumps(res), mimetype='application/json')
     if request.method == 'GET':
-	pass
+        pass
 
+def serverlog(request, log):
+    res = {}
+    if request.user.is_authenticated():
+        activity = Activity.objects.create(
+            user = request.user,
+            operation = log['operation'],
+            data = log['data']
+        )
+    else:
+        activity = Activity.objects.create(
+            operation = log['operation'],
+            data = log['data']
+        )
+    activity.save()
+    return res

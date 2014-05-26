@@ -14,7 +14,7 @@ class Attribute(models.Model):
         unique_together = (("attr", "val"),)
 
     def __unicode__(self):
-	return self.attr + ' : ' + self.val
+        return self.attr + ' : ' + self.val
 
 class Entity(models.Model):
     name          = models.CharField(max_length=100, blank=True)
@@ -50,9 +50,9 @@ class Message(models.Model):
         attr = {}
         attr['uid'] = self.id
         attr['content'] = self.content
-        attr['date']    = '' 
-        if self.date != None: 
-            attr['date']  = self.date.strftime('%m/%d/%Y') 
+        attr['date']    = ''
+        if self.date != None:
+            attr['date']  = self.date.strftime('%m/%d/%Y')
         return attr
 
 class Location(Entity):
@@ -65,10 +65,10 @@ class Location(Entity):
         return self.location.geom_type
 
     def save(self, *args, **kwargs):
-	"""auto fill entity_type"""
-	self.entity_type = 'Location'
-	super(Location, self).save(*args, **kwargs)
-    
+        """auto fill entity_type"""
+        self.entity_type = 'Location'
+        super(Location, self).save(*args, **kwargs)
+
 
     def getKeyAttr(self):
         attr = {}
@@ -78,8 +78,8 @@ class Location(Entity):
         if self.location:
             attr['shape'] = self.location.wkt
             attr['srid'] = self.location.srid
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -107,9 +107,9 @@ class Person(Entity):
     status       = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-	"""auto fill entity_type"""
-	self.entity_type = 'Person'
-	super(Person, self).save(*args, **kwargs)
+        """auto fill entity_type"""
+        self.entity_type = 'Person'
+        super(Person, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}
@@ -119,9 +119,8 @@ class Person(Entity):
         attr['race'] = self.race
         attr['nationality'] = self.nationality
         attr['entity'] = 'person'
-	attr['attr'] = {}
-	for a in self.attributes.all():
-	    attr['attr'][a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -144,9 +143,9 @@ class Organization(Entity):
     registration_state    = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-	"""auto fill entity_type"""
-	self.entity_type = 'Organization'
-	super(Organization, self).save(*args, **kwargs)
+        """auto fill entity_type"""
+        self.entity_type = 'Organization'
+        super(Organization, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}
@@ -157,8 +156,8 @@ class Organization(Entity):
         attr['ethnicity'] = self.ethnicity
         attr['religion'] = self.religion
         attr['entity'] = 'organization'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -174,9 +173,9 @@ class Event(Entity):
     date  = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-	"""auto fill entity_type"""
-	self.entity_type = 'Event'
-	super(Event, self).save(*args, **kwargs)
+        """auto fill entity_type"""
+        self.entity_type = 'Event'
+        super(Event, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}
@@ -185,10 +184,10 @@ class Event(Entity):
         attr['types'] = self.types
         attr['entity'] = 'event'
         attr['date'] = ''
-        if self.date != None: 
-            attr['date']  = self.date.strftime('%m/%d/%Y') 
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        if self.date != None:
+            attr['date']  = self.date.strftime('%m/%d/%Y')
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -214,8 +213,8 @@ class Unit(Entity):
         attr['uid'] = self.id
         attr['name'] = self.name
         attr['entity'] = 'unit'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -236,9 +235,9 @@ class Resource(Entity):
     objects = InheritanceManager()
 
     def save(self, *args, **kwargs):
-	"""auto fill entity_type"""
-	self.entity_type = 'Resource'
-	super(Resource, self).save(*args, **kwargs)
+        """auto fill entity_type"""
+        self.entity_type = 'Resource'
+        super(Resource, self).save(*args, **kwargs)
 
     def getKeyAttr(self):
         attr = {}
@@ -247,8 +246,8 @@ class Resource(Entity):
         attr['condition'] = self.condition
         attr['entity'] = 'resource'
         attr['resource_type'] = self.resource_type
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -269,8 +268,8 @@ class Equipment(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.equipment'
         attr['resource_type'] = 'equipment'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -293,8 +292,8 @@ class Weapon(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.weapon'
         attr['resource_type'] = 'weapon'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -324,8 +323,8 @@ class Vehicle(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.vehicle'
         attr['resource_type'] = 'vehicle'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -352,8 +351,8 @@ class Facility(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.facility'
         attr['resource_type'] = 'facility'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -382,8 +381,8 @@ class Document(Resource):
         attr['availability'] = self.availability
         attr['entity'] = 'resource.document'
         attr['resource_type'] = 'document'
-	for a in self.attributes.all():
-	    attr[a.attr] = a.val
+        for a in self.attributes.all():
+            attr[a.attr] = a.val
 
         return attr
 
@@ -413,9 +412,3 @@ class Relationship(models.Model):
         attr['frequency']   = self.frequency
         attr['intelligence_evaluation'] = self.intelligence_evaluation
         return attr
-
-
-
-
-
-
