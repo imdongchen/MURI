@@ -242,7 +242,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 .css('top', (_this.mouseup_node.y + _this.mousedown_node.y)/2.0)
                 .css('left', (_this.mouseup_node.x + _this.mousedown_node.x)/2.0)
             );
-            $('#relation_form form').submit(function() {
+            $('#relation_form form').submit(function(e) {
                 var rel = $('#relation').val();
                 link.rel = rel;
                 $.post('network/relation', {
@@ -257,6 +257,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                     })
                 })
                 $(this).trigger('reset').parent().hide();
+                e.preventDefault();
             });
 
             _this.restart();
