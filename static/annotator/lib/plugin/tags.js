@@ -289,7 +289,12 @@ Annotator.Plugin.Tags = (function(_super) {
             for (var i = 0; i < annotation.tags.length; i ++) {
                 var tag = annotation.tags[i];
                 attribute = this.attribute_widget.serialize();
-                $.extend(tag, attribute);
+                for (var attr in tag) {
+                    if (attr !== 'entity' && attr !== 'uid' && attribute[attr] === undefined) {
+                        delete tag[attr]; // delete attributes not in the form
+                    }
+                }
+                $.extend(tag, attribute); // add attributes in the from to tag
             }
         }
     };

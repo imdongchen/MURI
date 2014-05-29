@@ -30,11 +30,11 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         var pointlayer = new OpenLayers.Layer.Vector("Points", {
             styleMap: new OpenLayers.StyleMap({
                 'default': new OpenLayers.Style({
-                    externalGraphic: '{{STATIC_URL}}dashboard/img/red_pin.png'
+                    externalGraphic: STATIC_URL + 'dashboard/img/red_pin.png'
                   , pointRadius: 16
                 }),
                 'select':  new OpenLayers.Style({
-                    externalGraphic: '{{STATIC_URL}}dashboard/img/blue_pin.png'
+                    externalGraphic: STATIC_URL + 'dashboard/img/blue_pin.png'
                   , pointRadius: 16
                 })
             })
@@ -145,7 +145,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         pointlayer.addFeatures(points);
         linelayer.redraw();
         pointlayer.redraw();
-    }, 
+    },
     highlight: function (features_id) {
         for (var i = 0; i < this.highlightedFeatures.length; i++) {
             this.mapControls['select'].unhighlight(this.highlightedFeatures[i]);
@@ -178,7 +178,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         $("#footprint_popup #footprint_name").text(feature.attributes.name);
         $("#footprint_popup #footprint_id").text(feature.attributes.id);
         var content = $('#footprint_popup').css('display', '').clone();
-        
+
         feature.popup = new OpenLayers.Popup.FramedCloud(
                 "footprint_info",
                 feature.geometry.getBounds().getCenterLonLat(),

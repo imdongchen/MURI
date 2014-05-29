@@ -17,7 +17,7 @@ class Attribute(models.Model):
         return self.attr + ' : ' + self.val
 
 class Entity(models.Model):
-    name          = models.CharField(max_length=100, blank=True)
+    name          = models.CharField(max_length=1000, blank=True)
     entity_type    = models.CharField(max_length=50, null=True, blank=True)
     attributes	  = models.ManyToManyField(Attribute, blank=True, null=True)
 
