@@ -94,7 +94,7 @@ $.subscribe("/entity/added", function(e, annotations) {
 $.subscribe('/entity/deleted', function(e, annotations) {
     for (var i = 0, len = annotations.length; i < len; i++) {
         var annotation = annotations[i];
-        
+
     }
 })
 
@@ -108,9 +108,11 @@ function toOLGeometry(location) {
     var feature = wktParser.read(location.shape);
     var origin_prj = new OpenLayers.Projection("EPSG:" + location.srid);
     var dest_prj   = new OpenLayers.Projection("EPSG:900913");
-    feature.geometry.transform(origin_prj, dest_prj); // projection of google map
-    feature.attributes.id = location.uid;
-    feature.attributes.name= location.name;
+    if (feature) {
+      feature.geometry.transform(origin_prj, dest_prj); // projection of google map
+      feature.attributes.id = location.uid;
+      feature.attributes.name= location.name;
+    }
     return feature;
 }
 

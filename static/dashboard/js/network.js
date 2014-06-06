@@ -3,8 +3,16 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         dimension: null
     },
     _create: function() {
-        this.width  = this.element.width();
-        this.height = this.element.height();
+        var images = ['person', 'organization', 'location', 'event', 'message', 'resource']
+        var filterbar = '<ul id="network-filterbar">';
+        for (var i = 0; i < images.length; i++) {
+            filterbar += '<li><input type="checkbox" id="' + images[i] +'-check"/><label for="' + images[i] + '-check">' + images[i] + '</label>';
+        }
+        filterbar += '</ul>';
+        this.element.append($(filterbar));
+        this.margin = {top: 5, bottom: 5, left: 13, right: 5};
+        this.width  = this.element.width() - this.margin.left - this.margin.right;
+        this.height = this.element.height() - this.margin.top - this.margin.bottom;
         this.nodes = [];
         this.links = [];
         var _this = this;
@@ -31,10 +39,11 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.svg = d3.select(this.element[0])
             .each(function() { this.focus(); })
             .append("svg:svg")
+            .attr('width', this.width)
+            .attr('height', this.height)
             .attr("pointer-events", "all")
         ;
         // define node images
-        var images = ['person', 'organization', 'location', 'event', 'message', 'resource']
         for (var i = 0; i < images.length; i++) {
             this.svg.append('svg:defs')
                 .append('svg:pattern').attr('id', 'img-'+images[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
@@ -51,7 +60,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('orient', 'auto')
             .append('svg:path')
             .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', '#ccc');
+            .attr('class', 'linkarrow');
 
         this.svg.append('svg:defs').append('svg:marker')
             .attr('id', 'start-arrow')
@@ -62,7 +71,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('orient', 'auto')
             .append('svg:path')
             .attr('d', 'M10,-5L0,0L10,5')
-            .attr('fill', '#ccc');
+            .attr('class', 'linkarrow');
 
         this.force = d3.layout.force()
             .nodes(this.nodes)
@@ -96,6 +105,35 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.link = this.svg.selectAll("path");
         this.node = this.svg.selectAll("g");
 
+        // line displayed when dragging new nodes
+        this.drag_line = this.svg.append('svg:path')
+            .attr('class', 'dragline hidden')
+            .attr('d', 'M0,0L0,0');
+        // mouse event vars
+        this.selected_node = null,
+        this.selected_link = null;
+        this.mousedown_link = null;
+        this.mousedown_node = null;
+        this.mouseup_node = null;
+
+        this._super("_create");
+        this.element.addClass("viznetwork");
+        this.element.addClass("viz");
+        this.element.data("viz", "vizViznetwork")
+        this.update();
+
+        // update network when dialog resized or dragged
+        this.element.on("dialogresizestop", function() {
+            var ele = this.element;
+            ele.css('width', 'auto');
+            ele.parent().css("height", 'auto');
+            this.resize();
+        }.bind(this));
+
+        this.element.subscribe('resize', function() {
+            this.resize();
+        })
+
         function tick(e) {
             // Push sources up and targets down to form a weak tree.
             var k = 6 * e.alpha;
@@ -122,23 +160,6 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             });
         };
 
-
-        // line displayed when dragging new nodes
-        this.drag_line = this.svg.append('svg:path')
-            .attr('class', 'link dragline hidden')
-            .attr('d', 'M0,0L0,0');
-        // mouse event vars
-        this.selected_node = null,
-        this.selected_link = null;
-        this.mousedown_link = null;
-        this.mousedown_node = null;
-        this.mouseup_node = null;
-
-        this._super("_create");
-        this.element.addClass("viznetwork");
-        this.element.addClass("viz");
-        this.element.data("viz", "vizViznetwork")
-        this.update();
     },
 
     setMode: function(mode) {
@@ -254,7 +275,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                     activitylog({
                         operation: 'create relationship',
                         data: JSON.stringify({'window_type': 'network', 'id': d.id})
-                    })
+                    });
                 })
                 $(this).trigger('reset').parent().hide();
                 e.preventDefault();
@@ -460,8 +481,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.node = this.node.data(this.nodes, function(d) {
             return d.id;
         });
+
         var g = this.node.enter().append("svg:g");
-//        g.call(_this.force.drag);
 
         g.append("svg:circle")
             .attr('r', 12)
@@ -474,17 +495,20 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                     return "url(#img-" + d.entity + ")";
                 }
             })
-            .on("mouseover", function(d) {
-                // enlarge target node
-                d3.select(this).attr('transform', 'scale(1.5)');
-            })
-            .on('mouseout', function(d) {
-                // unenlarge target node
-                d3.select(this).attr('transform', '');
-            })
+            // .on("mouseover", function(d) {
+            //     // enlarge target node
+            //     d3.select(this).attr('transform', 'scale(1.5)');
+            // })
+            .on('mouseover', this.highlight)
+            // .on('mouseout', function(d) {
+            //     // unenlarge target node
+            //     d3.select(this).attr('transform', '');
+            // })
+            .on('mouseout', this.unhighlight)
         ;
 
         g.append("text")
+            .attr('class', 'node-text')
             .attr("x", 0)
             .attr("y", 4)
             .style("text-anchor", "middle")
@@ -510,15 +534,63 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         //                .gravity(100 * k)
 
         this.force.start();
+
+        function onMouseOverNode(d) {
+            highlight(d);
+        }
     },
 
     resize: function() {
-        this.width = this.element.width();
-        this.height = this.element.height();
-        this.svg.attr("width", this.width).attr("height", this.height);
+        console.log('resized')
+        this.width = this.element.width() - this.margin.left - this.margin.right;
+        this.height = this.element.height() - this.margin.top - this.margin.bottom;
+        d3.select('svg').attr("width", this.width).attr("height", this.height);
         this.force.size([this.width, this.height]).resume();
+        this.force.start();
     },
-    highlight: function() {
+    highlight: function(nodeData) {
+        d3.selectAll('.node').style('stroke-opacity', function(o) {
+            if (isConnected(nodeData, o)) {
+                d3.select(this).style('fill-opacity', 1);
+                $(this).siblings('text').css('fill-opacity', 1);
+                return 1;
+            } else {
+                d3.select(this).style('fill-opacity', .3);
+                $(this).siblings('text').css('fill-opacity', .3);
+                return .3
+            }
+        });
+        d3.selectAll('.link').style('stroke-opacity', function(o) {
+            if (o.source.id === nodeData.id || o.target.id === nodeData.id) {
+                return 1;
+            } else {
+                return .3;
+            }
+        });
+
+        d3.select(this).attr('transform', 'scale(1.5)');
+
+        function isConnected(a, b) {
+            var connected = false;
+            if (a.id === b.id) connected = true;
+
+            d3.selectAll('.link').data().some(function(link) {
+                if (link) {
+                    if ((link.source.id === a.id && link.target.id === b.id)
+                        || (link.target.id === a.id && link.source.id === b.id)) {
+                            connected = true;
+                            return connected;
+                        };
+                }
+            });
+            return connected;
+        }
+    },
+    unhighlight: function() {
+        d3.selectAll('.node').style('stroke-opacity', 1).style('fill-opacity', 1);
+        d3.selectAll('.link').style('stroke-opacity', 1);
+        d3.selectAll('.node-text').style('fill-opacity', 1);
+        d3.select(this).attr('transform', '');
     },
     destroy: function() {
     }

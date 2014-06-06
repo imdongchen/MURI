@@ -110,6 +110,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
             ele.css('width', 'auto');
             ele.parent().css("height", 'auto');
         }.bind(this));
+
         this.element.on("dialogdragstop", function() {
             this.map.updateSize();
         }.bind(this))

@@ -9,7 +9,8 @@ $.widget("viz.vizcontainer", $.ui.dialogExtend, {
         "dblclick" : "collapse",
         "close" : function(){
             this.destroy();
-        }
+        },
+        maximize: this.resize
 
     },
     _create: function() {
@@ -17,6 +18,9 @@ $.widget("viz.vizcontainer", $.ui.dialogExtend, {
     },
     update: function() {
         alert ("base");
+    },
+    resize: function() {
+        this.element.publish('resize');
     },
     destroy: function() {
         this._super("destroy");

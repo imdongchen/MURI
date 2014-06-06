@@ -1,12 +1,17 @@
 circle.selected {
     stroke: #3276b1 !important;
-    stroke-width: 2px;
+    stroke-width: dpx;
 }
+path.dragline,
 path.link {
     fill: none;
     stroke: #ccc;
-    stroke-width: 3px;
-    cursor: default;
+    stroke-width: 2px;
+    cursor: pointer;
+}
+
+.linkarrow {
+    fill: #ccc;
 }
 path.link.hidden {
     stroke-width: 0;
@@ -15,7 +20,7 @@ circle.node:hover {
     stroke-width: 1.5px;
     cursor: pointer; ;
 }
-path.link.dragline {
+path.dragline {
     pointer-events: none;
 }
 
@@ -35,3 +40,11 @@ path.link.dragline {
     width: 100px;
 }
 
+#network-filterbar {
+    list-style-type: none;
+    width: 100%;
+}
+#network-filterbar li {
+    display: inline;
+    margin: 20px 10px;
+}
