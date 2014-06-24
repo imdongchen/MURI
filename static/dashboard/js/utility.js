@@ -20,3 +20,9 @@ wb.utility.formatTime = d3.time.format("%I:%M %p");
 wb.utility.capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+wb.utility.uniqueArray = function(arr) {
+    return arr.filter(function(d, i, self) {
+        return self.indexOf(d) === i;
+    });
+};

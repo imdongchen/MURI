@@ -296,30 +296,25 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
 
         function brushing() {
             var e = _this.brush.extent();
-            var nodes_id = [];
+            var selected_nodes = [], selected_relationships = [];
             d3.selectAll(".node").classed("selected", function(d) {
                 d.selected = e[0][0] <= brushX.invert(d.x) && brushX.invert(d.x) <= e[1][0]
                     && e[0][1] <= brushY.invert(d.y) && brushY.invert(d.y) <= e[1][1];
-                if (d.selected) nodes_id.push(d.id);
+                if (d.selected) {
+                    selected_nodes.push(d);
+                    selected_relationships = selected_relationships.concat(d.relationships);
+                }
                 return d.selected;
             });
-            if (nodes_id.length > 0) {
+
+            if (selected_relationships.length > 0) {
+                selected_relationships = wb.utility.uniqueArray(selected_relationships);
+
                 _this.options.dimension.filter(function(d) {
-                    for (var i = 0, len = nodes_id.length; i < len; i++) {
-                        var ent = '' + nodes_id[i];
-                        if (ent.charAt(0) === 'm') {
-                            if (ent == 'm' + d[0]) {
-                                return true;
-                            }
-                        } else {
-                            ent = parseInt(ent);
-                            if (d.indexOf(ent) > 0) {
-                                return true;
-                            }
-                        }
-                    }
+                    if (d > 0) return selected_relationships.indexOf(d) >= 0;
                     return false;
                 });
+
                 $.publish('/data/filter', _this.element.attr("id"))
             }
         }
@@ -455,14 +450,16 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         return this.nodeMap[node_id];
     },
 
-    addNode: function(id, node) {
+    addNode: function(id, node, relationship) {
         var existed_node = this.findNode(id, node);
         if (existed_node) {
+            existed_node.relationships.push(relationship.primary.id);
             return existed_node;
         } else {
             var node_id = node + '-' + id;
             var entity = $.extend({}, wb.store[node][id]);
             entity.id = node_id;
+            entity.relationships = [relationship.primary.id];
             this.nodeMap[node_id] = entity;
             this.nodes.push(entity);
             return entity;
@@ -470,47 +467,34 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     },
 
     addLink: function(source, target, source_node, target_node, relationship) {
-        var source_entity = this.addNode(source, source_node);
-        var target_entity = this.addNode(target, target_node);
-        if (source_node === 'dataentry') {
-            this.links.push({
-                source: source_entity,
-                target: target_entity,
-                confidence: 1,
-                relation: 'contain',
-                description: '',
-                date: source_entity.date
-            });
-        } else {
-            this.links.push({
-                source: source_entity,
-                target: target_entity,
-                confidence: relationship.primary.confidence,
-                relation: relationship.primary.relation,
-                description: relationship.primary.description,
-                date: relationship.primary.date,
-            });
-        }
-
+        var source_entity = this.addNode(source, source_node, relationship);
+        var target_entity = this.addNode(target, target_node, relationship);
+        this.links.push({
+            source: source_entity,
+            target: target_entity,
+            confidence: 1,
+            relation: relationship.primary.relation,
+            description: '',
+            date: source_entity.date,
+            id: relationship.primary.id
+        });
     },
 
     updateData: function() {
         var _this = this;
 
-        // relationships between data entry and entity
-        this.options.dimension.filterExact(0).top(Infinity).forEach(function(d) {
-            var source = d.dataentry;
-            var target = d.event || d.location || d.person || d.organization || d.resource;
-            _this.addLink(source, target, 'dataentry', 'entity');
-        });
-        this.options.dimension.filterAll();
-        // relationship between entities
         this.options.group.all().forEach(function(d) {
             if (d.key > 0) {
                 var relationship = wb.store.relationship[d.key];
-                var source = relationship.primary.source;
                 var target = relationship.primary.target;
-                _this.addLink(source, target, 'entity', 'entity', relationship);
+                var source;
+                if (relationship.primary.source) {
+                    source = relationship.primary.source;
+                    _this.addLink(source, target, 'entity', 'entity', relationship);
+                } else {
+                    source = relationship.primary.dataentry; // if primary.source is undefined, it is the relationship between data entry and entity
+                    _this.addLink(source, target, 'dataentry', 'entity', relationship);
+                }
             }
         });
     },
@@ -521,22 +505,20 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         links.style('display', 'none');
         nodes.style('display', 'none');
         var nodes_to_show = [], links_to_show = [];
-        this.options.dimension.filterExact(0).top(Infinity).forEach(function(d) {
-            nodes_to_show.push('dataentry-' + d.dataentry);
-            var target = d.event || d.location || d.person || d.organization || d.resource;
-            nodes_to_show.push('entity-' + target);
-        });
-        this.options.dimension.filterAll();
+
         this.options.group.all().forEach(function(d) {
             if (d.key > 0 && d.value) {
                 var relationship = wb.store.relationship[d.key];
-                nodes_to_show.push('entity-' + relationship.primary.source);
                 nodes_to_show.push('entity-' + relationship.primary.target);
+                if (relationship.primary.source) {
+                    nodes_to_show.push('entity-' + relationship.primary.source);
+                } else {
+                    nodes_to_show.push('dataentry-' + relationship.primary.dataentry);
+                }
             }
         });
-        var nodes_to_show_unique = nodes_to_show.filter(function(d, i, self) {
-            return self.indexOf(d) === i;
-        });
+
+        var nodes_to_show_unique = wb.utility.uniqueArray(nodes_to_show);
         nodes.style('display', function(d) {
             if (nodes_to_show_unique.indexOf(d.id) < 0) return 'none'; // hide if not in the list
             else return null;

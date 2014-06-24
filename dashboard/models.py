@@ -49,10 +49,13 @@ class Attribute(models.Model):
     def __unicode__(self):
         return self.attr + ' : ' + self.val
 
+
 class Entity(models.Model):
-    name          = models.CharField(max_length=1000, blank=True)
+    name          = models.CharField(max_length=1000, null=True, blank=True)
     entity_type    = models.CharField(max_length=50, null=True, blank=True)
     attributes	  = models.ManyToManyField(Attribute, blank=True, null=True)
+    created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
+    created_at     = models.DateTimeField(default=datetime.now, null=True, blank=True, verbose_name='created at')
 
     objects = InheritanceManager()
 
@@ -79,8 +82,8 @@ class Entity(models.Model):
 
 class Dataset(models.Model):
     name = models.CharField(max_length=500)
-    created_by = models.ForeignKey(User)
-    create_at  = models.DateTimeField(default=datetime.now)
+    created_by = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
+    create_at  = models.DateTimeField(default=datetime.now, verbose_name='created at')
 
 
 class DataEntry(models.Model):
@@ -101,7 +104,7 @@ class DataEntry(models.Model):
 
 class Location(Entity):
     geometry = models.GeometryField(null=True, blank=True)
-    imprecision = models.FloatField(null=True, blank=True)
+    imprecision = models.CharField(max_length=50, null=True, blank=True)
 
     objects = models.GeoManager()
 
@@ -220,7 +223,7 @@ class Document(Resource):
 
 
 class Relationship(models.Model):
-    source = models.ForeignKey(Entity, related_name="relates_as_source")
+    source = models.ForeignKey(Entity, null=True, blank=True, related_name="relates_as_source") # trick here: if source is null, it is a "special" relationship, indicating that a dataentry 'contains' an entity
     target = models.ForeignKey(Entity, related_name="relates_as_target")
     description   = models.TextField(null=True, blank=True)
     relation  = models.CharField(max_length=500, null=True, blank=True)
@@ -228,6 +231,8 @@ class Relationship(models.Model):
     date        = models.DateTimeField(null=True, blank=True)
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
     attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
+    create_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
+    created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
 
     def __unicode__(self):
         return self.source.name + '-' + self.target.name

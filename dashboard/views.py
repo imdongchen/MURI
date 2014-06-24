@@ -67,7 +67,6 @@ def data(request):
         datasets = Dataset.objects.filter(name__in=dataset_names)
         # step 2: get data entries in requested datasets
         data_entries = DataEntry.objects.filter(dataset__in=datasets).order_by('-date')
-        # step 3: get entities annotated in each of those data entries
         for de in data_entries:
             # add to data entry list
             dataentry_dict[de.id] = de.get_attr()
@@ -78,6 +77,7 @@ def data(request):
                 'person': 0, 'location': 0, 'event': 0, 'organization': 0, 'resource': 0, 'relationship': -1,
                 'date': de.date.strftime('%m/%d/%Y')
             })
+
             # step 3.1: get annotations in those data entries
             annotations = []
             if request.user.is_authenticated():
@@ -95,10 +95,14 @@ def data(request):
                     if entity.id not in entity_dict:
                         entity_dict[entity.id] = entity.get_attr()
                     # 2nd type of ele, consisting of data entry and one entity
-                    # indicating that the entity is created within that entry. Note the trick here: relationship id is 0
+                    # indicating that the entity is created within that entry.
+                    # search relationship table for relationship id
+                    # TODO: the search strategy is quite redundant, could be optimized
+                    dataentry_entity_rel = Relationship.objects.get(source=None, target=entity, dataentry=de)
+                    relationship_dict[dataentry_entity_rel.id] = dataentry_entity_rel.get_attr()
                     fact = {}
                     fact['dataentry'] = de.id
-                    fact['relationship'] = 0
+                    fact['relationship'] = dataentry_entity_rel.id
                     fact['date'] = de.date.strftime('%m/%d/%Y')
                     for ENTITY_TYPE in ENTITY_ENUM:
                         if ENTITY_TYPE == entity.entity_type:
@@ -138,113 +142,49 @@ def data(request):
                 ele.append(fact2)
 
     return HttpResponse(json.dumps(res), mimetype='application/json')
-        #
-        #
-        # messages = Message.objects.all().order_by('-date')
-        # for msg in messages:
-        #     e_info = {}
-        #     e_info = msg.getKeyAttr()
-        #
-        #
-        #     e_info['organizations']  = []
-        #     e_info['resources']  = []
-        #     e_info['persons']  = []
-        #     e_info['locations']  = []
-        #     e_info['events']  = []
-        #
-        #     annotations = []
-        #     if request.user.is_authenticated():
-        #         annotations = msg.annotation_set.filter(created_by=request.user)
-        #     else:
-        #         annotations = msg.annotation_set.all()
-        #
-        #     for ann in annotations:
-        #         entities = ann.entities.all().select_subclasses()
-        #         for entity in entities:
-        #             if hasattr(entity, 'organization'):
-        #                 e_info['organizations'].append(entity.getKeyAttr())
-        #             elif hasattr(entity, 'resource'):
-        #                 e_info['resources'].append(entity.getKeyAttr())
-        #             elif hasattr(entity, 'person'):
-        #                 e_info['persons'].append(entity.getKeyAttr())
-        #             elif hasattr(entity, 'location'):
-        #                 e_info['locations'].append(entity.getKeyAttr())
-        #             elif hasattr(entity, 'event'):
-        #                 e_info['events'].append(entity.getKeyAttr())
-        #
-        #     response['data'] += flatten(e_info)
 
 
-def flatten(dic):
-    res = []
-    for person in dic['persons']+[{}]:
-        rec = {}
-        rec['uid'] = dic['uid']
-        rec['date'] = dic['date']
-        rec['content'] = dic['content']
-
-        if len(dic['persons']) != 0 and person == {}:
-            continue
-        rec['person'] = person
-        for org in dic['organizations']+[{}]:
-            if len(dic['organizations']) != 0 and org == {}:
-                continue
-            rec['organization'] = org
-            for resource in dic['resources']+[{}]:
-                if len(dic['resources']) != 0 and resource == {}:
-                    continue
-                rec['resource'] = resource
-                for fp in dic['locations']+[{}]:
-                    if len(dic['locations']) != 0 and fp == {}:
-                        continue
-                    rec['location'] = fp
-                    for event in dic['events']+[{}]:
-                        if len(dic['events']) != 0 and event == {}:
-                            continue
-                        rec['event'] = event
-                        res.append(copy.deepcopy(rec))
-    return res
-
-def prepareNetwork(request):
-    if request.method == 'GET':
-        response = {}
-        response['nodes'] = []
-        response['links'] = []
-        node_types = request.GET.getlist('entities[]', None)
-        filter_id = request.GET.getlist('messages_id[]', None)
-
-        if node_types == None or filter_id == None:
-            return
-
-        graph   = nx.DiGraph()
-
-    # construct network on 'co-occurrance'
-        msgs = Message.objects.filter(id__in=filter_id)
-        annotations = []
-        for msg in msgs:
-            if request.user.is_authenticated():
-                annotations = msg.annotation_set.filter(created_by=request.user)
-            else:
-                annotations = msg.annotation_set.all()
-            if len(annotations) > 0:
-                graph.add_node('m'+str(msg.id), msg.getKeyAttr())
-                for ann in annotations:
-                    entities = ann.entities.all().select_subclasses()
-                    for ent in entities:
-                        graph.add_node(ent.id, ent.getKeyAttr())
-                        graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
-                        targets = ent.findTargets()
-                        sources = ent.findSources()
-                        for target in targets:
-                            rels = Relationship.objects.filter(source=ent,target=target)
-                            graph.add_node(target.id, target.getKeyAttr())
-                            for rel in rels:
-                                graph.add_edge(ent.id, target.id, rel=rel.description)
-                        for source in sources:
-                            rels = Relationship.objects.filter(source=source,target=ent)
-                            graph.add_node(source.id, source.getKeyAttr())
-                            for rel in rels:
-                                graph.add_edge(source.id, ent.id, rel=rel.description)
+#### abandoned ####
+# def prepareNetwork(request):
+#     if request.method == 'GET':
+#         response = {}
+#         response['nodes'] = []
+#         response['links'] = []
+#         node_types = request.GET.getlist('entities[]', None)
+#         filter_id = request.GET.getlist('messages_id[]', None)
+#
+#         if node_types == None or filter_id == None:
+#             return
+#
+#         graph   = nx.DiGraph()
+#
+#     # construct network on 'co-occurrance'
+#         msgs = Message.objects.filter(id__in=filter_id)
+#         annotations = []
+#         for msg in msgs:
+#             if request.user.is_authenticated():
+#                 annotations = msg.annotation_set.filter(created_by=request.user)
+#             else:
+#                 annotations = msg.annotation_set.all()
+#             if len(annotations) > 0:
+#                 graph.add_node('m'+str(msg.id), msg.getKeyAttr())
+#                 for ann in annotations:
+#                     entities = ann.entities.all().select_subclasses()
+#                     for ent in entities:
+#                         graph.add_node(ent.id, ent.getKeyAttr())
+#                         graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
+#                         targets = ent.findTargets()
+#                         sources = ent.findSources()
+#                         for target in targets:
+#                             rels = Relationship.objects.filter(source=ent,target=target)
+#                             graph.add_node(target.id, target.getKeyAttr())
+#                             for rel in rels:
+#                                 graph.add_edge(ent.id, target.id, rel=rel.description)
+#                         for source in sources:
+#                             rels = Relationship.objects.filter(source=source,target=ent)
+#                             graph.add_node(source.id, source.getKeyAttr())
+#                             for rel in rels:
+#                                 graph.add_edge(source.id, ent.id, rel=rel.description)
 
 
 
@@ -260,10 +200,15 @@ def prepareNetwork(request):
 #       for relation in relations:
 #           graph.add_edge(relation.source.id, relation.target.id, relation.getAllAttr())
 
-        return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
-    return
+    #     return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
+    # return
+
 
 def network_relation(request):
+    """
+    Process post request for creating new relationships
+
+    """
     res = {}
     if request.method == "POST":
         source = request.POST.get('source', '')
