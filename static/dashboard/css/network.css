@@ -48,3 +48,12 @@ path.dragline {
     display: inline;
     margin: 20px 10px;
 }
+
+#network-tooltip {
+    border: 1px solid #ccc;
+    box-shadow: 5px 5 2px #888888;
+    background-color: rgba(70, 128, 240, .1);
+}
+#network-tooltip table tr {
+    border: solid thin #ccc;
+}

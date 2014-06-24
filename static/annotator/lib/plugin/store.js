@@ -103,7 +103,7 @@ Annotator.Plugin.Store = (function(_super) {
         var to_update = [];
         for (var i = 0, len = this.annotations.length; i < len; i++) {
             var ann = this.annotations[i];
-            if (ann.quote === annotation.quote) {
+            if (ann.tags[0].primary.name === annotation.tags[0].primary.name) {
                 ann.tags = annotation.tags;
                 to_update.push(ann);
             }
@@ -124,12 +124,30 @@ Annotator.Plugin.Store = (function(_super) {
 
     Store.prototype.annotationDeleted = function(annotation) {
         var _this = this;
-        if (__indexOf.call(this.annotations, annotation) >= 0) {
-            return this._apiRequest('destroy', annotation, (function() {
-                _this.unregisterAnnotation(annotation);
-                // $.publish('/entity/deleted', [[annotaion]]);
-            }));
+        var to_delete = [];
+        // delete all annotations with the same quote
+        if (__indexOf.call(this.annotations, annotation) < 0) {
+            return ;
         }
+        this.annotations.forEach(function(ann) {
+            if (ann.quote === annotation.quote) {
+                to_delete.push(ann);
+            }
+        });
+        if (to_delete.length > 0) {
+            this._apiRequest('destroy', to_delete, function() {
+                to_delete.forEach(function(ann) {
+                    _this.unregisterAnnotation(ann);
+                });
+                Annotator.showNotification(Annotator._t("Deleted " + to_delete.length + " annotations!"), Annotator.Notification.SUCCESS);
+            });
+        }
+        // if (__indexOf.call(this.annotations, annotation) >= 0) {
+        //     return this._apiRequest('destroy', annotation, (function() {
+        //         _this.unregisterAnnotation(annotation);
+        //         // $.publish('/entity/deleted', [[annotaion]]);
+        //     }));
+        // }
     };
 
     Store.prototype.registerAnnotation = function(annotation) {
@@ -288,7 +306,6 @@ Annotator.Plugin.Store = (function(_super) {
                 delete annotation[i].highlights;
             }
             data = JSON.stringify(annotation);
-//            data = JSON.stringify(annotation); // somehow this does not work. Maybe JSON.stringify cannot be applied to deep objects?
             if (highlights) {
                 for (var i = 0, len = annotation.length; i < len; i++) {
                     annotation[i].highlights = highlights[i];

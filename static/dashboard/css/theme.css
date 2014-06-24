@@ -2,12 +2,20 @@
     background: #C5CEFF; !important
 }
 
+.ui-widget.ui-dialog {
+    padding: 0;
+}
+.ui-dialog-titlebar {
+    border-radius: 0 !important;
+}
+
 #page_header {
     padding: 0px;
     margin: 0px;
-    background: url('../img/board-frame-dark.jpg') repeat-x;
+    /*background: url('../img/board-frame-dark.jpg') repeat-x;*/
     width: 100%;
     height: 40px;
+    background-color: #ccc;
 }
 
 .ui-dialog-content {
@@ -31,8 +39,7 @@
 
 html, body {
     font: 12px Sans serif;
-    background-image: url('../img/board-lg.jpg');
+    /*background-image: url('../img/board-lg.jpg');*/
 /*    position: relative;
 */
 }
-

@@ -1,11 +1,44 @@
 from django.contrib.gis.db import models
 from model_utils.managers import InheritanceManager
 from django.template.defaultfilters import slugify
+from django.contrib.auth.models import User
+from datetime import datetime
+from django.db.models.fields import FieldDoesNotExist
 
 from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.GeometryField"])
 
 # Create your models here.
+def get_model_attr(instance):
+    attr = {'primary': {}, 'other': {}}
+    primary = attr['primary']
+    for field_name in instance._meta.get_all_field_names():
+        # these fields are 'outliers' and skipped
+        if field_name == 'attributes' or field_name == 'entity_ptr':
+            continue
+        try:
+            field = instance._meta.get_field(field_name)
+            field_type = field.get_internal_type()
+            value = getattr(instance, field_name)
+            if field_type == 'DateTimeField':
+                primary[field_name] = value.strftime('%m/%d/%Y') if value else None
+            elif field_type == 'GeometryField':
+                primary[field_name] = value.wkt if value else None
+            elif field_type == 'ForeignKey':
+                if value:
+                    primary[field_name] = value.id
+            else:
+                primary[field_name] = value
+        except FieldDoesNotExist:
+            pass
+
+    other = attr['other']
+    for a in instance.attributes.all():
+        other[a.attr] = a.val
+
+    return attr
+
+
 class Attribute(models.Model):
     attr = models.CharField(max_length=255)
     val  = models.CharField(max_length=255)
@@ -40,23 +73,34 @@ class Entity(models.Model):
             res.append(sou[0])
         return Entity.objects.filter(id__in=res).select_subclasses()
 
+    def get_attr(self):
+        return get_model_attr(self)
 
-class Message(models.Model):
-    uid = models.CharField(max_length=10)
-    content = models.CharField(max_length=1000)
+
+class Dataset(models.Model):
+    name = models.CharField(max_length=500)
+    created_by = models.ForeignKey(User)
+    create_at  = models.DateTimeField(default=datetime.now)
+
+
+class DataEntry(models.Model):
+    content = models.TextField()
     date  = models.DateTimeField(null=True, blank=True)
+    dataset = models.ForeignKey(Dataset, null=True, blank=True)
 
-    def getKeyAttr(self):
+    def get_attr(self):
         attr = {}
-        attr['uid'] = self.id
+        attr['id'] = self.id
         attr['content'] = self.content
+        attr['dataset'] = self.dataset.id
         attr['date']    = ''
         if self.date != None:
             attr['date']  = self.date.strftime('%m/%d/%Y')
         return attr
 
+
 class Location(Entity):
-    location = models.GeometryField(null=True, blank=True)
+    geometry = models.GeometryField(null=True, blank=True)
     imprecision = models.FloatField(null=True, blank=True)
 
     objects = models.GeoManager()
@@ -66,216 +110,68 @@ class Location(Entity):
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
-        self.entity_type = 'Location'
+        self.entity_type = 'location'
         super(Location, self).save(*args, **kwargs)
 
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['entity'] = 'location'
-        if self.location:
-            attr['shape'] = self.location.wkt
-            attr['srid'] = self.location.srid
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
-
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Person(Entity):
-    first_name   = models.CharField(max_length=50, null=True, blank=True)
-    middle_name  = models.CharField(max_length=50, null=True, blank=True)
-    last_name    = models.CharField(max_length=50, null=True, blank=True)
-    prefix       = models.CharField(max_length=10, null=True, blank=True)
-    suffix       = models.CharField(max_length=10, null=True, blank=True)
-    primary_citizenship  = models.CharField(max_length=50, null=True, blank=True)
-    secondary_citizenship= models.CharField(max_length=50, null=True, blank=True)
-    nationality    = models.CharField(max_length=50, null=True, blank=True)
-    alias   = models.CharField(max_length=50, null=True, blank=True)
-    place_birth  = models.CharField(max_length=50, null=True, blank=True)
-    place_death  = models.CharField(max_length=50, null=True, blank=True)
+    gender       = models.CharField(max_length=10, null=True, blank=True)
+    nationality  = models.CharField(max_length=50, null=True, blank=True)
+    alias        = models.ForeignKey('self', null=True, blank=True)  # TODO: the person could be an alias to another person
     ethnicity    = models.CharField(max_length=50, null=True, blank=True)
     race         = models.CharField(max_length=10, null=True, blank=True)
-    gender       = models.CharField(max_length=10, null=True, blank=True)
-    marital_status = models.CharField(max_length=10, null=True, blank=True)
+    mariried     = models.CharField(max_length=10, null=True, blank=True)
     religion     = models.CharField(max_length=50, null=True, blank=True)
-    status       = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
-        self.entity_type = 'Person'
+        self.entity_type = 'person'
         super(Person, self).save(*args, **kwargs)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['gender'] = self.gender
-        attr['race'] = self.race
-        attr['nationality'] = self.nationality
-        attr['entity'] = 'person'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        attr['primary_citizenship'] = self.primary_citizenship
-        attr['alias'] = self.alias
-        attr['ethnicity'] = self.ethnicity
-        attr['marital_status'] = self.marital_status
-        attr['status'] = self.status
-        return attr
 
 class Organization(Entity):
-    types    = models.CharField(max_length=100, null=True, blank=True)
+    category    = models.CharField(max_length=100, null=True, blank=True, verbose_name='type')
     nationality = models.CharField(max_length=50, blank=True, null=True)
     ethnicity   = models.CharField(max_length=50, null=True, blank=True)
     religion    = models.CharField(max_length=50, null=True, blank=True)
-    date_founded = models.DateTimeField(null=True, blank=True)
-    registration_country = models.CharField(max_length=50, null=True, blank=True)
-    registration_state    = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
-        self.entity_type = 'Organization'
+        self.entity_type = 'organization'
         super(Organization, self).save(*args, **kwargs)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['types'] = self.types
-        attr['nationality'] = self.nationality
-        attr['ethnicity'] = self.ethnicity
-        attr['religion'] = self.religion
-        attr['entity'] = 'organization'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Event(Entity):
-    types    = models.CharField(max_length=100, null=True, blank=True)
-    category = models.CharField(max_length=100, null=True, blank=True)
-    nationality= models.CharField(max_length=50, null=True, blank=True)
-    purpose  = models.CharField(max_length=500, null=True, blank=True)
-    date  = models.DateTimeField(null=True, blank=True)
+    category     = models.CharField(max_length=100, null=True, blank=True, verbose_name='type')
+    nationality  = models.CharField(max_length=50, null=True, blank=True)
+    date         = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
-        self.entity_type = 'Event'
+        self.entity_type = 'event'
         super(Event, self).save(*args, **kwargs)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['types'] = self.types
-        attr['entity'] = 'event'
-        attr['date'] = ''
-        if self.date != None:
-            attr['date']  = self.date.strftime('%m/%d/%Y')
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
 
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        attr['nationality'] = self.nationality
-        attr['intelligence_evaluation'] = self.intelligence_evaluation
-        messages = self.message_set.all()
-        if len(messages) != 0:
-            attr['messages'] = [message for message in messages]
-        return attr
-
-class Unit(Entity):
-    unit_number    = models.CharField(max_length=50, null=True, blank=True)
-    unit_type    = models.CharField(max_length=50, null=True, blank=True)
-    echelon    = models.CharField(max_length=50, null=True, blank=True)
-    country    = models.CharField(max_length=50, null=True, blank=True)
-    role       = models.CharField(max_length=50, null=True, blank=True)
-    parent_echelon  = models.CharField(max_length=50, null=True, blank=True)
-
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['entity'] = 'unit'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
-
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        attr['unit_number'] = self.unit_number
-        attr['unit_type'] = self.unit_type
-        attr['echelon'] = self.echelon
-        return attr
 
 class Resource(Entity):
     condition    = models.CharField(max_length=100, null=True, blank=True)
-    operational_status = models.CharField(max_length=50, null=True, blank=True)
     availability = models.CharField(max_length=50, null=True, blank=True)
-    country      = models.CharField(max_length=50, null=True, blank=True)
-    resource_type    = models.CharField(max_length=50, null=True, blank=True)
+    category    = models.CharField(max_length=50, null=True, blank=True, verbose_name='type')
 
     objects = InheritanceManager()
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
-        self.entity_type = 'Resource'
+        self.entity_type = 'resource'
         super(Resource, self).save(*args, **kwargs)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['entity'] = 'resource'
-        attr['resource_type'] = self.resource_type
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
-
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr = self.getKeyAttr()
-        return attr
 
 class Equipment(Resource):
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr['entity'] = 'resource.equipment'
-        attr['resource_type'] = 'equipment'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
-
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
+    pass
 
 
 class Weapon(Resource):
@@ -283,23 +179,7 @@ class Weapon(Resource):
     model   = models.CharField(max_length=50, null=True, blank=True)
     equipment_code = models.CharField(max_length=50, null=True, blank=True)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr['entity'] = 'resource.weapon'
-        attr['resource_type'] = 'weapon'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Vehicle(Resource):
     vin     = models.CharField(max_length=50, null=True, blank=True)
@@ -310,55 +190,21 @@ class Vehicle(Resource):
     license_state  = models.CharField(max_length=50, null=True, blank=True)
     license_country = models.CharField(max_length=50, null=True, blank=True)
     color   = models.CharField(max_length=50, null=True, blank=True)
-    category = models.CharField(max_length=50, null=True, blank=True)
     usage   = models.CharField(max_length=100, null=True, blank=True)
     fuel_type = models.CharField(max_length=50, null=True, blank=True)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr['entity'] = 'resource.vehicle'
-        attr['resource_type'] = 'vehicle'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Facility(Resource):
     types     = models.CharField(max_length=100, null=True, blank=True)
     primary_function = models.CharField(max_length=100, null=True, blank=True)
-    O_suffix  = models.CharField(max_length=50, null=True, blank=True)
     BE_number = models.CharField(max_length=50, null=True, blank=True)
     PIN       = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "facilities"
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr['entity'] = 'resource.facility'
-        attr['resource_type'] = 'facility'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
 
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Document(Resource):
     title   = models.CharField(max_length=100, null=True, blank=True)
@@ -372,43 +218,19 @@ class Document(Resource):
     date_approved  = models.CharField(max_length=50, null=True, blank=True)
     date_published  = models.CharField(max_length=50, null=True, blank=True)
 
-    def getKeyAttr(self):
-        attr = {}
-        attr['uid'] = self.id
-        attr['name'] = self.name
-        attr['condition'] = self.condition
-        attr['operational_status'] = self.operational_status
-        attr['availability'] = self.availability
-        attr['entity'] = 'resource.document'
-        attr['resource_type'] = 'document'
-        for a in self.attributes.all():
-            attr[a.attr] = a.val
-
-        return attr
-
-    def getAllAttr(self):
-        attr = self.getKeyAttr()
-        return attr
 
 class Relationship(models.Model):
     source = models.ForeignKey(Entity, related_name="relates_as_source")
     target = models.ForeignKey(Entity, related_name="relates_as_target")
-    description   = models.CharField(max_length=500, null=True, blank=True)
-    types  = models.CharField(max_length=100, null=True, blank=True)
-    frequency  = models.CharField(max_length=50, null=True, blank=True)
-    intelligence_evaluation  = models.CharField(max_length=50, null=True, blank=True)
-    date_begin  = models.DateTimeField(null=True, blank=True)
-    date_end    = models.DateTimeField(null=True, blank=True)
-    date_as_of  = models.DateTimeField(null=True, blank=True)
-    security_info  = models.CharField(max_length=50, null=True, blank=True)
-    guid  = models.CharField(max_length=50, null=True, blank=True)
+    description   = models.TextField(null=True, blank=True)
+    relation  = models.CharField(max_length=500, null=True, blank=True)
+    confidence  = models.FloatField(null=True, blank=True)
+    date        = models.DateTimeField(null=True, blank=True)
+    dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
+    attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
 
     def __unicode__(self):
         return self.source.name + '-' + self.target.name
 
-    def getAllAttr(self):
-        attr = {}
-        attr['description'] = self.description
-        attr['frequency']   = self.frequency
-        attr['intelligence_evaluation'] = self.intelligence_evaluation
-        return attr
+    def get_attr(self):
+        return get_model_attr(self)

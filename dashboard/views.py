@@ -24,77 +24,156 @@ def index(request):
 
     return render(request, 'dashboard/index.html', Context({"dialogs": dialogs}))
 
-def queryEvent(request):
-    response = {}
-    response['aaData'] = [] # this field name is required by client
-    events = Event.objects.all().order_by('date')
-    for event in events:
-        date_begin = ""
-        date_end = ""
-        if event.date_begin != None:
-            date_begin = event.date_begin.strftime('%m/%d/%Y')
-        if event.date_end != None:
-            date_end = event.date_end.strftime('%m/%d/%Y')
 
-        record = [event.name, event.types, date_begin, date_end]
-        response['aaData'].append(record)
+def data(request):
+    """
+    this provides the basic data structure for client
+    the request should contain a list of datasets
+    the return data is structured as:
+        {
+            'ele': [
+                {'entry': <id>,
+                'person': <id>,
+                'location': <id>,
+                'event': <id>,
+                'resource': <id>,
+                'organization': <id>,
+                'relationship': <id>
+                'date': <date string>},
+                ...
+            ],
+            'entity_dict': {
+                '<id>': { 'primary': {}, 'other': {} },
+                ...
+            },
+            'dataentry_dict': {
+                '<id>': { 'id': <id>, 'content': '<content>', 'date': '<date_string>' }
+                ...
+            },
+            'relationship_dict': {
+                '<id>': { 'primary': {}, 'other': {} }
+                ...
+            }
+        }
+    """
+    res = {'ele': [], 'entity_dict': {}, 'dataentry_dict': {}, 'relationship_dict': {}}
+    ele = res['ele']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
+    ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource']
 
-    return HttpResponse(json.dumps(response), mimetype='application/json')
+    dataset_names = request.POST.getlist('datasets[]')
 
-def getData(request):
-    response = {}
-    response['data'] = []
-    messages = Message.objects.all().order_by('-date')
-    for msg in messages:
-        e_info = {}
-        e_info = msg.getKeyAttr()
+    if dataset_names and len(dataset_names):
+        # step 1: get requested datasets
+        datasets = Dataset.objects.filter(name__in=dataset_names)
+        # step 2: get data entries in requested datasets
+        data_entries = DataEntry.objects.filter(dataset__in=datasets).order_by('-date')
+        # step 3: get entities annotated in each of those data entries
+        for de in data_entries:
+            # add to data entry list
+            dataentry_dict[de.id] = de.get_attr()
+            # 1st type of ele, consisting of data entry only
+            # note the trick here: all entity ids are 0, and relationship id is -1
+            ele.append({
+                'dataentry': de.id,
+                'person': 0, 'location': 0, 'event': 0, 'organization': 0, 'resource': 0, 'relationship': -1,
+                'date': de.date.strftime('%m/%d/%Y')
+            })
+            # step 3.1: get annotations in those data entries
+            annotations = []
+            if request.user.is_authenticated():
+                # if the user is logged in, get only his annotations; TODO: get annotations of the group the user belongs to
+                annotations = de.annotation_set.filter(created_by=request.user)
+            else:
+                # if the user is not logged, get all annotations
+                annotations = de.annotation_set.all()
+            # step 3.2: get entities created in those annotations
+            for ann in annotations:
+                entities = ann.entities.all().select_subclasses()
+                # step 4: for each entry-entity pair, create an 'ele' data record
+                for entity in entities:
+                    # Add to entity list
+                    if entity.id not in entity_dict:
+                        entity_dict[entity.id] = entity.get_attr()
+                    # 2nd type of ele, consisting of data entry and one entity
+                    # indicating that the entity is created within that entry. Note the trick here: relationship id is 0
+                    fact = {}
+                    fact['dataentry'] = de.id
+                    fact['relationship'] = 0
+                    fact['date'] = de.date.strftime('%m/%d/%Y')
+                    for ENTITY_TYPE in ENTITY_ENUM:
+                        if ENTITY_TYPE == entity.entity_type:
+                            fact[ENTITY_TYPE] = entity.id
+                        else:
+                            fact[ENTITY_TYPE] = 0
+                    ele.append(fact)
+        # step 5: create the 3rd type of ele
+        # step 5.1: get all requested entity ids
+        entities = entity_dict.keys()
+        # step 5.2: get all relationships involving those entities
+        relationships = Relationship.objects.filter(Q(source__id__in=entities) & Q(target__id__in=entities))
+        for rel in relationships:
+            # add to relationship list
+            relationship_dict[rel.id] = rel.get_attr()
 
+            source_type = rel.source.entity_type
+            target_type = rel.target.entity_type
+            fact = {}
+            fact['relationship'] = rel.id
+            fact['date'] = rel.date.strftime('%m/%d/%Y') if rel.date else ''
+            fact['dataentry'] = rel.dataentry.id if rel.dataentry else 0
+            for ENTITY_TYPE in ENTITY_ENUM:
+                if source_type == ENTITY_TYPE:
+                    fact[ENTITY_TYPE] = rel.source.id
+                elif target_type == ENTITY_TYPE:
+                    fact[ENTITY_TYPE] = rel.target.id
+                else:
+                    fact[ENTITY_TYPE] = 0
+            ele.append(fact)
+            if source_type == target_type:
+                # if the source and target refers to the same entity type
+                # the algorithm above overwrites source entity
+                # hence we need to add another fact about the source entity, with other information identical to the target entity
+                fact2 = copy.deepcopy(fact)
+                fact2[target_type] = rel.target.id
+                ele.append(fact2)
 
-        e_info['organizations']  = []
-        e_info['resources']  = []
-        e_info['persons']  = []
-        e_info['locations']  = []
-        e_info['events']  = []
+    return HttpResponse(json.dumps(res), mimetype='application/json')
+        #
+        #
+        # messages = Message.objects.all().order_by('-date')
+        # for msg in messages:
+        #     e_info = {}
+        #     e_info = msg.getKeyAttr()
+        #
+        #
+        #     e_info['organizations']  = []
+        #     e_info['resources']  = []
+        #     e_info['persons']  = []
+        #     e_info['locations']  = []
+        #     e_info['events']  = []
+        #
+        #     annotations = []
+        #     if request.user.is_authenticated():
+        #         annotations = msg.annotation_set.filter(created_by=request.user)
+        #     else:
+        #         annotations = msg.annotation_set.all()
+        #
+        #     for ann in annotations:
+        #         entities = ann.entities.all().select_subclasses()
+        #         for entity in entities:
+        #             if hasattr(entity, 'organization'):
+        #                 e_info['organizations'].append(entity.getKeyAttr())
+        #             elif hasattr(entity, 'resource'):
+        #                 e_info['resources'].append(entity.getKeyAttr())
+        #             elif hasattr(entity, 'person'):
+        #                 e_info['persons'].append(entity.getKeyAttr())
+        #             elif hasattr(entity, 'location'):
+        #                 e_info['locations'].append(entity.getKeyAttr())
+        #             elif hasattr(entity, 'event'):
+        #                 e_info['events'].append(entity.getKeyAttr())
+        #
+        #     response['data'] += flatten(e_info)
 
-        annotations = []
-        if request.user.is_authenticated():
-            annotations = msg.annotation_set.filter(created_by=request.user)
-        else:
-            annotations = msg.annotation_set.all()
-
-        for ann in annotations:
-            entities = ann.entities.all().select_subclasses()
-            for entity in entities:
-                if hasattr(entity, 'organization'):
-                    e_info['organizations'].append(entity.getKeyAttr())
-                elif hasattr(entity, 'resource'):
-                    e_info['resources'].append(entity.getKeyAttr())
-                elif hasattr(entity, 'person'):
-                    e_info['persons'].append(entity.getKeyAttr())
-                elif hasattr(entity, 'location'):
-                    e_info['locations'].append(entity.getKeyAttr())
-                elif hasattr(entity, 'event'):
-                    e_info['events'].append(entity.getKeyAttr())
-
-
-#
-#        for mes in event.message_set.all():
-#            e_info['messages'].append(mes.getKeyAttr())
-#
-#        linked_entities = list(chain(event.findTargets(), event.findSources()))
-#        for entity in linked_entities:
-#            if hasattr(entity, 'organization'):
-#                e_info['organizations'].append(entity.getKeyAttr())
-#            elif hasattr(entity, 'resource'):
-#                e_info['resources'].append(entity.getKeyAttr())
-#            elif hasattr(entity, 'person'):
-#                e_info['persons'].append(entity.getKeyAttr())
-#            elif hasattr(entity, 'location'):
-#                e_info['locations'].append(entity.getKeyAttr())
-
-        response['data'] += flatten(e_info)
-
-    return HttpResponse(json.dumps(response), mimetype='application/json')
 
 def flatten(dic):
     res = []
@@ -202,7 +281,7 @@ def network_relation(request):
         else:
             target = Entity.objects.get(id=int(target))
 
-        rel, created = Relationship.objects.get_or_create(source=source, target=target, description=rel)
+        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel)
         rel.save()
         res['source'] = source.id
         res['target'] = target.id

@@ -1,5 +1,5 @@
 from django.db import models
-from dashboard.models import Message, Entity
+from dashboard.models import DataEntry, Entity
 from django.contrib.auth.models import User
 import datetime
 
@@ -11,7 +11,7 @@ class Annotation(models.Model):
     # end temporary
     startOffset = models.IntegerField()
     endOffset   = models.IntegerField()
-    message	= models.ForeignKey(Message)
+    dataentry	= models.ForeignKey(DataEntry)
     entities	= models.ManyToManyField(Entity)
     created_by  = models.ForeignKey(User, blank=True, null=True)
     created_at  = models.DateTimeField(default=datetime.datetime.now)
@@ -25,10 +25,10 @@ class Annotation(models.Model):
             'startOffset': self.startOffset,
             'endOffset'  : self.endOffset
         }]
-        ann['anchor']   = self.message.id
+        ann['anchor']   = self.dataentry.id
         ann['tags'] = []
         for ent in self.entities.all().select_subclasses():
-            ann['tags'].append(ent.getKeyAttr())
+            ann['tags'].append(ent.get_attr())
         return ann
 
     def __unicode__(self):

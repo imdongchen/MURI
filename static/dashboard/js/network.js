@@ -1,18 +1,23 @@
-$.widget("viz.viznetwork", $.viz.vizcontainer, {
-    options: {
-        dimension: null
-    },
+$.widget("viz.viznetwork", $.viz.vizbase, {
     _create: function() {
-        var images = ['person', 'organization', 'location', 'event', 'message', 'resource']
+        this.options.base.resizeStop = this.resize.bind(this);
+        this.options.extend.maximize = this.resize.bind(this);
+        this.options.extend.restore  = this.resize.bind(this);
+        this._super('_create');
+        this.element.addClass("viz viznetwork");
+        this.element.data("viz", "vizViznetwork")
+
+        var images = ['person', 'organization', 'location', 'event', 'dataentry', 'resource']
         var filterbar = '<ul id="network-filterbar">';
         for (var i = 0; i < images.length; i++) {
             filterbar += '<li><input type="checkbox" id="' + images[i] +'-check"/><label for="' + images[i] + '-check">' + images[i] + '</label>';
         }
         filterbar += '</ul>';
-        this.element.append($(filterbar));
-        this.margin = {top: 5, bottom: 5, left: 13, right: 5};
+        // this.element.append($(filterbar)); // TODO: add this filter bar after filter function is completed
+        this.margin = {top: 35, bottom: 5, left: 13, right: 5};
         this.width  = this.element.width() - this.margin.left - this.margin.right;
         this.height = this.element.height() - this.margin.top - this.margin.bottom;
+        this.nodeMap = {};
         this.nodes = [];
         this.links = [];
         var _this = this;
@@ -47,7 +52,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         for (var i = 0; i < images.length; i++) {
             this.svg.append('svg:defs')
                 .append('svg:pattern').attr('id', 'img-'+images[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
-                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + images[i] + '.png');
+                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + images[i] + '.png')
+            ;
         }
 
         // define arrow markers for links
@@ -60,7 +66,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr('orient', 'auto')
             .append('svg:path')
             .attr('d', 'M0,-5L10,0L0,5')
-            .attr('class', 'linkarrow');
+            .attr('class', 'linkarrow')
+        ;
 
         this.svg.append('svg:defs').append('svg:marker')
             .attr('id', 'start-arrow')
@@ -84,11 +91,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
         // d3 behaviors
         this.zoom = d3.behavior.zoom();
-
         this.brush = d3.svg.brush();
-
         this.drag = this.force.drag();
-
 
         this.svg = this.svg.append('svg:g')
             .call(this.zoom)
@@ -109,6 +113,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.drag_line = this.svg.append('svg:path')
             .attr('class', 'dragline hidden')
             .attr('d', 'M0,0L0,0');
+
         // mouse event vars
         this.selected_node = null,
         this.selected_link = null;
@@ -116,23 +121,8 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.mousedown_node = null;
         this.mouseup_node = null;
 
-        this._super("_create");
-        this.element.addClass("viznetwork");
-        this.element.addClass("viz");
-        this.element.data("viz", "vizViznetwork")
+        this.updateData();
         this.update();
-
-        // update network when dialog resized or dragged
-        this.element.on("dialogresizestop", function() {
-            var ele = this.element;
-            ele.css('width', 'auto');
-            ele.parent().css("height", 'auto');
-            this.resize();
-        }.bind(this));
-
-        this.element.subscribe('resize', function() {
-            this.resize();
-        })
 
         function tick(e) {
             // Push sources up and targets down to form a weak tree.
@@ -159,7 +149,6 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 return "translate(" + d.x + "," + d.y + ")";
             });
         };
-
     },
 
     setMode: function(mode) {
@@ -175,7 +164,6 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
                 this.setFilterMode();
                 break;
         }
-
     },
 
     setDrawMode: function() {
@@ -342,7 +330,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             // empty brush deselects all nodes
             if (_this.brush.empty()) {
                 d3.selectAll(".node").classed("selected", function(d) {
-                    return d.selected=false;
+                    return d.selected = false;
                 });
                 _this.options.dimension.filterAll();
                 $.publish('/data/filter', _this.element.attr("id"))
@@ -374,16 +362,23 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
     setNormalMode: function() {
         var _this = this;
 
-//        this.svg.call(this.zoom
-//            .on("zoom", zoomed)
-//        );
         this.zoom.on('zoom', zoomed);
         this.node.call(this.drag
             .on("dragstart", dragstarted)
             .on("drag", dragged)
             .on("dragend", dragend)
         );
-
+        this.node
+            .on('mouseover', function(d) {
+                window.networkmouseovertimeout = setTimeout(function() {
+                    this.showTooltip(d)
+                }.bind(this), 1000); // delay for 1s to show tooltip
+            }.bind(this))
+            .on('mouseout', function(d) {
+                clearTimeout(window.networkmouseovertimeout);
+                this.hideTooltip();
+            }.bind(this))
+        ;
 
         function dragstarted(d) {
             d3.event.sourceEvent.stopPropagation();
@@ -401,6 +396,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
 
         function dragend(d) {
             d3.select(this).classed("dragging", false);
+            d.fixed = true;
         }
         function zoomed() {
             _this.svg.attr("transform",
@@ -423,30 +419,135 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         this.node.on('mousedown.drag', null);
     },
 
-    update: function() {
-        /* get the id of filtered messages */
-        var messages_id = [];
-        this.options.dimension.group().top(Infinity).forEach(function(p, i) {
-            if (p.key[0] !== undefined && p.value !== 0) {
-                messages_id.push(p.key[0])
+    showTooltip: function(d) {
+        var tooltip = '<div id="network-tooltip"><table>'
+        if (d.id) {
+            var node = d.id.split('-');
+            var node_type = node[0], node_id = node[1];
+            if (node_type === 'dataentry') {
+                tooltip += '<tr><th>Content</th><td>' + d.content + '</td></tr>';
+                tooltip += '<tr><th>Dataset</th><td>' + wb.store.dataset[d.dataset].name + '</td></tr>';
+                tooltip += '<tr><th>Date</th><td>' + wb.utility.formatDate(d.date) + '</td></tr>';
+            } else {
+                var primary = d.primary;
+                tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + '</th><td>' + primary.name + '</td></tr>';
+                for (var attr in primary) {
+                    if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                        tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
+                    }
+                }
             }
-        })
+            tooltip += '</table></div>';
+            $(tooltip).appendTo(this.element).css({
+                position: 'absolute',
+                top: d.y + 'px',
+                left: d.x + 15 + 'px'
+            });
+        }
+    },
 
-        // request data from server
-	    data = {};
-        data['entities'] = ['person, organization'];
-	    data['messages_id'] = messages_id;
+    hideTooltip: function() {
+        $('#network-tooltip', this.element).remove();
+    },
+
+    findNode: function(id, node) {
+        var node_id = node + '-' + id;
+        return this.nodeMap[node_id];
+    },
+
+    addNode: function(id, node) {
+        var existed_node = this.findNode(id, node);
+        if (existed_node) {
+            return existed_node;
+        } else {
+            var node_id = node + '-' + id;
+            var entity = $.extend({}, wb.store[node][id]);
+            entity.id = node_id;
+            this.nodeMap[node_id] = entity;
+            this.nodes.push(entity);
+            return entity;
+        }
+    },
+
+    addLink: function(source, target, source_node, target_node, relationship) {
+        var source_entity = this.addNode(source, source_node);
+        var target_entity = this.addNode(target, target_node);
+        if (source_node === 'dataentry') {
+            this.links.push({
+                source: source_entity,
+                target: target_entity,
+                confidence: 1,
+                relation: 'contain',
+                description: '',
+                date: source_entity.date
+            });
+        } else {
+            this.links.push({
+                source: source_entity,
+                target: target_entity,
+                confidence: relationship.primary.confidence,
+                relation: relationship.primary.relation,
+                description: relationship.primary.description,
+                date: relationship.primary.date,
+            });
+        }
+
+    },
+
+    updateData: function() {
         var _this = this;
 
-	    $.get("network", data, function(d) {
-            _this.nodes.length = 0;
-            Array.prototype.push.apply(_this.nodes, d.nodes);
-            _this.links.length = 0;
-            Array.prototype.push.apply(_this.links, d.links);
+        // relationships between data entry and entity
+        this.options.dimension.filterExact(0).top(Infinity).forEach(function(d) {
+            var source = d.dataentry;
+            var target = d.event || d.location || d.person || d.organization || d.resource;
+            _this.addLink(source, target, 'dataentry', 'entity');
+        });
+        this.options.dimension.filterAll();
+        // relationship between entities
+        this.options.group.all().forEach(function(d) {
+            if (d.key > 0) {
+                var relationship = wb.store.relationship[d.key];
+                var source = relationship.primary.source;
+                var target = relationship.primary.target;
+                _this.addLink(source, target, 'entity', 'entity', relationship);
+            }
+        });
+    },
 
-            _this.restart();
-            _this.setMode("normal");
-	    });
+    update: function() {
+        var links = this.svg.selectAll('.link');
+        var nodes = this.svg.selectAll('.node');
+        links.style('display', 'none');
+        nodes.style('display', 'none');
+        var nodes_to_show = [], links_to_show = [];
+        this.options.dimension.filterExact(0).top(Infinity).forEach(function(d) {
+            nodes_to_show.push('dataentry-' + d.dataentry);
+            var target = d.event || d.location || d.person || d.organization || d.resource;
+            nodes_to_show.push('entity-' + target);
+        });
+        this.options.dimension.filterAll();
+        this.options.group.all().forEach(function(d) {
+            if (d.key > 0 && d.value) {
+                var relationship = wb.store.relationship[d.key];
+                nodes_to_show.push('entity-' + relationship.primary.source);
+                nodes_to_show.push('entity-' + relationship.primary.target);
+            }
+        });
+        var nodes_to_show_unique = nodes_to_show.filter(function(d, i, self) {
+            return self.indexOf(d) === i;
+        });
+        nodes.style('display', function(d) {
+            if (nodes_to_show_unique.indexOf(d.id) < 0) return 'none'; // hide if not in the list
+            else return null;
+        });
+        links.style('display', function(d) {
+            // show link only if its source and target nodes are both in the list
+            if (nodes_to_show_unique.indexOf(d.source.id) < 0 || nodes_to_show_unique.indexOf(d.target.id) < 0) return 'none';
+            else return null;
+        });
+        this.restart();
+        this.setMode('normal');
     },
 
     resetMouseVars: function() {
@@ -482,17 +583,17 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             return d.id;
         });
 
-        var g = this.node.enter().append("svg:g");
+        var g = this.node.enter().append("svg:g").attr('class', 'node');
 
         g.append("svg:circle")
             .attr('r', 12)
-            .attr('class', 'node')
             .attr('fill', function(d) {
-                if (d.id.toString().charAt(0) === 'm') {
-                    return "url(#img-message)";
+                var node = d.id.split('-')[0];
+                if (node === 'entity') { // node is an entity
+                    return "url(#img-" + d.primary.entity_type + ")";
                 }
-                else {
-                    return "url(#img-" + d.entity + ")";
+                else { // node is data entry
+                    return "url(#img-dataentry)";
                 }
             })
             // .on("mouseover", function(d) {
@@ -513,18 +614,15 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
             .attr("y", 4)
             .style("text-anchor", "middle")
             .attr("dy", "-.95em")
-            .text(function(d) { return d.name })
+            .text(function(d) {
+                if (d.primary) {
+                    return d.primary.name
+                } else {
+                    return wb.utility.formatDate(d.date);
+                }
+            })
             .style("-webkit-user-select", "none"); // disable text selection when dragging mouse
 
-        g.append("svg:title").text(function(d) {
-            var res = '';
-            for (var key in d) {
-                res += key;
-                if (d[key] === null || d[key] === "") res += ":\tUnknown\n";
-                else res += ":\t" + d[key] + "\n";
-            }
-            return res;
-        });
         this.node.exit().remove();
 
 
@@ -541,30 +639,32 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
     },
 
     resize: function() {
-        console.log('resized')
+        this._super('resize');
         this.width = this.element.width() - this.margin.left - this.margin.right;
         this.height = this.element.height() - this.margin.top - this.margin.bottom;
-        d3.select('svg').attr("width", this.width).attr("height", this.height);
+        this.element.find('svg').attr('width', this.width).attr('height', this.height);
+        this.element.find('svg').find('rect').attr('width', this.width).attr('height', this.height);
         this.force.size([this.width, this.height]).resume();
         this.force.start();
     },
+
     highlight: function(nodeData) {
-        d3.selectAll('.node').style('stroke-opacity', function(o) {
+        d3.selectAll('.node circle').style('stroke-opacity', function(o) {
             if (isConnected(nodeData, o)) {
                 d3.select(this).style('fill-opacity', 1);
                 $(this).siblings('text').css('fill-opacity', 1);
                 return 1;
             } else {
-                d3.select(this).style('fill-opacity', .3);
-                $(this).siblings('text').css('fill-opacity', .3);
-                return .3
+                d3.select(this).style('fill-opacity', .2);
+                $(this).siblings('text').css('fill-opacity', .2);
+                return .2
             }
         });
         d3.selectAll('.link').style('stroke-opacity', function(o) {
             if (o.source.id === nodeData.id || o.target.id === nodeData.id) {
                 return 1;
             } else {
-                return .3;
+                return .2;
             }
         });
 
@@ -587,7 +687,7 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
         }
     },
     unhighlight: function() {
-        d3.selectAll('.node').style('stroke-opacity', 1).style('fill-opacity', 1);
+        d3.selectAll('.node circle').style('stroke-opacity', 1).style('fill-opacity', 1);
         d3.selectAll('.link').style('stroke-opacity', 1);
         d3.selectAll('.node-text').style('fill-opacity', 1);
         d3.select(this).attr('transform', '');
@@ -595,3 +695,14 @@ $.widget("viz.viznetwork", $.viz.vizcontainer, {
     destroy: function() {
     }
 });
+
+
+
+wb.viz.network = function() {
+    function exports(selection) {
+        selection.each(function() {
+        });
+    }
+
+    return exports;
+};

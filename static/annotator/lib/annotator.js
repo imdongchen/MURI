@@ -250,7 +250,7 @@ Annotator = (function(_super) {
             var cssClass = 'annotator-hl ';
             if (annotation.tags) {
                 cssClass += $.map(annotation.tags, function(tag) {
-                    return 'annotator-hl-' + tag['entity']
+                    return 'annotator-hl-' + tag.primary.entity_type;
                 }).join(' ')
             }
             $.merge(annotation.highlights, this.highlightRange(normed, cssClass));
@@ -268,15 +268,22 @@ Annotator = (function(_super) {
 
     Annotator.prototype.deleteAnnotation = function(annotation) {
         var child, h, _i, _len, _ref;
-        if (annotation.highlights != null) {
-            _ref = annotation.highlights;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                h = _ref[_i];
-                if (!(h.parentNode != null)) {
-                    continue;
+        var anns = this.plugins.Store.annotations.filter(function(ann) {
+            return ann.quote === annotation.quote;
+        });
+        anns.push(annotation);
+        for (var k = 0; k < anns.length; k++) {
+            var ann = anns[k];
+            if (ann.highlights != null) {
+                _ref = ann.highlights;
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                    h = _ref[_i];
+                    if (!(h.parentNode != null)) {
+                        continue;
+                    }
+                    child = h.childNodes[0];
+                    $(h).replaceWith(h.childNodes);
                 }
-                child = h.childNodes[0];
-                $(h).replaceWith(h.childNodes);
             }
         }
         this.publish('annotationDeleted', [annotation]);
@@ -555,7 +562,7 @@ Annotator = (function(_super) {
                     var ann = existing_anns[k];
                     if (ann.anchor === new_ann.anchor && ann.ranges[0].start === new_ann.ranges[0].start) {
                         // annotation existed
-                        // todo: what if a different tag?
+                        // TODO: what if a different tag?
                         existed = true;
                         break;
                     }

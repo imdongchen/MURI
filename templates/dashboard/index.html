@@ -3,21 +3,19 @@
 {% load compress %}
 
 {% block extralib %}
-<script type="text/javascript" src="{% static 'dashboard/lib/jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
-<script type="text/javascript" src="{% static 'dashboard/js/SIIL.js' %}"></script>
-<!-- crossfilter for coordinated view -->
-<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.5/d3.min.js" charset="utf-8"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.5/d3.js" charset="utf-8"></script>
 <script type="text/javascript" src="{% static 'dashboard/lib/crossfilter-1.2.0/crossfilter.js' %}"></script>
-
-<!-- extended dialogue -->
+<script type="text/javascript" src="{% static 'dashboard/lib/jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/lib/jquery-dialogextend-2.02/build/jquery.dialogextend.js' %}"></script>
-<script src="{% static 'dashboard/lib/jquery-ui-contextmenu/jquery.ui-contextmenu.js' %}" type="text/javascript"></script>
-<script type="text/javascript" src="{% static 'dashboard/js/viscontainer.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
+<script type="text/javascript" src="{% static 'dashboard/js/wb.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/utility.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/vizbase.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script>
 {% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/activitylog.js' %}"></script>
-<script type="text/javascript" src="{% static 'dashboard/js/linkedview.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/main.js' %}"></script>
 {% endcompress %}
 
 <script language='javascript'>var STATIC_URL = "{{ STATIC_URL|escapejs }}";</script>

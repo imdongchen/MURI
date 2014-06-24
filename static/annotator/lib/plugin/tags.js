@@ -14,17 +14,15 @@ $.widget('custom.attribute_widget', {
     add: function(attr, value) {
         var row = '<li><ul class="annotator-attribute">\
             <li><input class="annotator-attribute-input" placeholder="Attribute..."/></li> \
-            <li><input class="annotator-attribute-value" placeholder="Value..."/></li> \
+            <li><input class="annotator-attribute-value" placeholder="Unknown"/></li> \
         ';
         row += '<li><button type="button" class="btn btn-default attribute-add-btn"><span class="glyphicon glyphicon-plus"></span></button></li></ul></li>';
-        this.content.append($(row));
-        if (attr && value) {
+            this.content.append($(row));
             var beforelastrow = this.content.find('.annotator-attribute').eq(-2);
             beforelastrow.find('.annotator-attribute-input').val(attr);
             beforelastrow.find('.annotator-attribute-value').val(value);
             beforelastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
                 .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
-        }
 
         this.content.find('.attribute-add-btn').click(_.bind(function(){
             var lastrow = this.content.find(".annotator-attribute:last");
@@ -35,10 +33,18 @@ $.widget('custom.attribute_widget', {
         this.content.find('.attribute-remove-btn').click(function() {
             $(this).parents('.annotator-attribute').parent().remove();
         });
+        this.sort();
     },
     reset: function() {
         this.element.empty();
         this._create();
+    },
+    sort: function() {
+        $('> li', this.content).sort(function(a, b) {
+            var a_val = $(a).find('.annotator-attribute-value').val();
+            var b_val = $(b).find('.annotator-attribute-value').val();
+            return a_val < b_val;
+        }).appendTo(this.content);
     },
     serialize: function() {
         var res = {};
@@ -50,7 +56,7 @@ $.widget('custom.attribute_widget', {
                 value = Annotator.Util.escape(value);
                 res[attr] = value;
             }
-        })
+        });
         return res;
     }
 });
@@ -80,7 +86,7 @@ Annotator.Plugin.Tags = (function(_super) {
         parseTags: function(tags) {
             if (tags && tags.length > 0) {
                 return $.map(tags, function(tag){
-                    return {'entity': tag};
+                    return {'primary': {entity_type: tag}, 'other': {}};
                 })
             }
             return [];
@@ -152,9 +158,10 @@ Annotator.Plugin.Tags = (function(_super) {
                         var existed = false;
                         for (var i = 0; i < self.annotation.tags.length; i++) {
                             var tag = self.annotation.tags[i];
-                            if (tag.entity === 'location') {
-                                if (! tag.location) {
-                                    tag.location = latlon;
+                            if (tag.primary.entity_type === 'location') {
+                                if (! tag.temporary.geometry) {
+                                    tag.temporary.geometry = latlon.toString();
+                                    tag.primary.geometry = latlon.toString();
                                 }
                                 existed = true;
                                 break;
@@ -162,8 +169,9 @@ Annotator.Plugin.Tags = (function(_super) {
                         }
                         if (! existed) {
                             self.annotation.tags.push({
-                                entity: 'location',
-                                location: latlon
+                                primary: { entity_type: 'location', geometry: latlon.toString() },
+                                other: {},
+                                temporary: { geometry: latlon.toString() }
                             });
                         }
                         self.updateAttrField(self.attrField, self.annotation);
@@ -232,9 +240,9 @@ Annotator.Plugin.Tags = (function(_super) {
         var selectize = this.tagselect[0].selectize;
         selectize.clear();
         if (annotation.tags) {
-            var items = annotation.tags.map(function(t) {return t.entity; });
+            var items = annotation.tags.map(function(t) {return t.primary.entity_type; });
             for (var i = 0; i < items.length; i++) {
-                selectize.addItem(items[0]);
+                selectize.addItem(items[i]);
             }
         }
     };
@@ -251,13 +259,13 @@ Annotator.Plugin.Tags = (function(_super) {
         if (annotation.tags) {
             for (var i = 0; i < annotation.tags.length; i++) {
                 var tag = annotation.tags[i];
-                for (var attr in tag) {
-                    if (attr !== 'entity' && attr !== 'uid') {
-                        if (tag.hasOwnProperty(attr) && tag[attr]) {
-                            this.attribute_widget.add(attr, tag[attr]);
-                        }
+                for (var attr in tag.primary) {
+                    if (attr !== 'entity_type' && attr !== 'id') { // skip these two attributes
+                        this.attribute_widget.add(attr, tag.primary[attr]);
                     }
-
+                }
+                for (var attr in tag.other) {
+                    this.attribute_widget.add(attr, tag.other[attr]);
                 }
             }
         }
@@ -273,7 +281,7 @@ Annotator.Plugin.Tags = (function(_super) {
             var tag = tags[i];
             var doesExist = false;
             for (var j = 0; j < annotation.tags.length; j++) {
-                if (annotation.tags[j].entity === tag.entity) {
+                if (annotation.tags[j].primary.entity_type === tag.primary.entity_type) {
                     doesExist = true;
                     break;
                 }
@@ -289,12 +297,17 @@ Annotator.Plugin.Tags = (function(_super) {
             for (var i = 0; i < annotation.tags.length; i ++) {
                 var tag = annotation.tags[i];
                 attribute = this.attribute_widget.serialize();
-                for (var attr in tag) {
-                    if (attr !== 'entity' && attr !== 'uid' && attribute[attr] === undefined) {
-                        delete tag[attr]; // delete attributes not in the form
+                for (var attr in tag.primary) {
+                    if (attr !== 'entity_type' && attr !== 'id' && attribute[attr] === undefined) {
+                        delete tag.primary[attr]; // delete attributes not in the form
                     }
                 }
-                $.extend(tag, attribute); // add attributes in the from to tag
+                for (var attr in tag.other) {
+                    if (attribute[attr] === undefined) {
+                        delete tag.other[attr]; // delete attributes not in the form
+                    }
+                }
+                tag.temporary = $.extend({}, attribute);
             }
         }
     };
@@ -317,7 +330,7 @@ Annotator.Plugin.Tags = (function(_super) {
             return field.addClass('annotator-tags').html(function() {
                 var string;
                 return string = $.map(annotation.tags, function(tag) {
-                    return '<span class="annotator-tag annotator-hl-' + tag['entity'] + '">' + Annotator.Util.escape(tag['entity']) + '</span>';
+                    return '<span class="annotator-tag annotator-hl-' + tag.primary.entity_type + '">' + Annotator.Util.escape(tag.primary.entity_type) + '</span>';
                 }).join(' ');
             });
         } else {

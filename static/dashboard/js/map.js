@@ -1,13 +1,22 @@
-$.widget("viz.vizmap", $.viz.vizcontainer, {
-    options: {
-        dimension : null,
-    },
+$.widget("viz.vizmap", $.viz.vizbase, {
     _create: function() {
-        this.map = null;
+        this.options.extend.maximize = this.update.bind(this);
+        this.options.extend.restore = this.update.bind(this);
+        this.options.base.resizeStop = this.resize.bind(this);
+        this.options.base.dragStop = this.resize.bind(this);
+        this._super("_create");
+        this.element.addClass("vizmap");
+        this.element.data("viz", "vizVizmap");
+
         this.layers = [];
+        this.features = [];
 
         var map = new OpenLayers.Map(this.element.attr("id"));
 //        this.element.css("overflow", "hidden")
+        var ghyb = new OpenLayers.Layer.Google(
+            "Google Hybrid",
+            {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 22}
+        );
         var gphy = new OpenLayers.Layer.Google(
             "Google Physical",
             {type: google.maps.MapTypeId.TERRAIN}
@@ -16,10 +25,6 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
             "Google Streets", // the default
             {numZoomLevels: 22}
         );
-        var ghyb = new OpenLayers.Layer.Google(
-            "Google Hybrid",
-            {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 22}
-        );
         var gsat = new OpenLayers.Layer.Google(
             "Google Satellite",
             {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
@@ -27,7 +32,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
 
         map.addLayers([ghyb, gphy, gmap, gsat]);
 
-        var pointlayer = new OpenLayers.Layer.Vector("Points", {
+        this.pointlayer = new OpenLayers.Layer.Vector("Points", {
             styleMap: new OpenLayers.StyleMap({
                 'default': new OpenLayers.Style({
                     externalGraphic: STATIC_URL + 'dashboard/img/red_pin.png'
@@ -39,7 +44,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
                 })
             })
         });
-        var linelayer = new OpenLayers.Layer.Vector("Lines", {
+        this.linelayer = new OpenLayers.Layer.Vector("Lines", {
             styleMap: new OpenLayers.StyleMap({
                 'default': new OpenLayers.Style({
                     strokeWidth: 3
@@ -54,8 +59,8 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
                 })
             })
         });
-        this.layers.push(pointlayer, linelayer);
-        map.addLayers([pointlayer, linelayer]);
+        this.layers.push(this.pointlayer, this.linelayer);
+        map.addLayers([this.pointlayer, this.linelayer]);
 
         map.setCenter(new OpenLayers.LonLat(44.42200, 33.32500).transform(
             new OpenLayers.Projection("EPSG:4326"),
@@ -69,7 +74,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         }));
         var mapControls = {
             select: new OpenLayers.Control.SelectFeature(
-                        [linelayer, pointlayer],
+                        this.layers,
                         {
                             clickout: true, toggle: true,
                             multiple: false, hover: false,
@@ -95,57 +100,56 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
             navCtrls[i].enableZoomWheel();
         }
 
+        this._addFeatures();
+
         this.map = map;
-        this.linelayer = linelayer;
-        this.pointlayer = pointlayer;
 
         this.mapControls = mapControls;
 
         this.update();
 
-        // update map when dialog resized or dragged
-        this.element.on("dialogresizestop", function() {
-            this.map.updateSize();
-            var ele = this.element;
-            ele.css('width', 'auto');
-            ele.parent().css("height", 'auto');
-        }.bind(this));
-
-        this.element.on("dialogdragstop", function() {
-            this.map.updateSize();
-        }.bind(this))
-
-        this.element.addClass("vizmap");
-        this.element.addClass("viz");
-        this.element.data("viz", "vizVizmap")
-        this._super("_create");
     },
-    update: function() {
-        var linelayer = this.linelayer;
-        var pointlayer = this.pointlayer;
-        linelayer.removeAllFeatures();
-        pointlayer.removeAllFeatures();
-
-        var points = [], lines = [];
-
-        this.options.dimension.group().top(Infinity).forEach(function(d, i) {
-            // d = {key: [id, name, shape, srid], value: Integer}
-            var fp = d.key;
-            if (fp[0] != undefined && d.value != 0) {
-                if (fp[2] != undefined) { // has shape attr
-                    if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
-                        points.push(fp[2]);
+    _addFeatures: function() {
+        var point_feas = [], line_feas = [];
+        var features = this.features;
+        this.options.group.all().forEach(function(d) {
+            if (d.key) {
+                var location = wb.store.entity[d.key];
+                var geometry = location.primary.geometry;
+                if (geometry) {
+                    if (geometry.geometry instanceof OpenLayers.Geometry.Point) {
+                        point_feas.push(geometry);
+                    } else if (geometry.geometry instanceof OpenLayers.Geometry.LineString) {
+                        line_feas.push(geometry);
                     }
-                    else {
-                        lines.push(fp[2]);
-                    }
+                    features.push(geometry);
                 }
             }
         });
-        linelayer.addFeatures(lines);
-        pointlayer.addFeatures(points);
-        linelayer.redraw();
-        pointlayer.redraw();
+        this.linelayer.addFeatures(line_feas);
+        this.pointlayer.addFeatures(point_feas);
+        this.linelayer.redraw();
+        this.pointlayer.redraw();
+        this.features = this.pointlayer.features.concat(this.linelayer.features);
+    },
+    update: function() {
+        this.features.forEach(function(fea) {
+            fea.style = {display: 'none'};
+        });
+        var features = this.features;
+        this.options.group.all().forEach(function(d) {
+            if (d.key && d.value) {
+                features.some(function(fea) {
+                    if (fea.attributes.id === d.key) {
+                        fea.style = null;
+                        return true;
+                    }
+                })
+            }
+        });
+        this.linelayer.redraw();
+        this.pointlayer.redraw();
+
     },
     highlight: function (features_id) {
         for (var i = 0; i < this.highlightedFeatures.length; i++) {
@@ -208,15 +212,9 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
                 data: JSON.stringify({'window_type': 'map'})
             })
         } else {
-            // filter event data by above feature ids
-            this.options.dimension.filter(function(fp) { // fp is an array [id, name, shape, srid]
-                if (fp[0] == undefined) {
-                    return false;
-                }
-                for (var j = 0; j < selectedFeas.length; j++) {
-                    if (fp[0] === selectedFeas[j]) {
-                        return true;
-                    }
+            this.options.dimension.filter(function(d) {
+                if (d) {
+                    return selectedFeas.indexOf(d) > -1;
                 }
                 return false;
             });
@@ -237,3 +235,13 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         this._super("_destroy");
     }
 });
+
+
+wb.viz.map = function() {
+    function exports(selection) {
+        selection.each(function() {
+        });
+    }
+
+    return exports;
+};

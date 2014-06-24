@@ -22,11 +22,12 @@ def get_or_create_annotation(request):
     if request.method == 'POST':
         res = None
         data = json.loads(request.body)
+
         if isinstance(data, list):
-            print 'get a list of annotations'
             res = []
             for d in data:
-                res.append(save_annotation(request, d))
+                ann = create_annotation(request, d)
+                res.append(save_annotation(request, ann, d))
 
             log = {}
             log['operation'] = 'add annotations'
@@ -37,19 +38,31 @@ def get_or_create_annotation(request):
             serverlog(request, log)
 
         elif isinstance(data, dict):
-            print 'get one annotation'
             res = {}
-            res = save_annotation(request, data)
+            ann = create_annotation(request, data)
+            res = save_annotation(request, ann, data)
             log = {}
             log['operation'] = 'add annotation'
             log['data'] = json.dumps({'annotation_id': res['id']})
             serverlog(request, log)
         return HttpResponse(json.dumps(res), mimetype='application/json')
+    if request.method == 'DELETE':
+        res = {}
+        print request.method
+        data = json.loads(request.body)
+        for d in data:
+            try:
+                ann = Annotation.objects.get(id=d['id'])
+            except Annotation.DoesNotExist:
+                print 'Delete annotation failed: annotation id %s does not exist' % d['id']
+                return HttpResponseNotFound()
+            else:
+                ann.delete()
+        return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
-def save_annotation(request, data):
-    res = {}
 
+def create_annotation(request, data):
     tags = data.get('tags',[])
     ranges = data.get('ranges', [])
     anchor = data.get('anchor', '0')
@@ -61,65 +74,73 @@ def save_annotation(request, data):
         print tags, ranges, anchor, quote
         return res
 
-    message = None
+    entry = None
     try:
-        message = Message.objects.get(id=anchor)
-    except Message.DoesNotExist:
-        print "Error: message not exist for ID: ", anchor
+        entry = DataEntry.objects.get(id=anchor)
+    except DataEntry.DoesNotExist:
+        print "Error: data entry not exist for ID: ", anchor
         return
     else:
-        res['tags'] = []
-
         user = None
         if request.user.is_authenticated():
             user = request.user
         annotation = Annotation.objects.create(startOffset=ranges[0]['startOffset'],
             endOffset=ranges[0]['endOffset'],
-            message=message,
+            dataentry=entry,
             start=ranges[0]['start'],
             end=ranges[0]['end'],
             created_by=user
         )
+        return annotation
 
-        for tag in tags:
-            obj = None
-            if tag['entity'] == 'person':
-                obj, created = Person.objects.get_or_create(name=quote)
-            if tag['entity'] == 'location':
-                obj, created = Location.objects.get_or_create(name=quote)
-            if tag['entity'] == 'event':
-                obj, created = Event.objects.get_or_create(name=quote)
-            if tag['entity'] == 'resource':
-                obj, created = Resource.objects.get_or_create(name=quote)
-            if tag['entity'] == 'organization':
-                obj, created = Organization.objects.get_or_create(name=quote)
-            for attr in tag:
-                if attr != 'entity':
-                    fields = obj._meta.get_all_field_names()
-                    if attr in fields:
-                        if tag['entity'] == 'location' and attr == 'location':
-                            latlon = tag[attr].split(',')
-                            location = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
-                            obj.location = location
-                        else:
-                            setattr(obj,attr, tag[attr])
-                    else:
-                        attribute, created_attr = Attribute.objects.get_or_create(attr=attr, val=tag[attr])
-                        obj.attributes.add(attribute)
-            obj.save()
+def save_annotation(request, annotation, data):
+    res = {'id': 0, 'tags': []}
+    tags = data.get('tags',[])
+    quote = data.get('quote')
 
-            annotation.entities.add(obj)
-            res['tags'].append(obj.getKeyAttr())
-        annotation.save()
-        res['id'] = annotation.id
-        return res
+    for tag in tags:
+        obj = None
+        entity_type = tag['primary']['entity_type']
+        if entity_type == 'person':
+            obj, created = Person.objects.get_or_create(name=quote)
+        if entity_type == 'location':
+            obj, created = Location.objects.get_or_create(name=quote)
+        if entity_type == 'event':
+            obj, created = Event.objects.get_or_create(name=quote)
+        if entity_type == 'resource':
+            obj, created = Resource.objects.get_or_create(name=quote)
+        if entity_type == 'organization':
+            obj, created = Organization.objects.get_or_create(name=quote)
+
+        # remove all attribute relations first
+        if not created:
+            obj.attributes.clear()
+        for attr in tag['temporary']:
+            fields = obj._meta.get_all_field_names()
+            if attr in fields:
+                if entity_type == 'location' and attr == 'geometry':
+                    latlon = tag['temporary'][attr].split(',')
+                    geometry = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
+                    obj.geometry = geometry
+                else:
+                    setattr(obj, attr, tag['temporary'][attr])
+            else:
+                attribute, created_attr = Attribute.objects.get_or_create(attr=attr, val=tag['temporary'][attr])
+                obj.attributes.add(attribute)
+        obj.save()
+
+        annotation.entities.add(obj)
+        res['tags'].append(obj.get_attr())
+    annotation.save()
+    res['id'] = annotation.id
+    return res
 
 def process_annotation(request, id):
     res = {}
     if request.method == 'DELETE':
         try:
             ann = Annotation.objects.get(id=id)
-        except ObjectDoesNotExist:
+        except Annotation.DoesNotExist:
             print 'Delete annotation failed: annotation id %s does not exist' % id
             return HttpResponseNotFound()
         else:
@@ -128,52 +149,54 @@ def process_annotation(request, id):
     if request.method == 'PUT':
         try:
             ann = Annotation.objects.get(id=id)
-        except ObjectDoesNotExist:
+        except Annotation.DoesNotExist:
             print 'Update annotation failed: annotation id %s does not exist' % id
         else:
             # remove all entity relations first
             ann.entities.clear()
 
             data = json.loads(request.body)
-            quote  = data.get('quote', '')
-            tags = data.get('tags',[])
-            res['tags'] = []
-            for tag in tags:
-                obj = None
-                if tag['entity'] == 'person':
-                    obj, created = Person.objects.get_or_create(name=quote)
-                if tag['entity'] == 'location':
-                    obj, created = Location.objects.get_or_create(name=quote)
-                if tag['entity'] == 'event':
-                    obj, created = Event.objects.get_or_create(name=quote)
-                if tag['entity'] == 'resource':
-                    obj, created = Resource.objects.get_or_create(name=quote)
-                if tag['entity'] == 'organization':
-                    obj, created = Organization.objects.get_or_create(name=quote)
 
-                # remove all attribute relations first
-                obj.attributes.clear()
-                fields = obj._meta.get_all_field_names()
-
-                for attr in tag:
-                    if attr != 'entity':
-                        fields = obj._meta.get_all_field_names()
-                        if attr in fields:
-                            if tag['entity'] == 'location' and attr == 'location':
-                                latlon = tag[attr].split(',')
-                                location = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
-                                obj.location = location
-                            else:
-                                setattr(obj, attr, tag[attr])
-                        else:
-                            attribute, created_attr = Attribute.objects.get_or_create(attr=attr, val=tag[attr])
-                            obj.attributes.add(attribute)
-                obj.save()
-
-                ann.entities.add(obj)
-                res['tags'].append(obj.getKeyAttr())
-            ann.save()
-            res['id'] = ann.id
+            res = save_annotation(request, ann, data)
+            # quote  = data.get('quote', '')
+            # tags = data.get('tags',[])
+            # res['tags'] = []
+            # for tag in tags:
+            #     obj = None
+            #     if tag['primary']['entity'] == 'person':
+            #         obj, created = Person.objects.get_or_create(name=quote)
+            #     if tag['primary']['entity'] == 'location':
+            #         obj, created = Location.objects.get_or_create(name=quote)
+            #     if tag['primary']['entity'] == 'event':
+            #         obj, created = Event.objects.get_or_create(name=quote)
+            #     if tag['primary']['entity'] == 'resource':
+            #         obj, created = Resource.objects.get_or_create(name=quote)
+            #     if tag['primary']['entity'] == 'organization':
+            #         obj, created = Organization.objects.get_or_create(name=quote)
+            #
+            #     # remove all attribute relations first
+            #     obj.attributes.clear()
+            #     fields = obj._meta.get_all_field_names()
+            #
+            #     for attr in tag:
+            #         if attr != 'entity':
+            #             fields = obj._meta.get_all_field_names()
+            #             if attr in fields:
+            #                 if tag['entity'] == 'location' and attr == 'location':
+            #                     latlon = tag[attr].split(',')
+            #                     location = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
+            #                     obj.location = location
+            #                 else:
+            #                     setattr(obj, attr, tag[attr])
+            #             else:
+            #                 attribute, created_attr = Attribute.objects.get_or_create(attr=attr, val=tag[attr])
+            #                 obj.attributes.add(attribute)
+            #     obj.save()
+            #
+            #     ann.entities.add(obj)
+            #     res['tags'].append(obj.getKeyAttr())
+            # ann.save()
+            # res['id'] = ann.id
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
