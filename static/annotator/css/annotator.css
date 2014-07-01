@@ -146,12 +146,12 @@
 
 .annotator-widget {
 	margin: 0;
-	padding: 0;
+	padding: 0px 1px;
 	bottom: 15px;
 	left: -18px;
 	min-width: 265px;
 	background-color: rgba(251, 251, 251, 0.98);
-	border: 1px solid rgba(122, 122, 122, 0.6);
+	/*border: 1px solid rgba(122, 122, 122, 0.6);*/
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
@@ -946,4 +946,13 @@
 
 .annotator-hl-filtered {
 	background-color: transparent;
+}
+
+#annotator-viewer-table th {
+	padding-right: 15px;
+
+}
+
+.annotator-editor .tag_name: {
+	/*width:*/
 }

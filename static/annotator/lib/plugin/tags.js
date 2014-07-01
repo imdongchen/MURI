@@ -70,7 +70,8 @@ Annotator.Plugin.Tags = (function(_super) {
     __extends(Tags, _super);
 
     function Tags() {
-        this.setAnnotationTags = __bind(this.setAnnotationTags, this);
+        this.initTagNameField = __bind(this.initTagNameField, this);
+        this.setAnnotationTag = __bind(this.setAnnotationTag, this);
         this.updateField = __bind(this.updateField, this);
         this.initTagField = __bind(this.initTagField, this);
         this.updateTagField = __bind(this.updateTagField, this);
@@ -83,13 +84,11 @@ Annotator.Plugin.Tags = (function(_super) {
     }
 
     Tags.prototype.options = {
-        parseTags: function(tags) {
-            if (tags && tags.length > 0) {
-                return $.map(tags, function(tag){
-                    return {'primary': {entity_type: tag}, 'other': {}};
-                })
+        parseTags: function(tag) {
+            if (tag) {
+                return {entity_type: tag}
             }
-            return [];
+            return {};
         },
         stringifyTags: function(array) { //array of tag objects
             return $.map(array, function(tag) {
@@ -111,15 +110,17 @@ Annotator.Plugin.Tags = (function(_super) {
         }
         this.titleField = this.annotator.editor.addField({
             type: 'custom',
-            html_content: '<label>Name: </label><input class="tag_name"></input>',
-            load: this.updateTitleField
+            html_content: '<label style="font-weight:bold;">Name: </label><input class="tag_name"></input>',
+            init: this.initTagNameField,
+            load: this.updateTitleField,
+            submit: this.setTagName
         });
         this.tagField = this.annotator.editor.addField({
             type: 'custom',
-            html_content: '<select class="selectize-entity" multiple />',
+            html_content: '<select class="selectize-entity"/>',
             init: this.initTagField,
             load: this.updateTagField,
-            submit: this.setAnnotationTags
+            submit: this.setAnnotationTag
         });
         this.attrField = this.annotator.editor.addField({
             type: 'custom',
@@ -131,12 +132,11 @@ Annotator.Plugin.Tags = (function(_super) {
         this.applyAllField = this.annotator.editor.addField({
             type: 'checkbox',
             label: Annotator._t('Apply to all data'),
-            load: this.updateApplyAllField,
             submit: this.applyToAll
         });
 
-        this.subscribe('/tag/changed', function(value) {
-            if (value && value.indexOf('location') > -1) {
+        this.subscribe('/tag/changed', function(e, value) {
+            if (value === 'location') {
                 if (self.annotation) {
                     // search for mgrs string and update attribute
                     var node = self.annotation.highlights[0].parentNode;
@@ -153,31 +153,23 @@ Annotator.Plugin.Tags = (function(_super) {
                         }
                     }
                     latlon = $(node).data('location');
-                    if (latlon && latlon.length === 2 ) {
-                        if (!self.annotation.tags) self.annotation.tags = [];
-                        var existed = false;
-                        for (var i = 0; i < self.annotation.tags.length; i++) {
-                            var tag = self.annotation.tags[i];
-                            if (tag.primary.entity_type === 'location') {
-                                if (! tag.temporary.geometry) {
-                                    tag.temporary.geometry = latlon.toString();
-                                    tag.primary.geometry = latlon.toString();
-                                }
-                                existed = true;
-                                break;
-                            }
-                        }
-                        if (! existed) {
-                            self.annotation.tags.push({
-                                primary: { entity_type: 'location', geometry: latlon.toString() },
-                                other: {},
-                                temporary: { geometry: latlon.toString() }
-                            });
-                        }
-                        self.updateAttrField(self.attrField, self.annotation);
+                    if (latlon && latlon.length === 2) {
+                        self.attribute_widget.add('geometry', latlon.toString());
                     }
                 }
             }
+        });
+
+        $.subscribe('/tag/selected', function(e, value) {
+            var entity = wb.store.entity[value];
+            if (!self.annotation.tag) {
+                self.annotation.tag = {};
+            }
+            self.annotation.tag.id = entity.primary.id;
+            self.annotation.tag.entity_type = entity.primary.entity_type;
+            self.annotation.tag.name = entity.primary.name;
+            self.updateTagField('', self.annotation);
+            self.updateAttrField('', self.annotation);
         });
 
         this.annotator.viewer.addField({
@@ -205,15 +197,48 @@ Annotator.Plugin.Tags = (function(_super) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     };
 
+    Tags.prototype.initTagNameField = function(field) {
+        var opts = [];
+        for (var key in wb.store.entity) {
+            var entity = wb.store.entity[key];
+            opts.push({
+                id: key,
+                value: entity.primary.name
+            });
+        }
+        optgroups = wb.ENTITY_ENUM.map(function(entity) {
+            return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
+        });
+        this.tagnameselect = $(field).find('.tag_name')
+            .autocomplete({
+                source: opts,
+                select: function(e, ui) {
+                    if (ui.item.id) {
+                        //TODO: update the attribute list to the attribute of the entity
+                        $.publish('/tag/selected', ui.item.id);
+                    }
+                }
+            })
+        ;
+    };
+
     Tags.prototype.updateTitleField = function(field, annotation) {
-        $(field).find('input.tag_name').val(annotation.quote);
+        // selectize = this.tagnameselect[0].selectize;
+        // selectize.clear();
+        var name;
+        if (annotation.tag && annotation.tag.name) {
+            name = annotation.tag.name;
+        } else {
+            name = annotation.quote;
+        }
+        // selectize.addItem(name);
+        $(field).find('.tag_name').val(name);
     };
 
     Tags.prototype.initTagField = function(field) {
         var self = this;
         this.tagselect = $(field).find('.selectize-entity')
             .selectize({
-                maxItems: null,
                 valueField: 'value',
                 labelField: 'title',
                 searchField: 'title',
@@ -225,7 +250,7 @@ Annotator.Plugin.Tags = (function(_super) {
                     {value: 'location', title: 'Location'},
                     {value: 'event', title: 'Event'}
                 ],
-                placeholder: 'Select an entity...',
+                placeholder: 'Tag as an entity...',
                 create: false,
                 onChange: function(value) {
                     self.publish('/tag/changed', [value]);
@@ -239,81 +264,56 @@ Annotator.Plugin.Tags = (function(_super) {
 
         var selectize = this.tagselect[0].selectize;
         selectize.clear();
-        if (annotation.tags) {
-            var items = annotation.tags.map(function(t) {return t.primary.entity_type; });
-            for (var i = 0; i < items.length; i++) {
-                selectize.addItem(items[i]);
-            }
+        if (annotation.tag && annotation.tag.entity_type) {
+            selectize.addItem(annotation.tag.entity_type);
         }
     };
 
 
     Tags.prototype.initAttrField = function(field, annotation) {
-        var $content = $($(field).children()[0])
-        $content.append($('<div>').attribute_widget());
+        var $content = $($(field).children()[0]);
+        $content.append('<div>');
+        this.attribute_widget = $content.find('div').attribute_widget().data('customAttribute_widget');
     };
 
     Tags.prototype.updateAttrField = function(field, annotation) {
-        this.attribute_widget = $(field).find('.annotator-attribute-widget').data('customAttribute_widget');
+        // this.attribute_widget = $(field).find('.annotator-attribute-widget').data('customAttribute_widget');
         this.attribute_widget.reset();
-        if (annotation.tags) {
-            for (var i = 0; i < annotation.tags.length; i++) {
-                var tag = annotation.tags[i];
-                for (var attr in tag.primary) {
-                    if (attr !== 'entity_type' && attr !== 'id') { // skip these two attributes
-                        this.attribute_widget.add(attr, tag.primary[attr]);
-                    }
+        if (annotation.tag && annotation.tag.id) {
+            var entity = wb.store.entity[annotation.tag.id];
+            for (var attr in entity.primary) {
+                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'created_at' && attr !== 'created_by') { // skip these two attributes
+                    this.attribute_widget.add(attr, entity.primary[attr]);
                 }
-                for (var attr in tag.other) {
-                    this.attribute_widget.add(attr, tag.other[attr]);
-                }
+            }
+            for (var attr in entity.other) {
+                this.attribute_widget.add(attr, entity.other[attr]);
             }
         }
     };
 
-    Tags.prototype.setAnnotationTags = function(field, annotation) {
-        if (! annotation.tags) {
-            annotation.tags = [];
+    Tags.prototype.setTagName = function(field, annotation) {
+        if (! annotation.tag) {
+            annotation.tag = {};
         }
-        var tags = this.parseTags($(field).find('.selectize-entity').val());
+        annotation.tag.name = $(field).find('.tag_name').val();
+    },
 
-        for (var i = 0; i < tags.length; i++) {
-            var tag = tags[i];
-            var doesExist = false;
-            for (var j = 0; j < annotation.tags.length; j++) {
-                if (annotation.tags[j].primary.entity_type === tag.primary.entity_type) {
-                    doesExist = true;
-                    break;
-                }
-            }
-            if (! doesExist) {
-                annotation.tags.push(tag);
-            }
+    Tags.prototype.setAnnotationTag = function(field, annotation) {
+        if (! annotation.tag) {
+            annotation.tag = {};
+        }
+        var entity_type = $(field).find('.selectize-entity').val();
+        if (entity_type) {
+            annotation.tag.entity_type = entity_type;
         }
     };
 
     Tags.prototype.setTagAttributes = function(field, annotation) {
-        if (annotation.tags) {
-            for (var i = 0; i < annotation.tags.length; i ++) {
-                var tag = annotation.tags[i];
-                attribute = this.attribute_widget.serialize();
-                for (var attr in tag.primary) {
-                    if (attr !== 'entity_type' && attr !== 'id' && attribute[attr] === undefined) {
-                        delete tag.primary[attr]; // delete attributes not in the form
-                    }
-                }
-                for (var attr in tag.other) {
-                    if (attribute[attr] === undefined) {
-                        delete tag.other[attr]; // delete attributes not in the form
-                    }
-                }
-                tag.temporary = $.extend({}, attribute);
-            }
+        if (annotation.tag) {
+            var attribute = this.attribute_widget.serialize();
+            annotation.tag.attribute = $.extend({}, attribute);
         }
-    };
-
-    Tags.prototype.updateApplyAllField = function(field, annotation) {
-
     };
 
     Tags.prototype.applyToAll = function(field, annotation) {
@@ -325,14 +325,18 @@ Annotator.Plugin.Tags = (function(_super) {
     };
 
     Tags.prototype.updateViewer = function(field, annotation) {
-        field = $(field);
-        if (annotation.tags && $.isArray(annotation.tags) && annotation.tags.length) {
-            return field.addClass('annotator-tags').html(function() {
-                var string;
-                return string = $.map(annotation.tags, function(tag) {
-                    return '<span class="annotator-tag annotator-hl-' + tag.primary.entity_type + '">' + Annotator.Util.escape(tag.primary.entity_type) + '</span>';
-                }).join(' ');
-            });
+        if (annotation.tag) {
+            var table = '<table id="annotator-viewer-table">';
+            var entity = wb.store.entity[annotation.tag.id];
+            var primary = entity.primary;
+            table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
+            for (var attr in primary) {
+                if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                    table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
+                }
+            }
+            table += '</table>';
+            $(field).append($(table));
         } else {
             return field.remove();
         }

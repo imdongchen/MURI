@@ -82,16 +82,18 @@ Annotator = (function(_super) {
         this.viewer = new Annotator.Viewer({
             readOnly: this.options.readOnly
         });
-        this.viewer.hide().on("edit", this.onEditAnnotation).on("delete", this.onDeleteAnnotation).addField({
-            load: function(field, annotation) {
-                if (annotation.text) {
-                    $(field).html(Util.escape(annotation.text));
-                } else {
-                    $(field).html("<i>" + (_t('No Comment')) + "</i>");
-                }
-                return _this.publish('annotationViewerTextField', [field, annotation]);
-            }
-        }).element.appendTo(this.wrapper).bind({
+        this.viewer.hide().on("edit", this.onEditAnnotation).on("delete", this.onDeleteAnnotation)
+            // .addField({
+            //     load: function(field, annotation) {
+            //         if (annotation.text) {
+            //             $(field).html(Util.escape(annotation.text));
+            //         } else {
+            //             $(field).html("<i>" + (_t('No Comment')) + "</i>");
+            //         }
+            //         return _this.publish('annotationViewerTextField', [field, annotation]);
+            //     }
+            // })
+            .element.appendTo(this.wrapper).bind({
                 "mouseover": this.clearViewerHideTimer,
                 "mouseout": this.startViewerHideTimer
             });
@@ -248,10 +250,8 @@ Annotator = (function(_super) {
             annotation.quote.push($.trim(normed.text()));
             annotation.ranges.push(normed.serialize(this.wrapper[0], '.annotator-hl'));
             var cssClass = 'annotator-hl ';
-            if (annotation.tags) {
-                cssClass += $.map(annotation.tags, function(tag) {
-                    return 'annotator-hl-' + tag.primary.entity_type;
-                }).join(' ')
+            if (annotation.tag) {
+                cssClass += 'annotator-hl-' + annotation.tag.entity_type;
             }
             $.merge(annotation.highlights, this.highlightRange(normed, cssClass));
         }
@@ -481,10 +481,8 @@ Annotator = (function(_super) {
             cleanup();
             $(annotation.highlights).removeClass('annotator-hl-temporary');
             // here add color code for tags
-            for (var i = 0; i < annotation.tags.length; i++) {
-                var tagcss = 'annotator-hl-' + annotation.tags[i]['entity'];
-                $(annotation.highlights).addClass(tagcss)
-            }
+            var tagcss = 'annotator-hl-' + annotation.tag.entity_type;
+            $(annotation.highlights).addClass(tagcss)
             return _this.publish('annotationCreated', [annotation]);
         };
         cancel = function() {
@@ -549,7 +547,7 @@ Annotator = (function(_super) {
                 var new_ann = {};
                 new_ann.ranges = [{}];
                 new_ann.highlights = annotation.highlights;
-                new_ann.tags = annotation.tags;
+                new_ann.tag = annotation.tag;
                 new_ann.quote = annotation.quote;
                 new_ann.ranges[0].start = '';
                 new_ann.ranges[0].end = ''; //start and end is not important
@@ -570,10 +568,8 @@ Annotator = (function(_super) {
                 // if annotation does not exist, add it
                 if (! existed) {
                     $(new_ann.highlights).removeClass('annotator-hl-temporary');
-                    for (var i = 0; i < new_ann.tags.length; i++) {
-                        var tagcss = 'annotator-hl-' + new_ann.tags[i]['entity'];
-                        $(new_ann.highlights).addClass(tagcss)
-                    }
+                    var tagcss = 'annotator-hl-' + new_ann.tag.entity_type;
+                    $(new_ann.highlights).addClass(tagcss)
                     annotations.push(new_ann);
                 }
             }

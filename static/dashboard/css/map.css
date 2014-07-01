@@ -3,7 +3,7 @@
     height: 100%;
     overflow: hidden;
 }
-.olControlPanel { 
+.olControlPanel {
   display:block;
   width:  24px;
   height: 24px;
@@ -13,29 +13,29 @@
 }
 
 
-.olControlPanel .olControlNavigationItemInactive { 
-  width:  22px;  
+.olControlPanel .olControlNavigationItemInactive {
+  width:  22px;
   height: 22px;
   background-image: url("/static/dashboard/img/pan_off.png");
   cursor: pointer;
   margin: 0 0 5px 5px;
 }
-.olControlPanel .olControlNavigationItemActive { 
-  width:  22px;  
+.olControlPanel .olControlNavigationItemActive {
+  width:  22px;
   height: 22px;
   background-image: url("/static/dashboard/img/pan_on.png");
   cursor: pointer;
   margin: 0 0 5px 5px;
 }
-.olControlPanel .olControlSelectFeatureItemInactive { 
-  width:  22px;  
+.olControlPanel .olControlSelectFeatureItemInactive {
+  width:  22px;
   height: 22px;
   background-image: url("/static/dashboard/img/select_off.png");
   cursor: pointer;
   margin: 0 0 5px 5px;
 }
-.olControlPanel .olControlSelectFeatureItemActive { 
-  width:  22px;  
+.olControlPanel .olControlSelectFeatureItemActive {
+  width:  22px;
   height: 22px;
   background-image: url("/static/dashboard/img/select_on.png");
   cursor: pointer;

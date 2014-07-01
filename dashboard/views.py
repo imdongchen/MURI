@@ -88,7 +88,8 @@ def data(request):
                 annotations = de.annotation_set.all()
             # step 3.2: get entities created in those annotations
             for ann in annotations:
-                entities = ann.entities.all().select_subclasses()
+                if not ann.entity: continue
+                entities = Entity.objects.filter(id=ann.entity.id).select_subclasses()
                 # step 4: for each entry-entity pair, create an 'ele' data record
                 for entity in entities:
                     # Add to entity list
@@ -239,12 +240,11 @@ def network_relation(request):
 
 def entity_attr(request):
     if request.method == "POST":
-        entity = request.POST.get("entity", "")
-        attr	= request.POST.get("attr", "")
-        id  = request.POST.get("row_id", 0)
+        attr	= request.POST.get("attribute", "")
+        id  = request.POST.get("id", 0)
         id = str(id)
         val = request.POST.get("value", "")
-        if not entity or not attr or not id:
+        if not attr or not id:
             print "Warning: request params incorrect"
             return
         try:
@@ -253,11 +253,16 @@ def entity_attr(request):
             print "entity not exist for editing"
             return
         else:
-            if not hasattr(ent, entity) :
-                print "lala"
-                return
-            if not hasattr(ent, attr):
-                return
-            setattr(ent, attr, val)
-            ent.save()
+            if hasattr(ent, attr):
+                setattr(ent, attr, val)
+                ent.save()
+            else:
+                # first, remove the entity-attribute link if the entity already has such an attribute
+                existed_attr = ent.attributes.filter(attr=attr)
+                if len(existed_attr):
+                    ent.attributes.remove(existed_attr[0])
+                # add another entity-attribute link
+                attr, created = Attribute.objects.get_or_create(attr=attr, val=val)
+                ent.attributes.add(attr)
+
             return HttpResponse(val)

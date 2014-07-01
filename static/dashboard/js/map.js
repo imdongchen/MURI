@@ -1,7 +1,7 @@
 $.widget("viz.vizmap", $.viz.vizbase, {
     _create: function() {
-        this.options.extend.maximize = this.update.bind(this);
-        this.options.extend.restore = this.update.bind(this);
+        this.options.extend.maximize = this.resize.bind(this);
+        this.options.extend.restore = this.resize.bind(this);
         this.options.base.resizeStop = this.resize.bind(this);
         this.options.base.dragStop = this.resize.bind(this);
         this._super("_create");
@@ -11,7 +11,17 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         this.layers = [];
         this.features = [];
 
-        var map = new OpenLayers.Map(this.element.attr("id"));
+        var map = new OpenLayers.Map({
+            div: this.element.attr("id"),
+            eventListeners: {
+                featureover: function(e) {
+                    this.highlight(e.feature);
+                }.bind(this),
+                featureout: function(e) {
+                    this.unhighlight(e.feature);
+                }.bind(this)
+            }
+        });
 //        this.element.css("overflow", "hidden")
         var ghyb = new OpenLayers.Layer.Google(
             "Google Hybrid",
@@ -100,7 +110,7 @@ $.widget("viz.vizmap", $.viz.vizbase, {
             navCtrls[i].enableZoomWheel();
         }
 
-        this._addFeatures();
+        this.updateData();
 
         this.map = map;
 
@@ -109,7 +119,7 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         this.update();
 
     },
-    _addFeatures: function() {
+    updateData: function() {
         var point_feas = [], line_feas = [];
         var features = this.features;
         this.options.group.all().forEach(function(d) {
@@ -151,31 +161,62 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         this.pointlayer.redraw();
 
     },
-    highlight: function (features_id) {
-        for (var i = 0; i < this.highlightedFeatures.length; i++) {
-            this.mapControls['select'].unhighlight(this.highlightedFeatures[i]);
-        }
-        this.highlightedFeatures = [];
-        for (var i = 0; i < this.map.popups.length; i++) {
-            this.map.removePopup(this.map.popups[i]);
-        }
-
-        var layers = [linelayer, pointlayer];
-        for (var i = 0; i < features_id.length; i++) {
-            for (var j = 0; j < layers.length; j++) {
-                var found = false;
-                var locallayer = layers[j];
-                for (var k = 0, len = locallayer.features.length; k < len; k++) {
-                    if (locallayer.features[k].attributes.id == features_id[i]) {
-                        this._showDetails(locallayer.features[k]);
-                        this.mapControls['select'].highlight(locallayer.features[k]);
-                        this.highlightedFeatures.push(locallayer.features[k]);
-                        found = true;
-                        break;
-                    }
-                }
-                if (found == true) break;
+    reload: function() {
+        this.updateData();
+        this.update();
+    },
+    highlight: function (feature) {
+        var entity = wb.store.entity[feature.attributes.id];
+        var primary = entity.primary;
+        var popup = '<div id="map-popup" class="entity-tooltip"><table>';
+        popup += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + '</th><td>' + primary.name + '</td></tr>';
+        for (var attr in primary) {
+            if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                popup += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
             }
+        }
+        popup += '</table></div>';
+
+        feature.popup = new OpenLayers.Popup.FramedCloud(
+                "location_info",
+                feature.geometry.getBounds().getCenterLonLat(),
+                new OpenLayers.Size(200,150),
+                popup,
+                null,
+                true
+        );
+
+        this.map.addPopup(feature.popup, true);
+
+        // for (var i = 0; i < this.highlightedFeatures.length; i++) {
+        //     this.mapControls['select'].unhighlight(this.highlightedFeatures[i]);
+        // }
+        // this.highlightedFeatures = [];
+        // for (var i = 0; i < this.map.popups.length; i++) {
+        //     this.map.removePopup(this.map.popups[i]);
+        // }
+        //
+        // var layers = [linelayer, pointlayer];
+        // for (var i = 0; i < features_id.length; i++) {
+        //     for (var j = 0; j < layers.length; j++) {
+        //         var found = false;
+        //         var locallayer = layers[j];
+        //         for (var k = 0, len = locallayer.features.length; k < len; k++) {
+        //             if (locallayer.features[k].attributes.id == features_id[i]) {
+        //                 this._showDetails(locallayer.features[k]);
+        //                 this.mapControls['select'].highlight(locallayer.features[k]);
+        //                 this.highlightedFeatures.push(locallayer.features[k]);
+        //                 found = true;
+        //                 break;
+        //             }
+        //         }
+        //         if (found == true) break;
+        //     }
+        // }
+    },
+    unhighlight: function(feature) {
+        if (feature.popup) {
+            this.map.removePopup(feature.popup);
         }
     },
 

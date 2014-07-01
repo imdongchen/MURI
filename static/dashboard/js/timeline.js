@@ -20,6 +20,9 @@ $.widget("viz.viztimeline", $.viz.vizbase, {
         this.element.data("viz", "vizViztimeline")
 
     },
+    updateData: function() {
+
+    },
     update: function() {
         var width = this.element.width();
         var height = this.element.height();
@@ -34,6 +37,10 @@ $.widget("viz.viztimeline", $.viz.vizbase, {
             .round(d3.time.day)
         ;
         d3.select(this.element[0]).call(this.timeline);
+    },
+    reload: function() {
+        this.updateData();
+        this.update();
     },
     resize: function() {
         this._super('resize');

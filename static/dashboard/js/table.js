@@ -9,6 +9,13 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         this.element.addClass("viztable dataentrytable");
         this.element.data("viz", "vizVizdataentrytable");
 
+        this.updateData();
+
+        this._setupAnnotator();
+
+        this.update();
+    },
+    updateData: function() {
         var data = [];
         this.options.group.all().forEach(function(d) {
             if (d.key) {
@@ -34,13 +41,16 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
         ;
-
-        this._setupAnnotator();
-
-        this.update();
     },
+    // update view
     update: function() {
         d3.select(this.element[0]).call(this.table);
+    },
+    reload: function() {
+        this.element.empty();
+        this.updateData();
+        this._resetAnnotator();
+        this.update();
     },
     _setupAnnotator: function() {
         var ele = this.element.closest(".ui-dialog");
@@ -82,6 +92,14 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
         this.options.extend.restore  = this.resize.bind(this);
         this._super('_create');
 
+        this.updateData();
+        this.update();
+
+        this.element.addClass("viztable entitytable");
+        // this.element.data("entity", 'dataentry');
+        this.element.data("viz", "vizVizentitytable");
+    },
+    updateData: function() {
         // determine columns first
         var columns = ['ID', 'Name'];
         this.options.group.top(2).some(function(d) {
@@ -122,16 +140,19 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
             .on('filter', function() {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
+            .editable(true)
+            .on('edit', function(entity, attr) {
+                $.publish('/entity/attribute/change', [entity, attr]);
+            })
         ;
-
-        this.update();
-
-        this.element.addClass("viztable entitytable");
-        // this.element.data("entity", 'dataentry');
-        this.element.data("viz", "vizVizentitytable");
     },
     update: function() {
         d3.select(this.element[0]).call(this.table);
+    },
+    reload: function() {
+        this.element.empty();
+        this.updateData();
+        this.update();
     },
     resize: function() {
         this._super('resize');
@@ -147,7 +168,8 @@ wb.viz.table = function() {
     ;
     var dimension, group, data, columns;
     var table;
-    var dispatch = d3.dispatch('filter');
+    var editable = false;
+    var dispatch = d3.dispatch('filter', 'edit');
 
     function exports(selection) {
         selection.each(function() {
@@ -217,6 +239,30 @@ wb.viz.table = function() {
                     }
                     dispatch.filter();
                 });
+
+                if (editable) {
+                    $('td', table.fnGetNodes()).editable("entity/attributes", {
+                        tooltip: "Double click to edit",
+                        cancel: "Cancel",
+                        submit: "Save",
+                        event: "dblclick",
+                        indicator: '<img src="/static/dashboard/img/wait.gif">',
+                        placeholder: "",
+                        callback: function( sValue, y ) {
+                            var aPos = table.fnGetPosition( this );
+                            table.fnUpdate( sValue, aPos[0], aPos[2] );
+                            dispatch.edit();
+                        },
+                        submitdata: function ( value, settings ) {
+                            var column = table.fnGetPosition( this )[2];
+                            var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
+                            return {
+                                id: $(this.parentNode).data("id"),
+                                attribute: attr,
+                            };
+                        }
+                    });
+                }
             }
             // filter table
             var filter = '';
@@ -283,6 +329,13 @@ wb.viz.table = function() {
         data = _;
         return exports;
     };
+
+    exports.editable = function(_) {
+        if (!arguments.length) return editable;
+        editable = _;
+        return exports;
+    };
+
     return d3.rebind(exports, dispatch, 'on');
 };
 
@@ -400,29 +453,29 @@ $.widget("viz.viztable", $.viz.vizcontainer, {
 
             });
 
-            if (self.options.editable) {
-                $('td', table.fnGetNodes()).editable("entity/attributes", {
-                    tooltip: "Double click to edit",
-                    cancel: "Cancel",
-                    submit: "Save",
-                    event: "dblclick",
-                    indicator: '<img src="/static/dashboard/img/wait.gif">',
-                    placeholder: "",
-                    "callback": function( sValue, y ) {
-                        var aPos = table.fnGetPosition( this );
-                        table.fnUpdate( sValue, aPos[0], aPos[2] );
-                    },
-                    "submitdata": function ( value, settings ) {
-                        var column = table.fnGetPosition( this )[2];
-                        var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
-                        return {
-                            "row_id": $(this.parentNode).data("id"),
-                            "attr": attr,
-                            "entity": self.element.data("entity")
-                        };
-                    }
-                })
-            }
+            // if (self.options.editable) {
+            //     $('td', table.fnGetNodes()).editable("entity/attributes", {
+            //         tooltip: "Double click to edit",
+            //         cancel: "Cancel",
+            //         submit: "Save",
+            //         event: "dblclick",
+            //         indicator: '<img src="/static/dashboard/img/wait.gif">',
+            //         placeholder: "",
+            //         "callback": function( sValue, y ) {
+            //             var aPos = table.fnGetPosition( this );
+            //             table.fnUpdate( sValue, aPos[0], aPos[2] );
+            //         },
+            //         "submitdata": function ( value, settings ) {
+            //             var column = table.fnGetPosition( this )[2];
+            //             var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
+            //             return {
+            //                 "row_id": $(this.parentNode).data("id"),
+            //                 "attr": attr,
+            //                 "entity": self.element.data("entity")
+            //             };
+            //         }
+            //     });
+            // }
 
         })
 

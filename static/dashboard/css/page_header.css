@@ -45,7 +45,7 @@ nav.blue li {list-style: none; float: left; border-right: 1px solid #272b76; pos
 nav.blue li.first, nav li.first a {border-top-left-radius: 2px; border-bottom-left-radius: 2px; -moz-border-top-left-radius: 2px; -moz-border-bottom-left-radius: 2px;}
 nav.blue li.last, nav li.last a {border-top-right-radius: 2px; border-bottom-right-radius: 2px; -moz-border-top-right-radius: 2px; -moz-border-bottom-right-radius: 2px;}
 nav.blue li.drop a {padding-right: 30px;}
-nav.blue li a {display: block; padding: 9px 23px 10px; text-decoration: none;  font-size: 12px; color: #fff; border-top: 1px solid #5a6eb7; border-left: 1px solid #4056a9; text-shadow: 0px -1px 0px #000;}
+nav.blue li a {display: block; padding: 12px 23px; text-decoration: none;  font-size: 12px; color: #fff; border-top: 0; border-left: 0; text-shadow: 0px -1px 0px #000;}
 nav.blue li a {background-position: 0px 0px;}
 nav.blue li a:hover, nav li.active a {background-position: 0px -36px;}
 nav.blue li a:active {background-position: 0px -72px;}
@@ -86,16 +86,9 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
 #user_login nav #login-trigger,
 #user_login nav #signup a {
     display: inline-block;
-    *display: inline;
-    *zoom: 1;
-    height: 25px;
-    line-height: 35px;
-    font-weight: bold;
-    vertical-align: middle;
-    padding: 0 8px;
+    padding: 13px 20px;
     text-decoration: none;
-    color: #444;
-    text-shadow: 0 1px 0 #fff;
+    color: #fff;
 }
 
 #user_login nav #signup a {
@@ -106,16 +99,16 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
     border-radius: 3px 0 0 3px;
 }
 
-#user_login nav #login-trigger:hover,
+/*#user_login nav #login-trigger:hover,
 #user_login nav #login .active,
 #user_login nav #signup a:hover {
     background: #fff;
-}
+}*/
 
 #user_login nav .content {
     display: none;
     position: absolute;
-    top: 24px;
+    /*top: 24px;*/
     right: 0;
     z-index: 999;
     background: #fff;
@@ -123,6 +116,7 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
     padding: 15px;
     box-shadow: 0 2px 2px -1px rgba(0,0,0,.9);
     border-radius: 3px 0 3px 3px;
+    border: 1px solid #ccc;
 }
 
 #user_login nav li .content {
@@ -142,59 +136,18 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
     box-shadow: 0 1px 1px #ccc inset;
 }
 
-#inputs input:focus {
-    background-color: #fff;
-    border-color: #e8c291;
-    outline: none;
-    box-shadow: 0 0 0 1px #e8c291 inset;
-}
-
-/*--------------------*/
-
-#user_login #actions {
-    margin: 10px 0 0 0;
-}
-
 #user_login #submit {
-    background-color: #1102BD;
-    background-image: linear-gradient(top, #e97171, #d14545);
+    background-color: #4D6CBB;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
     text-shadow: 0 1px 0 rgba(0,0,0,.5);
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.3) inset;
-    border: 1px solid #7e1515;
-    float: left;
+    border: 0;
+    float: right;
     height: 30px;
     padding: 0;
     width: 100px;
     cursor: pointer;
     font: bold 14px Arial, Helvetica;
     color: #fff;
-}
-
-#user_login #submit:hover,
-#user_login #submit:focus {
-    background-color: #e97171;
-    background-image: linear-gradient(top, #d14545, #e97171);
-}
-
-#login #submit:active {
-    outline: none;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset;
-}
-
-#login #submit::-moz-focus-inner {
-    border: none;
-}
-
-#login label {
-    float: right;
-    line-height: 30px;
-}
-
-#login label input {
-    position: relative;
-    top: 2px;
-    right: 2px;
 }

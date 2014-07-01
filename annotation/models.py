@@ -12,7 +12,7 @@ class Annotation(models.Model):
     startOffset = models.IntegerField()
     endOffset   = models.IntegerField()
     dataentry   = models.ForeignKey(DataEntry)
-    entities	= models.ManyToManyField(Entity)
+    entity  	= models.ForeignKey(Entity, blank=True, null=True)
     created_by  = models.ForeignKey(User, blank=True, null=True)
     created_at  = models.DateTimeField(default=datetime.datetime.now)
 
@@ -26,23 +26,22 @@ class Annotation(models.Model):
             'endOffset'  : self.endOffset
         }]
         ann['anchor']   = self.dataentry.id
-        ann['tags'] = []
-        for ent in self.entities.all().select_subclasses():
-            ann['tags'].append(ent.get_attr())
+        ann['tag'] = {'id': self.entity.id, 'entity_type': self.entity.entity_type}
+
         return ann
 
     def __unicode__(self):
         return self.entities.all()[0].name
 
-    def save(self, *args, **kwargs):
-        """
-        create relationship between data entry and entity automatically
-        """
-        for entity in self.entities:
-            rel, created = Relationship.objects.get_or_create(source=None, target=entity, dataentry=self.dataentry)
-            if created:
-                rel.relation = 'contain'
-                rel.date = self.dataentry.date
-                rel.created_by = self.created_by
-                rel.save()
-        super(Annotation, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     """
+    #     create relationship between data entry and entity automatically
+    #     """
+    #     for entity in self.entities:
+    #         rel, created = Relationship.objects.get_or_create(source=None, target=entity, dataentry=self.dataentry)
+    #         if created:
+    #             rel.relation = 'contain'
+    #             rel.date = self.dataentry.date
+    #             rel.created_by = self.created_by
+    #             rel.save()
+    #     super(Annotation, self).save(*args, **kwargs)

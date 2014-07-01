@@ -415,7 +415,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     },
 
     showTooltip: function(d) {
-        var tooltip = '<div id="network-tooltip"><table>'
+        var tooltip = '<div id="network-tooltip" class="entity-tooltip"><table>'
         if (d.id) {
             var node = d.id.split('-');
             var node_type = node[0], node_id = node[1];
@@ -427,9 +427,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 var primary = d.primary;
                 tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + '</th><td>' + primary.name + '</td></tr>';
                 for (var attr in primary) {
-                    if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
-                        tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
-                    }
+                    tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
                 }
             }
             tooltip += '</table></div>';
@@ -530,6 +528,11 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         });
         this.restart();
         this.setMode('normal');
+    },
+
+    reload: function() {
+        this.updateData();
+        this.update();
     },
 
     resetMouseVars: function() {
