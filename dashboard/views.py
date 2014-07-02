@@ -9,6 +9,7 @@ from django.template import Context
 from django.db.models import Q
 from itertools import chain
 import copy
+import settings
 
 def index(request):
     bbox    = request.REQUEST.getlist('map')
@@ -22,7 +23,15 @@ def index(request):
     if (len(message_ids) != 0):
         dialogs.append("message_table")
 
-    return render(request, 'dashboard/index.html', Context({"dialogs": dialogs}))
+    if settings.FORCE_SCRIPT_NAME:
+        PREFIX_URL = settings.FORCE_SCRIPT_NAME;
+    else:
+        PREFIX_URL = ''
+
+    return render(request, 'dashboard/index.html', Context({
+        "dialogs": dialogs,
+        "PREFIX_URL": PREFIX_URL
+    }))
 
 
 def data(request):

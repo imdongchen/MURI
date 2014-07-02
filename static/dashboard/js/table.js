@@ -56,7 +56,7 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         var ele = this.element.closest(".ui-dialog");
         ele.annotator();
         ele.annotator('addPlugin', 'Store', {
-            prefix: '/annotation',
+            prefix: 'annotation',
             urls: {
                 // These are the default URLs.
                 create:  '/annotations',
