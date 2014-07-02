@@ -23,7 +23,7 @@ def index(request):
     if (len(message_ids) != 0):
         dialogs.append("message_table")
 
-    if settings.FORCE_SCRIPT_NAME:
+    if hasattr(settings, 'FORCE_SCRIPT_NAME'):
         PREFIX_URL = settings.FORCE_SCRIPT_NAME;
     else:
         PREFIX_URL = ''
