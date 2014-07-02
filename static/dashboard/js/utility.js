@@ -26,3 +26,7 @@ wb.utility.uniqueArray = function(arr) {
         return self.indexOf(d) === i;
     });
 };
+
+wb.utility.Date = function(date) {
+    return date ? new Date(date) : null;
+};

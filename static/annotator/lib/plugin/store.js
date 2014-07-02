@@ -80,9 +80,10 @@ Annotator.Plugin.Store = (function(_super) {
                 _this.updateAnnotation(to_create[i], annotations[i]); // assume the order of the sent annotations and returned annotations is the same
                 _this.annotator.setupAnnotation(to_create[i]);
             }
-            
+
             $.publish("/entity/add", [entity, relationships]);
-            Annotator.showNotification(Annotator._t("Added " + annotations.length + " new annotations!"), Annotator.Notification.SUCCESS);
+            // Annotator.showNotification(Annotator._t("Added " + annotations.length + " new annotations!"), Annotator.Notification.SUCCESS);
+            wb.notify(annotations.length + ' annotations added!', 'success');
         });
     };
 
@@ -100,6 +101,7 @@ Annotator.Plugin.Store = (function(_super) {
                 wb.store.relationship[relationship.primary.id] = relationship;
 
                 $.publish("/entity/add", [entity, [relationship]]);
+                wb.notify('1 annotation added!', 'success');
             });
         } else {
             return this.updateAnnotation(annotation, {});
@@ -156,7 +158,8 @@ Annotator.Plugin.Store = (function(_super) {
                 _this.updateAnnotation(ann);
             });
 
-            Annotator.showNotification(Annotator._t("Updated " + to_update.length + " annotations!"), Annotator.Notification.SUCCESS);
+            // Annotator.showNotification(Annotator._t("Updated " + to_update.length + " annotations!"), Annotator.Notification.SUCCESS);
+            wb.notify(to_update.length + ' annotations updated!', 'success');
         });
     };
 
@@ -173,6 +176,7 @@ Annotator.Plugin.Store = (function(_super) {
                     $.publish('entity/attribute/change', [data.entity]);
                 }
                 _this.updateAnnotation(annotation);
+                wb.notify('1 annotation updated!', 'success');
             }));
         }
     };
@@ -195,7 +199,8 @@ Annotator.Plugin.Store = (function(_super) {
                     _this.unregisterAnnotation(ann);
                 });
                 $.publish('/entity/delete', [to_delete]);
-                Annotator.showNotification(Annotator._t("Deleted " + to_delete.length + " annotations!"), Annotator.Notification.SUCCESS);
+                // Annotator.showNotification(Annotator._t("Deleted " + to_delete.length + " annotations!"), Annotator.Notification.SUCCESS);
+                wb.notify(to_delete.length + ' annotations deleted', 'success');
             });
         }
     };

@@ -52,7 +52,6 @@ def get_or_create_annotation(request):
         return HttpResponse(json.dumps(res), mimetype='application/json')
     if request.method == 'DELETE':
         res = {}
-        print request.method
         data = json.loads(request.body)
         for d in data:
             try:
@@ -72,10 +71,9 @@ def create_annotation(request, data):
     quote  = data.get('quote', '')
 
     if len(ranges) == 0 or quote == '' or 'startOffset' not in ranges[0] or 'endOffset' not in ranges[0] or anchor == '0':
-        res['error'] = 'Error: no tag received'
         print "error: no tag received"
         print ranges, anchor, quote
-        return res
+        return
 
     entry = None
     try:

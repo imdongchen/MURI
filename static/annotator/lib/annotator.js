@@ -535,7 +535,7 @@ Annotator = (function(_super) {
         var annotations = [];
 
         var root = this.wrapper[0];
-        $(root).find('tr').each(matchAnnotation);
+        $(root).find('table.dataTable > tbody > tr').each(matchAnnotation);
 
         this.publish('/annotations/created', [annotations])
 
@@ -555,12 +555,15 @@ Annotator = (function(_super) {
                 new_ann.ranges[0].endOffset = match.index + match[0].length;
                 new_ann.anchor = $(row).data("id");
 
+                // check if the quote has already been annotated
                 var existed = false;
                 for (var k = 0, len = existing_anns.length; k < len; k++) {
                     var ann = existing_anns[k];
-                    if (ann.anchor === new_ann.anchor && ann.ranges[0].start === new_ann.ranges[0].start) {
-                        // annotation existed
-                        // TODO: what if a different tag?
+                    if (ann.anchor === new_ann.anchor && ann.tag.id === new_ann.tag.id
+                        && ((ann.ranges[0].startOffset <= new_ann.ranges[0].startOffset && ann.ranges[0].endOffset >= new_ann.ranges[0].endOffset)
+                        || (ann.ranges[0].startOffset >= new_ann.ranges[0].startOffset && ann.ranges[0].endOffset <= new_ann.ranges[0].endOffset))) {
+                        // if there exists one annotation that contains or is contained within the new annotation, and has the same tag and anchor
+                        // then do not add new annotation
                         existed = true;
                         break;
                     }

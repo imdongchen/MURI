@@ -254,17 +254,20 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             $('#relation_form form').submit(function(e) {
                 var rel = $('#relation').val();
                 link.rel = rel;
-                $.post('network/relation', {
+                $.post('relationship', {
                     source: link.source.id,
                     target: link.target.id,
                     rel: link.rel
                 }, function(d) {
-                    console.log(d);
+                    var rel = d.relationship;
+                    $.publish('/relationship/add', rel);
+                    wb.notify('1 relationship added!', 'success');
+                    
                     activitylog({
                         operation: 'create relationship',
                         data: JSON.stringify({'window_type': 'network', 'id': d.id})
                     });
-                })
+                });
                 $(this).trigger('reset').parent().hide();
                 e.preventDefault();
             });
@@ -427,7 +430,9 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 var primary = d.primary;
                 tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + '</th><td>' + primary.name + '</td></tr>';
                 for (var attr in primary) {
-                    tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
+                    if (attr !== 'name' && attr !== 'entity_type' && attr !== 'id' && primary[attr]) {
+                        tooltip += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
+                    }
                 }
             }
             tooltip += '</table></div>';
@@ -601,7 +606,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr("dy", "-.95em")
             .text(function(d) {
                 if (d.primary) {
-                    return d.primary.name
+                    return d.primary.name.length < 20 ? d.primary.name : d.primary.name.substring(0, 20) + '...';
                 } else {
                     return wb.utility.formatDate(d.date);
                 }

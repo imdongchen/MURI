@@ -12,11 +12,14 @@
 <script src="http://maps.google.com/maps/api/js?v=3&amp;sensor=false"></script>
 
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/notification.css' %}">
+
+{% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/wb.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/utility.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/vizbase.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script>
-{% compress js %}
+<script type="text/javascript" src="{% static 'dashboard/js/notification.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/activitylog.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/main.js' %}"></script>
 {% endcompress %}
@@ -26,6 +29,9 @@
 
 {% block page-header %}
     {% include 'dashboard/page_header.html' %}
+    <div id='notification' class='notification'>
+
+    </div>
 {% endblock %}
 {% block page-body %}
     {% include 'dashboard/table.html' %}

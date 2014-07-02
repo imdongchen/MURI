@@ -187,8 +187,6 @@ def data(request):
 #                             for rel in rels:
 #                                 graph.add_edge(source.id, ent.id, rel=rel.description)
 
-
-
 #       linked_entities = list(events.select_subclasses())
 
 #       for eve in events:
@@ -205,7 +203,7 @@ def data(request):
     # return
 
 
-def network_relation(request):
+def relationship(request):
     """
     Process post request for creating new relationships
 
@@ -218,21 +216,23 @@ def network_relation(request):
 
         if source == '' or target == '':
             return
-        if source[0] == 'm':
-            source = Message.objects.get(id=int(source[1:]))
-        else:
-            source = Entity.objects.get(id=int(source))
-        if target[0] == 'm':
-            target = Message.objects.get(id=int(target[1:]))
-        else:
-            target = Entity.objects.get(id=int(target))
+        source = source.split('-')
+        target = target.split('-')
+        if source[0] == 'dataentry':
+            source = Dataentry.objects.get(id=int(source[1]))
+        elif source[0] == 'entity':
+            source = Entity.objects.get(id=int(source[1]))
+        if target[0] == 'dataentry':
+            target = Dataentry.objects.get(id=int(target[1]))
+        elif target[0] == 'entity':
+            target = Entity.objects.get(id=int(target[1]))
 
-        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel)
+        user = None
+        if request.user.is_authenticated():
+            user = request.user
+        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel, created_by=user)
         rel.save()
-        res['source'] = source.id
-        res['target'] = target.id
-        res['rel'] = rel.description
-        res['id'] = rel.id
+        res['relationship'] = rel.get_attr()
 
         return HttpResponse(json.dumps(res), mimetype='application/json')
 

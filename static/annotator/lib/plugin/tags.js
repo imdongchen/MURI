@@ -135,13 +135,13 @@ Annotator.Plugin.Tags = (function(_super) {
             submit: this.applyToAll
         });
 
-        this.subscribe('/tag/changed', function(e, value) {
+        this.subscribe('/tag/changed', function(value) {
             if (value === 'location') {
                 if (self.annotation) {
                     // search for mgrs string and update attribute
                     var node = self.annotation.highlights[0].parentNode;
                     if (!node) {
-                        console.log(annotation)
+                        console.warn(annotation);
                     }
                     var latlon = [];
                     if (!$(node).data('location')) {

@@ -21,6 +21,7 @@ $(document).ready(function() {
         type: 'POST',
         data: {datasets: ['Sunni Criminal', 'test']},
         success: function(res) {
+
             wb.store.relationship = res.relationship_dict;
             wb.store.dataentry = res.dataentry_dict;
             wb.store.entity = res.entity_dict;
@@ -102,7 +103,7 @@ $.subscribe("/viz/close", function(e, panel_id, panel_title) {
     activitylog({
         operation: 'close window',
         data: JSON.stringify({'window_type': panel_title})
-    })
+    });
 });
 
 // do when a visual artifact performs a filter
@@ -119,11 +120,48 @@ $.subscribe('/data/filter', function() {
 });
 
 
+$.subscribe('/relationship/add', function(e, relationship) {
+    var facts = [];
+    var fact = {};
+    var primary = relationship.primary;
+    primary.date = wb.utility.Date(primary.date);
+    wb.store.relationship[relationship.primary.id] = relationship;
+
+    var source = wb.store.entity[primary.source];
+    var target = wb.store.entity[primary.target];
+
+    fact.dataentry = primary.dataentry;
+    fact.date = primary.date;
+    fact.relationship = primary.id;
+    var ENTITY_ENUM = wb.ENTITY_ENUM;
+    for (var i = 0; i < ENTITY_ENUM.length; i++) {
+        var ENTITY_TYPE = ENTITY_ENUM[i];
+        if (source.primary.entity_type === ENTITY_TYPE) {
+            fact[ENTITY_TYPE] = primary.source;
+        } else if (target.primary.entity_type === ENTITY_TYPE) {
+            fact[ENTITY_TYPE] = primary.target;
+        } else {
+            fact[ENTITY_TYPE] = 0;
+        }
+    }
+    facts.push(fact);
+    if (source.primary.entity_type === target.primary.entity_type) {
+        var fact2 = $.extend({}, fact);
+        fact2[target.primary.entity_type] = target.primary.id;
+        facts.push(fact2);
+    }
+
+    wb.datafilter.add(facts);
+
+    $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
+});
+
+
 // do when an entity is added (created by annotation)
 $.subscribe("/entity/add", function(e, entity, relationships) {
     var facts = [];
     relationships.forEach(function(relationship) {
-        relationship.primary.date = new Date(relationship.primary.date);
+        relationship.primary.date = wb.utility.Date(relationship.primary.date);
         wb.store.relationship[relationship.primary.id] = relationship;
 
         var fact = {};
@@ -211,7 +249,7 @@ $.subscribe('/data/reload', function(e, except) {
     var dataentry_table_id = $('.dataentrytable').attr('id');
     for (var j = 0; j < wb.vartifacts.length; j++) {
         var panel = wb.vartifacts[j];
-        if (dataentry_table_id.indexOf(panel.attr("id")) < 0) { // if it is not data entry table, reload it
+        if (except.indexOf(panel.attr("id")) < 0) {
             var viz = panel.data("viz");
             panel.data(viz).reload();
         }

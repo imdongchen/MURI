@@ -1,32 +1,3 @@
-$.widget("viz.vizcontainer", $.ui.dialogExtend, {
-    options: {
-        color: "red",
-        "closable" :    true,
-        "maximizable" : true,
-        "minimizable" : true,
-        "minimizeLocation" : "right",
-        "collapsable" : true,
-        "dblclick" : "collapse",
-        "close" : function(){
-            this.destroy();
-        },
-        maximize: this.resize
-
-    },
-    _create: function() {
-        this._super("_create");
-    },
-    update: function() {
-        alert ("base");
-    },
-    resize: function() {
-        this.element.publish('resize');
-    },
-    destroy: function() {
-        this._super("destroy");
-    },
-});
-
 $.widget('viz.vizbase', {
     options: {
         title: '',
@@ -68,9 +39,9 @@ $.widget('viz.vizbase', {
     _destroy: function() {
         if (this.options.dimension) {
             this.options.dimension.filterAll();
-            $.publish('/data/filter');
         }
         $.publish("/viz/close", [this.element.attr("id"), this.element.dialog('option', 'title')]);
         this.element.dialog('destroy').remove();
+        $.publish('/data/filter');
     }
 })
