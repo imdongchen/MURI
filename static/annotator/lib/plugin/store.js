@@ -169,11 +169,11 @@ Annotator.Plugin.Store = (function(_super) {
             return this._apiRequest('update', annotation, (function(data) {
                 if (annotation.tag.entity_type !== wb.store.entity[annotation.tag.id].primary.entity_type) {
                     // if entity type changed
-                    $.publish('entity/annotation/change', [[annotation], data.entity, data.relationship]);
+                    $.publish('/entity/annotation/change', [[annotation], data.entity, data.relationship]);
 
                 } else {
                     // if entity type does not change; only attributes change
-                    $.publish('entity/attribute/change', [data.entity]);
+                    $.publish('/entity/attribute/change', [data.entity]);
                 }
                 _this.updateAnnotation(annotation);
                 wb.notify('1 annotation updated!', 'success');

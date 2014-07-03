@@ -119,9 +119,12 @@ def save_annotation(request, annotation, data):
             fields = obj._meta.get_all_field_names()
             if attr in fields:
                 if entity_type == 'location' and attr == 'geometry':
-                    latlon = tag['attribute'][attr].split(',')
-                    geometry = fromstr('POINT(%s %s)' % (latlon[1], latlon[0]))
-                    obj.geometry = geometry
+                    wkt = tag['attribute'][attr]
+                    try:
+                        geometry = fromstr(wkt)
+                        obj.geometry = geometry
+                    except:
+                        print 'Warning: geometry format unrecognized, ', wkt
                 else:
                     setattr(obj, attr, tag['attribute'][attr])
             else:

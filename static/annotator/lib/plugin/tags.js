@@ -154,7 +154,7 @@ Annotator.Plugin.Tags = (function(_super) {
                     }
                     latlon = $(node).data('location');
                     if (latlon && latlon.length === 2) {
-                        self.attribute_widget.add('geometry', latlon.toString());
+                        self.attribute_widget.add('geometry', 'POINT(' + latlon[1] + ' ' + latlon[0] +')');
                     }
                 }
             }
