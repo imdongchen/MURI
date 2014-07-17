@@ -18,11 +18,14 @@ $.widget('wb.notification', {
 
 
 wb.notify = function(message, status) {
+    // status could be 'error', 'info', 'success'
+    // status defaults to 'info'
+    
     if (!message) {
         return;
     }
     status = status || 'info';
-    
+
     var $notification = $('#notification');
     if ($notification) {
         $notification.addClass('notification-' + status).html(message);

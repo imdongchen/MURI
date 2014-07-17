@@ -268,10 +268,27 @@ Annotator = (function(_super) {
 
     Annotator.prototype.deleteAnnotation = function(annotation) {
         var child, h, _i, _len, _ref;
+        var ann = annotation;
+        if (ann.highlights != null) {
+            _ref = ann.highlights;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                h = _ref[_i];
+                if (!(h.parentNode != null)) {
+                    continue;
+                }
+                child = h.childNodes[0];
+                $(h).replaceWith(h.childNodes);
+            }
+        }
+        this.publish('annotationDeleted', [annotation]);
+        return annotation;
+    };
+
+    Annotator.prototype.deleteAnnotations = function(annotation) {
+        var child, h, _i, _len, _ref;
         var anns = this.plugins.Store.annotations.filter(function(ann) {
             return ann.quote === annotation.quote;
         });
-        anns.push(annotation);
         for (var k = 0; k < anns.length; k++) {
             var ann = anns[k];
             if (ann.highlights != null) {
@@ -286,9 +303,10 @@ Annotator = (function(_super) {
                 }
             }
         }
-        this.publish('annotationDeleted', [annotation]);
+        this.publish('annotationsDeleted', [anns]);
         return annotation;
     };
+
 
     Annotator.prototype.loadAnnotations = function(annotations) {
         var clone, loader,
@@ -491,7 +509,7 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cancel);
-            _this.unsubscribe('/annotation/applyall', _this.onCreateAllAnnotations);
+            _this.unsubscribe('/annotation/applyall', onCreateAllAnnotations);
             return _this.unsubscribe('annotationEditorSubmit', save);
         };
         this.subscribe('annotationEditorHidden', cancel);
@@ -522,7 +540,26 @@ Annotator = (function(_super) {
 
     Annotator.prototype.onDeleteAnnotation = function(annotation) {
         this.viewer.hide();
-        return this.deleteAnnotation(annotation);
+        // ask if delete single or delete all
+        var content = '<p>Do you want to delete this single annotation, or all matching annotations?</p>'
+        var deleteAnnotation = this.deleteAnnotation.bind(this);
+        var deleteAnnotations = this.deleteAnnotations.bind(this);
+        $(content).dialog({
+            title: 'Delete annotations',
+            buttons: {
+                'Cancel': function() {
+                    $(this).dialog("destroy");
+                },
+                'Just this one': function() {
+                    deleteAnnotation(annotation);
+                    $(this).dialog("destroy");
+                },
+                'Delete all': function() {
+                    deleteAnnotations(annotation);
+                    $(this).dialog("destroy");
+                }
+            }
+        })
     };
 
     Annotator.prototype.onCreateAllAnnotations = function(annotation) {
@@ -531,11 +568,15 @@ Annotator = (function(_super) {
         // step 2: create annotation instances
         // step 3: register annotations and send request
         this.unsubscribe('annotationEditorSubmit');
+        this.unsubscribe('annotationEditorHidden');
+        this.unsubscribe('/annotation/applyall');
+
         var existing_anns = this.plugins.Store.annotations;
         var annotations = [];
 
         var root = this.wrapper[0];
         $(root).find('table.dataTable > tbody > tr').each(matchAnnotation);
+        this.deleteAnnotation(annotation); // delete the temporary annotation
 
         this.publish('/annotations/created', [annotations])
 
@@ -579,10 +620,21 @@ Annotator = (function(_super) {
         };
     };
 
+    // update all annotations with the same quote
     Annotator.prototype.onUpdateAllAnnotations = function(annotation) {
         this.unsubscribe('annotationEditorSubmit');
+        this.unsubscribe('annotationEditorHidden');
+        this.unsubscribe('/annotation/applyall');
+
+        var annotations = this.plugins.Store.annotations.filter(function(ann) {
+            if (ann.quote === annotation.quote) {
+                $.extend(ann.tag, annotation.tag);
+                return true;
+            }
+        });
+
         // let store plugin to deal with it
-        this.publish('/annotations/updated', [annotation]);
+        this.publish('/annotations/updated', [annotations]);
     };
 
     return Annotator;

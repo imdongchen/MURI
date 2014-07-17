@@ -57,14 +57,6 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         ele.annotator();
         ele.annotator('addPlugin', 'Store', {
             prefix: 'annotation',
-            urls: {
-                // These are the default URLs.
-                create:  '/annotations',
-                read:    '/annotations/:id',
-                update:  '/annotations/:id',
-                destroy: '/annotations/:id',
-                search:  '/search'
-            }
         });
         ele.annotator('addPlugin', 'Tags');
     },

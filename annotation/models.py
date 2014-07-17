@@ -31,7 +31,7 @@ class Annotation(models.Model):
         return ann
 
     def __unicode__(self):
-        return self.entities.all()[0].name
+        return 'entry-'+ str(self.dataentry.id) + '-' + self.entity.name
 
     # def save(self, *args, **kwargs):
     #     """

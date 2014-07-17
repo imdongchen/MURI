@@ -10,6 +10,7 @@ Annotator.Plugin.Store = (function(_super) {
     Store.prototype.events = {
         'annotationCreated': 'annotationCreated',
         'annotationDeleted': 'annotationDeleted',
+        'annotationsDeleted': 'annotationsDeleted',
         'annotationUpdated': 'annotationUpdated',
         '/annotations/created': 'annotationsCreated',
         '/annotations/updated': 'annotationsUpdated',
@@ -21,10 +22,13 @@ Annotator.Plugin.Store = (function(_super) {
         loadFromSearch: false,
         prefix: '/store',
         urls: {
-            create: '/annotations',
+            create: '/annotation',
+            createAll: '/annotations',
             read: '/annotations/:id',
-            update: '/annotations/:id',
-            destroy: '/annotations/:id',
+            update: '/annotation/:id',
+            updateAll: '/annotations',
+            destroy: '/annotation/:id',
+            destroyAll: '/annotations',
             search: '/search'
         }
     };
@@ -70,7 +74,7 @@ Annotator.Plugin.Store = (function(_super) {
                 return this.updateAnnotation(annotation, {});
             }
         }
-        this._apiRequest('create', to_create, function(data) {
+        this._apiRequest('createAll', to_create, function(data) {
             var annotations = data.annotations,
                 entity = data.entity;
                 relationships = data.relationships
@@ -81,7 +85,8 @@ Annotator.Plugin.Store = (function(_super) {
                 _this.annotator.setupAnnotation(to_create[i]);
             }
 
-            $.publish("/entity/add", [entity, relationships]);
+            $.publish("/entity/change", entity);
+            $.publish("/relationship/add", [relationships]);
             // Annotator.showNotification(Annotator._t("Added " + annotations.length + " new annotations!"), Annotator.Notification.SUCCESS);
             wb.notify(annotations.length + ' annotations added!', 'success');
         });
@@ -97,10 +102,9 @@ Annotator.Plugin.Store = (function(_super) {
                     relationship = data.relationship
                 ;
                 _this.updateAnnotation(annotation, ann);
-                wb.store.entity[entity.primary.id] = entity;
-                wb.store.relationship[relationship.primary.id] = relationship;
 
-                $.publish("/entity/add", [entity, [relationship]]);
+                $.publish('/entity/change', entity);
+                $.publish("/relationship/add", [[relationship]]);
                 wb.notify('1 annotation added!', 'success');
             });
         } else {
@@ -108,58 +112,40 @@ Annotator.Plugin.Store = (function(_super) {
         }
     };
 
-    Store.prototype.annotationsUpdated = function(annotation) {
+    Store.prototype.annotationsUpdated = function(annotations) {
         var _this = this;
-        var to_update = [];
 
-        for (var i = 0, len = this.annotations.length; i < len; i++) {
-            var ann = this.annotations[i];
-            if (ann.tag.id === annotation.tag.id) {
-                to_update.push(ann);
-            }
-        }
-        this._apiRequest('update', to_update[0], function(data) { // just post one of the annotation, mainly to update entity
+        this._apiRequest('updateAll', annotations, function(data) { // just post one of the annotation, mainly to update entity
             var entity = data.entity,
-                relationship = data.relationship
+                anns = data.annotations,
+                relationships = data.relationships
             ;
 
-            if (to_update.length === 1) {
-                if (to_update[0].tag.entity_type !== wb.store.entity[to_update[0].tag.id].primary.entity_type) {
-                    // if entity type changed
-                    $.publish('entity/annotation/change', [to_update, entity, relationship]);
-
-                } else {
-                    // if entity type does not change; only attributes change
-                    $.publish('entity/attribute/change', [entity]);
+            if (relationships && relationships.length > 0) {
+                // if server responds with relationships, it means entity changes
+                // otherwise, there is no need to update relationships, thus the server will not send back relationships
+                $.publish('/entity/change', entity);
+                $.publish('/relationship/change', [relationships]);
+                for (var i = 0; i < annotations.length; i++) {
+                    // assume the order of the old and new annotations are the same
+                    var annotation = annotations[i],
+                        ann        = anns[i]
+                    ;
+                    var highlights = annotation.highlights;
+                    for (var j = 0; j < highlights.length; j++) {
+                        $(highlights[j]).removeClass()
+                            .addClass('annotator-hl annotator-hl-' + entity.primary.entity_type)
+                        ;
+                    }
+                    _this.updateAnnotation(annotation, ann);
                 }
             } else {
-                if (to_update[0].id !== annotation.id) {
-                    // if to_update[0] is not annotation
-                    if (entity.primary.entity_type === to_update[0].tag.entity_type) {
-                        // if entity type does not change
-                        $.publish('entity/attribute/change', [entity]);
-                    } else {
-                        // if entity type changes
-                        $.publish('entity/annotation/change', [to_update, entity, relationship]);
-                    }
-                } else {
-                    // else, compare with to_update[1]
-                    if (entity.primary.entity_type === to_update[1].tag.entity_type) {
-                        // if entity type does not change
-                        $.publish('entity/attribute/change', [entity]);
-                    } else {
-                        // if entity type changes
-                        $.publish('entity/annotation/change', [to_update, entity, relationship]);
-                    }
-
-                }
+                // if entity type does not change; only attributes change
+                $.publish('/entity/change', [entity]);
             }
-            to_update.forEach(function(ann) {
-                _this.updateAnnotation(ann);
-            });
 
             // Annotator.showNotification(Annotator._t("Updated " + to_update.length + " annotations!"), Annotator.Notification.SUCCESS);
-            wb.notify(to_update.length + ' annotations updated!', 'success');
+            wb.notify(annotations.length + ' annotations updated!', 'success');
         });
     };
 
@@ -167,40 +153,61 @@ Annotator.Plugin.Store = (function(_super) {
         var _this = this;
         if (__indexOf.call(this.annotations, annotation) >= 0) {
             return this._apiRequest('update', annotation, (function(data) {
-                if (annotation.tag.entity_type !== wb.store.entity[annotation.tag.id].primary.entity_type) {
-                    // if entity type changed
-                    $.publish('/entity/annotation/change', [[annotation], data.entity, data.relationship]);
-
+                var ann = data.annotation,
+                    entity = data.entity,
+                    relationship = data.relationship
+                ;
+                if (relationship){
+                    // if server responds with relationship, it means entity changed
+                    // otherwise, if entity does not change, there is no need to update relationship, thus the server does not send back relationship
+                    $.publish('/entity/change', entity);
+                    $.publish('/relationship/change', [[relationship]]);
+                    var highlights = annotation.highlights;
+                    for (var i = 0; i < highlights.length; i++) {
+                        $(highlights[i]).removeClass()
+                            .addClass('annotator-hl annotator-hl-' + ann.tag.entity_type)
+                        ;
+                    }
                 } else {
                     // if entity type does not change; only attributes change
-                    $.publish('/entity/attribute/change', [data.entity]);
+                    $.publish('/entity/change', [entity]);
                 }
-                _this.updateAnnotation(annotation);
+                _this.updateAnnotation(annotation, ann);
                 wb.notify('1 annotation updated!', 'success');
             }));
         }
     };
 
+
     Store.prototype.annotationDeleted = function(annotation) {
         var _this = this;
-        var to_delete = [];
-        // delete all annotations with the same quote
-        if (__indexOf.call(this.annotations, annotation) < 0) {
-            return ;
+        if (annotation.id) { // if an annotation has no id, it is temporary annotation, no need to publish events
+            this._apiRequest('destroy', annotation, function(data) {
+                var relationship = data.relationship;
+
+                _this.unregisterAnnotation(annotation);
+                $.publish('/relationship/delete', [[relationship]]);
+                wb.notify('1 annotation deleted', 'success');
+            });
+        } else {
+            _this.unregisterAnnotation(annotation);
         }
-        this.annotations.forEach(function(ann) {
-            if (ann.quote === annotation.quote) {
-                to_delete.push(ann);
-            }
-        });
-        if (to_delete.length > 0) {
-            this._apiRequest('destroy', to_delete, function() {
-                to_delete.forEach(function(ann) {
+    };
+
+
+    Store.prototype.annotationsDeleted = function(annotations) {
+        var _this = this;
+
+        if (annotations.length > 0) {
+            this._apiRequest('destroyAll', annotations, function(data) {
+                var relationships = data.relationships;
+
+                annotations.forEach(function(ann) {
                     _this.unregisterAnnotation(ann);
                 });
-                $.publish('/entity/delete', [to_delete]);
+                $.publish('/relationship/delete', [relationships]);
                 // Annotator.showNotification(Annotator._t("Deleted " + to_delete.length + " annotations!"), Annotator.Notification.SUCCESS);
-                wb.notify(to_delete.length + ' annotations deleted', 'success');
+                wb.notify(annotations.length + ' annotations deleted', 'success');
             });
         }
     };
@@ -336,9 +343,12 @@ Annotator.Plugin.Store = (function(_super) {
         var table;
         table = {
             'create': 'POST',
+            'createAll': 'POST',
             'read': 'GET',
             'update': 'PUT',
+            'updateAll': 'PUT',
             'destroy': 'DELETE',
+            'destroyAll': 'DELETE',
             'search': 'GET'
         };
         return table[action];
@@ -355,8 +365,8 @@ Annotator.Plugin.Store = (function(_super) {
                 annotation.highlights = highlights;
             }
         } else if (annotation.constructor === Array) {
+            highlights = [];
             for (var i = 0, len = annotation.length; i < len; i++) {
-                highlights = [];
                 highlights.push(annotation[i].highlights);
                 delete annotation[i].highlights;
             }
@@ -389,7 +399,8 @@ Annotator.Plugin.Store = (function(_super) {
             case 500:
                 message = Annotator._t("Sorry something went wrong with the annotation store");
         }
-        Annotator.showNotification(message, Annotator.Notification.ERROR);
+        // Annotator.showNotification(message, Annotator.Notification.ERROR);
+        wb.notify(message, 'error');
         return console.error(Annotator._t("API request failed:") + (" '" + xhr.status + "'"));
     };
 

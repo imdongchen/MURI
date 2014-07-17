@@ -11,28 +11,38 @@ $.widget('custom.attribute_widget', {
         this.add();
 
     },
-    add: function(attr, value) {
-        var row = '<li><ul class="annotator-attribute">\
-            <li><input class="annotator-attribute-input" placeholder="Attribute..."/></li> \
-            <li><input class="annotator-attribute-value" placeholder="Unknown"/></li> \
-        ';
-        row += '<li><button type="button" class="btn btn-default attribute-add-btn"><span class="glyphicon glyphicon-plus"></span></button></li></ul></li>';
-            this.content.append($(row));
-            var beforelastrow = this.content.find('.annotator-attribute').eq(-2);
-            beforelastrow.find('.annotator-attribute-input').val(attr);
-            beforelastrow.find('.annotator-attribute-value').val(value);
-            beforelastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
-                .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
+    add: function(attr, value, primary) { // if it is primary, the row cannot be deleted
+        attr = attr || '';
+        value  = value || '';
+        primary = primary || 'other';
 
-        this.content.find('.attribute-add-btn').click(_.bind(function(){
-            var lastrow = this.content.find(".annotator-attribute:last");
-            lastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
-                .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
-            this.add();
-        }, this));
-        this.content.find('.attribute-remove-btn').click(function() {
-            $(this).parents('.annotator-attribute').parent().remove();
-        });
+        var row = '<li><ul class="annotator-attribute annotator-attribute-' + primary + '">';
+        row += '<li><input class="annotator-attribute-input" placeholder="Attribute..." value="' + attr + '"/></li>';
+        row += '<li><input class="annotator-attribute-value" placeholder="Unknown" value="' + value + '"/></li>';
+
+        var lastrow = this.content.find('.annotator-attribute:last');
+        if (lastrow.length) { // if there is already an attribute row
+            row += '<li><button type="button" class="btn btn-default attribute-remove-btn"><span class="glyphicon glyphicon-minus"></span></button></li></ul></li>';
+            var $row = $(row).insertBefore(lastrow);
+            $row.find('.attribute-remove-btn').click(function() {
+                var row = $(this).parents('.annotator-attribute');
+                if (row.hasClass('annotator-attribute-primary')) {
+                    row.find('.annotator-attribute-value').val('');
+                } else {
+                    row.parent().remove();
+                }
+            });
+        } else { // if it is the first attribute row
+            row += '<li><button type="button" class="btn btn-default attribute-add-btn"><span class="glyphicon glyphicon-plus"></span></button></li></ul></li>';
+            var $row = $(row).appendTo(this.content);
+            $row.find('.attribute-add-btn').click(_.bind(function(){
+                var lastrow = this.content.find(".annotator-attribute:last");
+                lastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
+                    .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                this.add();
+            }, this));
+        }
+
         this.sort();
     },
     reset: function() {
@@ -51,7 +61,7 @@ $.widget('custom.attribute_widget', {
         $('> li', this.content).each(function(i, row) {
             var attr = $(row).find('.annotator-attribute-input').val();
             var value = $(row).find('.annotator-attribute-value').val();
-            if (attr && value) {
+            if (attr) {
                 attr = Annotator.Util.escape(attr);
                 value = Annotator.Util.escape(value);
                 res[attr] = value;
@@ -135,7 +145,7 @@ Annotator.Plugin.Tags = (function(_super) {
             submit: this.applyToAll
         });
 
-        this.subscribe('/tag/changed', function(value) {
+        this.subscribe('/tag/type/change', function(value) {
             if (value === 'location') {
                 if (self.annotation) {
                     // search for mgrs string and update attribute
@@ -160,7 +170,7 @@ Annotator.Plugin.Tags = (function(_super) {
             }
         });
 
-        $.subscribe('/tag/selected', function(e, value) {
+        $.subscribe('/tag/name/change', function(e, value) {
             var entity = wb.store.entity[value];
             if (!self.annotation.tag) {
                 self.annotation.tag = {};
@@ -215,7 +225,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 select: function(e, ui) {
                     if (ui.item.id) {
                         //TODO: update the attribute list to the attribute of the entity
-                        $.publish('/tag/selected', ui.item.id);
+                        $.publish('/tag/name/change', ui.item.id);
                     }
                 }
             })
@@ -226,8 +236,9 @@ Annotator.Plugin.Tags = (function(_super) {
         // selectize = this.tagnameselect[0].selectize;
         // selectize.clear();
         var name;
-        if (annotation.tag && annotation.tag.name) {
-            name = annotation.tag.name;
+        if (annotation.tag) {
+            var entity = wb.store.entity[annotation.tag.id]
+            name = entity.primary.name;
         } else {
             name = annotation.quote;
         }
@@ -253,7 +264,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 placeholder: 'Tag as an entity...',
                 create: false,
                 onChange: function(value) {
-                    self.publish('/tag/changed', [value]);
+                    self.publish('/tag/type/change', [value]);
                 }
             }
         );
@@ -283,11 +294,11 @@ Annotator.Plugin.Tags = (function(_super) {
             var entity = wb.store.entity[annotation.tag.id];
             for (var attr in entity.primary) {
                 if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'created_at' && attr !== 'created_by') { // skip these two attributes
-                    this.attribute_widget.add(attr, entity.primary[attr]);
+                    this.attribute_widget.add(attr, entity.primary[attr], 'primary');
                 }
             }
             for (var attr in entity.other) {
-                this.attribute_widget.add(attr, entity.other[attr]);
+                this.attribute_widget.add(attr, entity.other[attr], 'other');
             }
         }
     };

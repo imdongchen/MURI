@@ -120,128 +120,92 @@ $.subscribe('/data/filter', function() {
 });
 
 
-$.subscribe('/relationship/add', function(e, relationship) {
-    var facts = [];
-    var fact = {};
-    var primary = relationship.primary;
-    primary.date = wb.utility.Date(primary.date);
-    wb.store.relationship[relationship.primary.id] = relationship;
-
-    var source = wb.store.entity[primary.source];
-    var target = wb.store.entity[primary.target];
-
-    fact.dataentry = primary.dataentry;
-    fact.date = primary.date;
-    fact.relationship = primary.id;
-    var ENTITY_ENUM = wb.ENTITY_ENUM;
-    for (var i = 0; i < ENTITY_ENUM.length; i++) {
-        var ENTITY_TYPE = ENTITY_ENUM[i];
-        if (source.primary.entity_type === ENTITY_TYPE) {
-            fact[ENTITY_TYPE] = primary.source;
-        } else if (target.primary.entity_type === ENTITY_TYPE) {
-            fact[ENTITY_TYPE] = primary.target;
-        } else {
-            fact[ENTITY_TYPE] = 0;
-        }
-    }
-    facts.push(fact);
-    if (source.primary.entity_type === target.primary.entity_type) {
-        var fact2 = $.extend({}, fact);
-        fact2[target.primary.entity_type] = target.primary.id;
-        facts.push(fact2);
-    }
-
-    wb.datafilter.add(facts);
-
+$.subscribe('/relationship/add', function(e, relationships) {
+    add_relationships(relationships);
     $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
 });
 
-
-// do when an entity is added (created by annotation)
-$.subscribe("/entity/add", function(e, entity, relationships) {
-    var facts = [];
-    relationships.forEach(function(relationship) {
-        relationship.primary.date = wb.utility.Date(relationship.primary.date);
-        wb.store.relationship[relationship.primary.id] = relationship;
-
-        var fact = {};
-        fact.dataentry = relationship.primary.dataentry;
-        fact.relationship = relationship.primary.id;
-        fact.date = relationship.primary.date;
-        var ENTITY_ENUM = wb.ENTITY_ENUM;
-        for (var i = 0; i < ENTITY_ENUM.length; i++) {
-            var ENTITY_TYPE = ENTITY_ENUM[i];
-            if (entity.primary.entity_type === ENTITY_TYPE) {
-                fact[ENTITY_TYPE] = relationship.primary.target;
-            } else {
-                fact[ENTITY_TYPE] = 0;
-            }
-        }
-        facts.push(fact);
-    });
-    wb.datafilter.add(facts);
-
-    // finally update store
-    if (entity.primary.entity_type === 'location') {
-        entity.primary.geometry = toOLGeometry(entity);
-    }
-    wb.store.entity[entity.primary.id] = entity;
-
-    $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
-});
 
 // do when entity is deleted
-$.subscribe('/entity/delete', function(e, annotations) {
-    // delete fact in crossfilter that contains this dataentry and the previous entity
-    // first defilter all existing filters
-    var old_entity = {};
-    old_entity.id = annotations[0].tag.id;
-    old_entity.entity_type = annotations[0].tag.entity_type;
-
-    for (var dim in wb.dim) {
-        wb.dim[dim].filterAll();
-    }
-    // then filter out what we need
-    // that is, data entry = annotation.anchor, 'the' entity = old entity id, and all other entities equal 0
-    for (var i = 0; i < wb.ENTITY_ENUM.length; i++) {
-        var ENTITY_TYPE = wb.ENTITY_ENUM[i];
-        if (ENTITY_TYPE === old_entity.entity_type) {
-            wb.dim[ENTITY_TYPE].filterExact(old_entity.id);
-        } else {
-            wb.dim[ENTITY_TYPE].filterExact(0);
-        }
-    }
-    var dataentries = annotations.map(function(ann) { return ann.anchor; });
-    wb.dim.dataentry.filter(function(d) {
-        return dataentries.indexOf(d) > -1;
-    });
-    wb.datafilter.remove();
-    for (var dim in wb.dim) {
-        wb.dim[dim].filterAll();
-    }
+$.subscribe('/relationship/delete', function(e, relationships) {
+    delete_relationships(relationships);
 
     $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
 });
 
 
 // do when attribute of an entity is modified
-$.subscribe('/entity/attribute/change', function(e, entity) {
+$.subscribe('/entity/change', function(e, entity) {
+    if (entity.primary.entity_type === 'location') {
+        entity.primary.geometry = toOLGeometry(entity);
+    }
     wb.store.entity[entity.primary.id] = entity;
 });
 
 
+function delete_relationships(relationships) {
+    // defilter first
+    for (var dim in wb.dim) {
+        wb.dim[dim].filterAll();
+    }
+    // filter
+    var rels = relationships.map(function(rel) {
+        return rel.primary.id;
+    });
+    wb.dim.relationship.filter(function(d) {
+        return rels.indexOf(d) > -1;
+    });
+    // delete
+    wb.datafilter.remove();
+    // defilter
+    wb.dim.relationship.filterAll();
+}
+
+function add_relationships(relationships) {
+    var facts = [];
+    relationships.forEach(function(relationship) {
+        relationship.primary.date = wb.utility.Date(relationship.primary.date);
+        wb.store.relationship[relationship.primary.id] = relationship;
+
+        var fact = {};
+        var primary = relationship.primary;
+        primary.date = wb.utility.Date(primary.date);
+        wb.store.relationship[relationship.primary.id] = relationship;
+
+        var source = wb.store.entity[primary.source];
+        var target = wb.store.entity[primary.target];
+
+        fact.dataentry = primary.dataentry;
+        fact.date = primary.date;
+        fact.relationship = primary.id;
+        var ENTITY_ENUM = wb.ENTITY_ENUM;
+        for (var i = 0; i < ENTITY_ENUM.length; i++) {
+            var ENTITY_TYPE = ENTITY_ENUM[i];
+            if (source && source.primary.entity_type === ENTITY_TYPE) {
+                fact[ENTITY_TYPE] = primary.source;
+            } else if (target && target.primary.entity_type === ENTITY_TYPE) {
+                fact[ENTITY_TYPE] = primary.target;
+            } else {
+                fact[ENTITY_TYPE] = 0;
+            }
+        }
+        facts.push(fact);
+        if (source && target && source.primary.entity_type === target.primary.entity_type) {
+            var fact2 = $.extend({}, fact);
+            fact2[target.primary.entity_type] = target.primary.id;
+            facts.push(fact2);
+        }
+    });
+
+    wb.datafilter.add(facts);
+}
+
 // do when an annotation changes its entity type, meaning the relationship between data entry and entity needs to be changed
 // also, it means the data crossfilter needs to be chagned
-$.subscribe('entity/annotation/change', function(e, annotations, entity, relationships) {
-    // we need to update ele, the basic crossfilter data, and (optional) update entity and relationship in the store
-    $.publish('/entity/delete', [annotations]);
-
-    for (var i = 0, len = annotations.length; i < len; i++) {
-        annotations[i].tag.id = entity.primary.id;
-        annotations[i].tag.entity_type = entity.primary.entity_type;
-    }
-
-    $.publish('/entity/add', [entity, relationships]);
+$.subscribe('/relationship/change', function(e, relationships) {
+    delete_relationships(relationships);
+    add_relationships(relationships);
+    $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
 });
 
 // do when data crossfilter is changed, and all visual artifacts need to reload data

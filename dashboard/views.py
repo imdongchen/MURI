@@ -108,18 +108,19 @@ def data(request):
                     # indicating that the entity is created within that entry.
                     # search relationship table for relationship id
                     # TODO: the search strategy is quite redundant, could be optimized
-                    dataentry_entity_rel = Relationship.objects.get(source=None, target=entity, dataentry=de)
-                    relationship_dict[dataentry_entity_rel.id] = dataentry_entity_rel.get_attr()
-                    fact = {}
-                    fact['dataentry'] = de.id
-                    fact['relationship'] = dataentry_entity_rel.id
-                    fact['date'] = de.date.strftime('%m/%d/%Y')
-                    for ENTITY_TYPE in ENTITY_ENUM:
-                        if ENTITY_TYPE == entity.entity_type:
-                            fact[ENTITY_TYPE] = entity.id
-                        else:
-                            fact[ENTITY_TYPE] = 0
-                    ele.append(fact)
+                    dataentry_entity_rels = Relationship.objects.filter(source=None, target=entity, dataentry=de)
+                    for d_e_r in dataentry_entity_rels:
+                        relationship_dict[d_e_r.id] = d_e_r.get_attr()
+                        fact = {}
+                        fact['dataentry'] = de.id
+                        fact['relationship'] = d_e_r.id
+                        fact['date'] = de.date.strftime('%m/%d/%Y')
+                        for ENTITY_TYPE in ENTITY_ENUM:
+                            if ENTITY_TYPE == entity.entity_type:
+                                fact[ENTITY_TYPE] = entity.id
+                            else:
+                                fact[ENTITY_TYPE] = 0
+                        ele.append(fact)
         # step 5: create the 3rd type of ele
         # step 5.1: get all requested entity ids
         entities = entity_dict.keys()
