@@ -582,7 +582,7 @@ Annotator = (function(_super) {
 
         function matchAnnotation(i, row) {
             var cell = row.children[1];
-            var re = new RegExp(annotation.quote, 'g');
+            var re = new RegExp(annotation.quote, 'ig'); // case-insensitive
             var match;
             while (match = re.exec($(cell).text())) {
                 var new_ann = {};
