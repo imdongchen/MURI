@@ -23,7 +23,7 @@ $.widget('custom.attribute_widget', {
         var lastrow = this.content.find('.annotator-attribute:last');
         if (lastrow.length) { // if there is already an attribute row
             row += '<li><button type="button" class="btn btn-default attribute-remove-btn"><span class="glyphicon glyphicon-minus"></span></button></li></ul></li>';
-            var $row = $(row).insertBefore(lastrow);
+            var $row = $(row).insertBefore(lastrow.parent()); // lastrow is <ul>, lastrow's parent is <li>
             $row.find('.attribute-remove-btn').click(function() {
                 var row = $(this).parents('.annotator-attribute');
                 if (row.hasClass('annotator-attribute-primary')) {
@@ -342,8 +342,14 @@ Annotator.Plugin.Tags = (function(_super) {
             var primary = entity.primary;
             table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
             for (var attr in primary) {
-                if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
+                }
+            }
+            var other = entity.other;
+            for (var attr in other) {
+                if (attr) {
+                    table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + other[attr] + '</td></tr>';
                 }
             }
             table += '</table>';

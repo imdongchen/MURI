@@ -509,7 +509,7 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cancel);
-            _this.unsubscribe('/annotation/applyall', onCreateAllAnnotations);
+            _this.unsubscribe('/annotation/applyall');
             return _this.unsubscribe('annotationEditorSubmit', save);
         };
         this.subscribe('annotationEditorHidden', cancel);

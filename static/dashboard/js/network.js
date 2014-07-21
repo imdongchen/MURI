@@ -246,13 +246,15 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             _this.selected_node = null;
 
             // pop up relationship form
-            _this.element.append($('#relation_form')
-                .show().focus()
+            var editor = '<div><form><label for="relation">Relationship:</label><input name="relation" id="relation"/>';
+            editor += '<br><input type="button" value="Cancel"/><input type="submit" value="Save"/>';
+            editor += '</form></div>';
+            var $editor = _this.element.append($(editor)
                 .css('top', (_this.mouseup_node.y + _this.mousedown_node.y)/2.0)
                 .css('left', (_this.mouseup_node.x + _this.mousedown_node.x)/2.0)
             );
-            $('#relation_form form').submit(function(e) {
-                var rel = $('#relation').val();
+            $editor.find('form').submit(function(e) {
+                var rel = $(this).find('#relation').val();
                 link.rel = rel;
                 $.post('relationship', {
                     source: link.source.id,
@@ -262,13 +264,13 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                     var rel = d.relationship;
                     $.publish('/relationship/add', rel);
                     wb.notify('1 relationship added!', 'success');
-                    
+
                     activitylog({
                         operation: 'create relationship',
                         data: JSON.stringify({'window_type': 'network', 'id': d.id})
                     });
                 });
-                $(this).trigger('reset').parent().hide();
+                $(this).parent().remove();
                 e.preventDefault();
             });
 
