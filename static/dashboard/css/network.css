@@ -1,4 +1,59 @@
-g.node.selected > rect{
-    stroke-width:1px;
-    stroke: "#0000FF";
+circle.selected {
+    stroke: #3276b1 !important;
+    stroke-width: dpx;
+}
+path.dragline,
+path.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 2px;
+    cursor: pointer;
+}
+
+.linkarrow {
+    fill: #ccc;
+}
+path.link.hidden {
+    stroke-width: 0;
+}
+circle.node:hover {
+    stroke-width: 1.5px;
+    cursor: pointer; ;
+}
+path.dragline {
+    pointer-events: none;
+}
+
+.brush .extent {
+    fill-opacity: .1;
+    stroke: #fff;
+    shape-rendering: crispEdges;
+}
+
+#relation_form {
+    display: none;
+    z-index: 999;
+    width: 150px;
+    position: absolute;
+}
+#relation {
+    width: 100px;
+}
+
+#network-filterbar {
+    list-style-type: none;
+    width: 100%;
+}
+#network-filterbar li {
+    display: inline;
+    margin: 20px 10px;
+}
+
+#network-tooltip {
+    border: 1px solid #ccc;
+    box-shadow: 5px 5 2px #888888;
+    background-color: rgba(70, 128, 240, .1);
+}
+#network-tooltip table tr {
+    border: solid thin #ccc;
 }

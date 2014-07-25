@@ -53,6 +53,8 @@ Annotator = (function(_super) {
         this.onEditorSubmit = __bind(this.onEditorSubmit, this);
         this.onEditorHide = __bind(this.onEditorHide, this);
         this.showEditor = __bind(this.showEditor, this);
+        this.onCreateAllAnnotations= __bind(this.onCreateAllAnnotations, this);
+        this.onUpdateAllAnnotations = __bind(this.onUpdateAllAnnotations, this);
         Annotator.__super__.constructor.apply(this, arguments);
         this.plugins = {};
         if (!Annotator.supported()) {
@@ -80,16 +82,18 @@ Annotator = (function(_super) {
         this.viewer = new Annotator.Viewer({
             readOnly: this.options.readOnly
         });
-        this.viewer.hide().on("edit", this.onEditAnnotation).on("delete", this.onDeleteAnnotation).addField({
-            load: function(field, annotation) {
-                if (annotation.text) {
-                    $(field).html(Util.escape(annotation.text));
-                } else {
-                    $(field).html("<i>" + (_t('No Comment')) + "</i>");
-                }
-                return _this.publish('annotationViewerTextField', [field, annotation]);
-            }
-        }).element.appendTo(this.wrapper).bind({
+        this.viewer.hide().on("edit", this.onEditAnnotation).on("delete", this.onDeleteAnnotation)
+            // .addField({
+            //     load: function(field, annotation) {
+            //         if (annotation.text) {
+            //             $(field).html(Util.escape(annotation.text));
+            //         } else {
+            //             $(field).html("<i>" + (_t('No Comment')) + "</i>");
+            //         }
+            //         return _this.publish('annotationViewerTextField', [field, annotation]);
+            //     }
+            // })
+            .element.appendTo(this.wrapper).bind({
                 "mouseover": this.clearViewerHideTimer,
                 "mouseout": this.startViewerHideTimer
             });
@@ -98,16 +102,17 @@ Annotator = (function(_super) {
 
     Annotator.prototype._setupEditor = function() {
         this.editor = new Annotator.Editor();
-        this.editor.hide().on('hide', this.onEditorHide).on('save', this.onEditorSubmit).addField({
-            type: 'textarea',
-            label: _t('Comments') + '\u2026',
-            load: function(field, annotation) {
-                return $(field).find('textarea').val(annotation.text || '');
-            },
-            submit: function(field, annotation) {
-                return annotation.text = $(field).find('textarea').val();
-            }
-        });
+        this.editor.hide().on('hide', this.onEditorHide).on('save', this.onEditorSubmit);
+//        .addField({
+//            type: 'textarea',
+//            label: _t('Comments') + '\u2026',
+//            load: function(field, annotation) {
+//                return $(field).find('textarea').val(annotation.text || '');
+//            },
+//            submit: function(field, annotation) {
+//                return annotation.text = $(field).find('textarea').val();
+//            }
+//        });
         this.editor.element.appendTo(this.wrapper);
         return this;
     };
@@ -221,7 +226,7 @@ Annotator = (function(_super) {
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             r = _ref[_i];
             try {
-                normedRanges.push(Range.sniff(r).normalize(root));
+                normedRanges.push(Range.sniff(r).normalize(root, annotation.anchor));
             } catch (_error) {
                 e = _error;
                 if (e instanceof Range.RangeError) {
@@ -234,11 +239,21 @@ Annotator = (function(_super) {
         annotation.quote = [];
         annotation.ranges = [];
         annotation.highlights = [];
+        // Originally the code catches the xpath start and end; now I change it to anchor to message id.
+        // Therefore I now record message id and startOffset and endOffset
+        if (this.selectedRanges && this.selectedRanges.length > 0) {
+            annotation.anchor = annotation.anchor || $(this.selectedRanges[0].commonAncestor).parent().data("id");
+        }
+
         for (_j = 0, _len1 = normedRanges.length; _j < _len1; _j++) {
             normed = normedRanges[_j];
             annotation.quote.push($.trim(normed.text()));
             annotation.ranges.push(normed.serialize(this.wrapper[0], '.annotator-hl'));
-            $.merge(annotation.highlights, this.highlightRange(normed));
+            var cssClass = 'annotator-hl ';
+            if (annotation.tag) {
+                cssClass += 'annotator-hl-' + annotation.tag.entity_type;
+            }
+            $.merge(annotation.highlights, this.highlightRange(normed, cssClass));
         }
         annotation.quote = annotation.quote.join(' / ');
         $(annotation.highlights).data('annotation', annotation);
@@ -253,8 +268,9 @@ Annotator = (function(_super) {
 
     Annotator.prototype.deleteAnnotation = function(annotation) {
         var child, h, _i, _len, _ref;
-        if (annotation.highlights != null) {
-            _ref = annotation.highlights;
+        var ann = annotation;
+        if (ann.highlights != null) {
+            _ref = ann.highlights;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 h = _ref[_i];
                 if (!(h.parentNode != null)) {
@@ -267,6 +283,30 @@ Annotator = (function(_super) {
         this.publish('annotationDeleted', [annotation]);
         return annotation;
     };
+
+    Annotator.prototype.deleteAnnotations = function(annotation) {
+        var child, h, _i, _len, _ref;
+        var anns = this.plugins.Store.annotations.filter(function(ann) {
+            return ann.quote === annotation.quote;
+        });
+        for (var k = 0; k < anns.length; k++) {
+            var ann = anns[k];
+            if (ann.highlights != null) {
+                _ref = ann.highlights;
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                    h = _ref[_i];
+                    if (!(h.parentNode != null)) {
+                        continue;
+                    }
+                    child = h.childNodes[0];
+                    $(h).replaceWith(h.childNodes);
+                }
+            }
+        }
+        this.publish('annotationsDeleted', [anns]);
+        return annotation;
+    };
+
 
     Annotator.prototype.loadAnnotations = function(annotations) {
         var clone, loader,
@@ -459,10 +499,8 @@ Annotator = (function(_super) {
             cleanup();
             $(annotation.highlights).removeClass('annotator-hl-temporary');
             // here add color code for tags
-            for (var i = 0; i < annotation.tags.length; i++) {
-                var tagcss = 'annotator-hl-' + annotation.tags[i];
-                $(annotation.highlights).addClass(tagcss)
-            }
+            var tagcss = 'annotator-hl-' + annotation.tag.entity_type;
+            $(annotation.highlights).addClass(tagcss)
             return _this.publish('annotationCreated', [annotation]);
         };
         cancel = function() {
@@ -471,9 +509,11 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cancel);
+            _this.unsubscribe('/annotation/applyall');
             return _this.unsubscribe('annotationEditorSubmit', save);
         };
         this.subscribe('annotationEditorHidden', cancel);
+        this.subscribe('/annotation/applyall', this.onCreateAllAnnotations);
         this.subscribe('annotationEditorSubmit', save);
         return this.showEditor(annotation, position);
     };
@@ -488,9 +528,11 @@ Annotator = (function(_super) {
         };
         cleanup = function() {
             _this.unsubscribe('annotationEditorHidden', cleanup);
+            _this.unsubscribe('/annotation/applyall', _this.onUpdateAllAnnotations);
             return _this.unsubscribe('annotationEditorSubmit', update);
         };
         this.subscribe('annotationEditorHidden', cleanup);
+        this.subscribe('/annotation/applyall', this.onUpdateAllAnnotations);
         this.subscribe('annotationEditorSubmit', update);
         this.viewer.hide();
         return this.showEditor(annotation, offset);
@@ -498,7 +540,101 @@ Annotator = (function(_super) {
 
     Annotator.prototype.onDeleteAnnotation = function(annotation) {
         this.viewer.hide();
-        return this.deleteAnnotation(annotation);
+        // ask if delete single or delete all
+        var content = '<p>Do you want to delete this single annotation, or all matching annotations?</p>'
+        var deleteAnnotation = this.deleteAnnotation.bind(this);
+        var deleteAnnotations = this.deleteAnnotations.bind(this);
+        $(content).dialog({
+            title: 'Delete annotations',
+            buttons: {
+                'Cancel': function() {
+                    $(this).dialog("destroy");
+                },
+                'Just this one': function() {
+                    deleteAnnotation(annotation);
+                    $(this).dialog("destroy");
+                },
+                'Delete all': function() {
+                    deleteAnnotations(annotation);
+                    $(this).dialog("destroy");
+                }
+            }
+        })
+    };
+
+    Annotator.prototype.onCreateAllAnnotations = function(annotation) {
+        // find this annotated text throughout data and tag it
+        // step 1: find all quotes
+        // step 2: create annotation instances
+        // step 3: register annotations and send request
+        this.unsubscribe('annotationEditorSubmit');
+        this.unsubscribe('annotationEditorHidden');
+        this.unsubscribe('/annotation/applyall');
+
+        var existing_anns = this.plugins.Store.annotations;
+        var annotations = [];
+
+        var root = this.wrapper[0];
+        $(root).find('table.dataTable > tbody > tr').each(matchAnnotation);
+        this.deleteAnnotation(annotation); // delete the temporary annotation
+
+        this.publish('/annotations/created', [annotations])
+
+        function matchAnnotation(i, row) {
+            var cell = row.children[1];
+            var re = new RegExp(annotation.quote, 'ig'); // case-insensitive
+            var match;
+            while (match = re.exec($(cell).text())) {
+                var new_ann = {};
+                new_ann.ranges = [{}];
+                new_ann.highlights = annotation.highlights;
+                new_ann.tag = annotation.tag;
+                new_ann.quote = annotation.quote;
+                new_ann.ranges[0].start = '';
+                new_ann.ranges[0].end = ''; //start and end is not important
+                new_ann.ranges[0].startOffset = match.index;
+                new_ann.ranges[0].endOffset = match.index + match[0].length;
+                new_ann.anchor = $(row).data("id");
+
+                // check if the quote has already been annotated
+                var existed = false;
+                for (var k = 0, len = existing_anns.length; k < len; k++) {
+                    var ann = existing_anns[k];
+                    if (ann.anchor === new_ann.anchor && ann.tag.id === new_ann.tag.id
+                        && ((ann.ranges[0].startOffset <= new_ann.ranges[0].startOffset && ann.ranges[0].endOffset >= new_ann.ranges[0].endOffset)
+                        || (ann.ranges[0].startOffset >= new_ann.ranges[0].startOffset && ann.ranges[0].endOffset <= new_ann.ranges[0].endOffset))) {
+                        // if there exists one annotation that contains or is contained within the new annotation, and has the same tag and anchor
+                        // then do not add new annotation
+                        existed = true;
+                        break;
+                    }
+                }
+                // if annotation does not exist, add it
+                if (! existed) {
+                    $(new_ann.highlights).removeClass('annotator-hl-temporary');
+                    var tagcss = 'annotator-hl-' + new_ann.tag.entity_type;
+                    $(new_ann.highlights).addClass(tagcss)
+                    annotations.push(new_ann);
+                }
+            }
+        };
+    };
+
+    // update all annotations with the same quote
+    Annotator.prototype.onUpdateAllAnnotations = function(annotation) {
+        this.unsubscribe('annotationEditorSubmit');
+        this.unsubscribe('annotationEditorHidden');
+        this.unsubscribe('/annotation/applyall');
+
+        var annotations = this.plugins.Store.annotations.filter(function(ann) {
+            if (ann.quote === annotation.quote) {
+                $.extend(ann.tag, annotation.tag);
+                return true;
+            }
+        });
+
+        // let store plugin to deal with it
+        this.publish('/annotations/updated', [annotations]);
     };
 
     return Annotator;

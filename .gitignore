@@ -22,9 +22,19 @@ Thumbs.db
 /dashboard/CACHE/
 data/
 pip-log.txt
+run_gunicorn.sh
 /dashboard/migrations/
+/activitylog/migrations/
 /logs/
+<<<<<<< HEAD
 /.idea/
 .idea/
+=======
+>>>>>>> 4624ae12cc34da69d24da1fe276cb48ba08377d9
 /workbench/migrations/
+/annotation/migrations/
 
+# IDE configuration file
+/.idea/
+run_gunicorn.sh
+/static_deploy/*

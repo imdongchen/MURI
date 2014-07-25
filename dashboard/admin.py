@@ -16,7 +16,7 @@ class GoogleAdmin(admin.OSMGeoAdmin):
     openlayers_url = "dashboard/lib/OpenLayers-2.12/OpenLayers.debug.js"
 
 admin.site.register(Organization)
-admin.site.register(Footprint, GoogleAdmin)
+admin.site.register(Location, GoogleAdmin)
 admin.site.register(Person)
 admin.site.register(Facility)
 admin.site.register(Document)

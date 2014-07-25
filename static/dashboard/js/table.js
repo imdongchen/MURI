@@ -1,524 +1,332 @@
-$.widget("viz.viztable", $.viz.vizcontainer, {
+$.widget('viz.vizdataentrytable', $.viz.vizbase, {
     options: {
-        dimension: null,
-        columns: [],
-        hasMenu: false,
     },
     _create: function() {
-        var thead = '<thead><tr>';
-        for (var i = 0, len = this.options.columns.length; i < len; i++) {
-            thead += '<th>' + this.options.columns[i] + '</th>';
-        }
-        thead += '</tr></thead>';
-        $(thead).appendTo(this.element);
+        this.options.base.resizeStop = this.resize.bind(this);
+        this.options.extend.maximize = this.resize.bind(this);
+        this.options.extend.restore  = this.resize.bind(this);
+        this._super('_create');
+        this.element.addClass("viztable dataentrytable");
+        this.element.data("viz", "vizVizdataentrytable");
 
-        this.table = this.element.dataTable({
-            "bJQueryUI": true,
-            "bDestroy": true,
-            'sScrollY': '100%',
-            //      , "aoColumns": [
-            //             {"sWidth": "1%"} , // column 1 will be hidden
-            //             {"sWidth": "19%"} ,
-            //             {"sWidth": "60%"},
-            //             {"sWidth": "20%"},
-            //        ],
-            // for multi select with ctrl and shift
-            "sRowSelect": "multi",
-            "sDom": "RlfrtipS",
-            "fnPreRowSelect": function(e, nodes, isSelect) {
-                if (e) {
-                    var mySelectList = null,
-                        myDeselectList = null;
-                    if (e.shiftKey && nodes.length == 1) {
-                        myDeselectList = this.fnGetSelected();
-                        mySelectList = myGetRangeOfRows(cgTableObject, myLastSelection, nodes[0]);
-                    } else {
-                        myLastSelection = nodes[0];
-                        if (!e.ctrlKey) {
-                            myDeselectList = this.fnGetSelected();
-                            if (!isSelect) {
-                                mySelectList = nodes;
-                            }
+        this.updateData();
+
+        this._setupAnnotator();
+
+        this.update();
+    },
+    updateData: function() {
+        var data = [];
+        this.options.group.all().forEach(function(d) {
+            if (d.key) {
+                var dataentry = wb.store.dataentry[d.key];
+                data.push([
+                    d.key,                                    // data entry id
+                    wb.store.dataset[dataentry.dataset].name,    // dataset name
+                    dataentry.content,                       // data entry content
+                    wb.utility.formatDate(dataentry.date)   // data entry date
+                ]);
+            }
+        });
+
+        var columns = ['ID', 'Dataset', 'Content', 'Date'];
+
+        this.table = wb.viz.table()
+            .columns(columns)
+            .height(this.element.height() - 80)
+            .data(data)
+            .dimension(this.options.dimension)
+            .group(this.options.group)
+            .on('filter', function() {
+                $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
+            }.bind(this))
+        ;
+    },
+    // update view
+    update: function() {
+        d3.select(this.element[0]).call(this.table);
+    },
+    reload: function() {
+        this.element.empty();
+        this.updateData();
+        this._resetAnnotator();
+        this.update();
+    },
+    _setupAnnotator: function() {
+        var ele = this.element.closest(".ui-dialog");
+        ele.annotator();
+        ele.annotator('addPlugin', 'Store', {
+            prefix: 'annotation',
+        });
+        ele.annotator('addPlugin', 'Tags');
+    },
+    _destroyAnnotator: function() {
+        var ele = this.element.closest(".ui-dialog");
+        if (ele.data("annotator")) {
+            ele.annotator("destroy");
+        }
+    },
+    _resetAnnotator: function() {
+        this._destroyAnnotator();
+        this._setupAnnotator();
+    },
+    resize: function() {
+        this._super('resize');
+        this.element.find('.dataTables_scrollBody').css('height', (this.element.height() - 80))
+    }
+});
+
+
+$.widget('viz.vizentitytable', $.viz.vizbase, {
+    _create: function() {
+        this.options.base.resizeStop = this.resize.bind(this);
+        this.options.extend.maximize = this.resize.bind(this);
+        this.options.extend.restore  = this.resize.bind(this);
+        this._super('_create');
+
+        this.updateData();
+        this.update();
+
+        this.element.addClass("viztable entitytable");
+        // this.element.data("entity", 'dataentry');
+        this.element.data("viz", "vizVizentitytable");
+    },
+    updateData: function() {
+        // determine columns first
+        var columns = ['ID', 'Name'];
+        this.options.group.top(2).some(function(d) {
+            if (d.key) {
+                var entity = wb.store.entity[d.key];
+                if (entity) {
+                    for (var attr in entity.primary) {
+                        if (attr !== 'id' && attr !== 'name' && attr !== 'entity_type') {
+                            columns.push(attr);
                         }
                     }
                 }
                 return true;
-            },
-            "fnRowSelected":   mySelectEventHandler,
-            "fnRowDeselected": mySelectEventHandler,
-            //      , "aaData": d
-            //        "sPaginationType": "full_numbers"
+            }
         });
 
-        this.element.addClass("viztable");
-        this.element.addClass("viz");
-        this._super("_create");
-        this.update();
-
-        if (this.options.hasMenu) {
-            $("body").annotator();
-            $("body").annotator('addPlugin', 'Store', {
-                prefix: '/annotation',
-                urls: {
-                    // These are the default URLs.
-                    create:  '/annotations',
-                    read:    '/annotations/:id',
-                    update:  '/annotations/:id',
-                    destroy: '/annotations/:id',
-                    search:  '/search',
-                },
-            });
-            $("body").annotator('addPlugin', 'Tags');
-
-            $(document).contextmenu({
-                delegate: ".viztable",
-                menu: "#message_tag_menu",
-                select: function(event, ui) {
-                    alert(ui.cmd);
-                }
-            });
-        };
-
-
-        function mySelectEventHandler(nodes) {
-            if (myDeselectList) {
-                var nodeList = myDeselectList;
-                myDeselectList = null;
-                this.fnDeselect(nodeList);
-            }
-            if (mySelectList) {
-                var nodeList = mySelectList;
-                mySelectList = null;
-                this.fnSelect (nodeList);
-            }
-        }
-
-        function myGetRangeOfRows(oDataTable, fromNode, toNode) {
-            var
-                fromPos = oDataTable.fnGetPosition(fromNode),
-                toPos = oDataTable.fnGetPosition(toNode);
-            oSettings = oDataTable.fnSettings(),
-                fromIndex = $.inArray(fromPos, oSettings.aiDisplay),
-                toIndex = $.inArray(toPos, oSettings.aiDisplay),
-                result = [];
-
-            if (fromIndex >= 0 && toIndex >= 0 && toIndex != fromIndex) {
-                for (var i=Math.min(fromIndex,toIndex); i < Math.max(fromIndex,toIndex); i++) {
-                    var dataIndex = oSettings.aiDisplay[i];
-                    result.push(oSettings.aoData[dataIndex].nTr);
-                }
-            }
-            return result.length>0?result:null;
-        }
-    },
-    resize: function() {
-        this.table.fnAdjustColumnSizing();
-    },
-    update: function() {
-        // prepare data for DataTable
-        if (this.options.dimension === null) {
-            return;
-        }
         var data = [];
-        this.options.dimension.group().top(Infinity).forEach(function(d) {
-            if (d.value !== 0 && d.key[0] !== undefined) {
-                row = [];
-                for (var i = 0, len = d.key.length; i < len; i++) {
-                    row.push([d.key[i]]);
+        this.options.group.all().forEach(function(d) {
+            if (d.key) {
+                var entity = wb.store.entity[d.key];
+                var primary = entity.primary;
+                var row = [primary.id, primary.name];
+                for (var attr in primary) {
+                    if (attr !== 'id' && attr !== 'name' && attr !== 'entity_type') {
+                        row.push(primary[attr]); // assume the order is as the columns
+                    }
                 }
                 data.push(row);
             }
         });
-        this.table.fnClearTable();
-        this.table.fnAddData(data);
 
-
-        var self = this;
-        this.table.$('tr').click(function(e) {
-            if ( $(this).hasClass('row_selected') ) {
-                $(this).removeClass('row_selected');
-            } else {
-                if (! e.shiftKey) {
-                    self.table.$('tr.row_selected').removeClass('row_selected');
-                }
-                document.getSelection().removeAllRanges(); // disable text selection when shift+clik
-                $(this).addClass('row_selected');
-            }
-            var selected_rows = self.table.$('tr.row_selected');
-            if (selected_rows.length == 0) {
-                self.options.dimension.filterAll();
-            } else {
-                records_id = [];
-                self.table.$('tr.row_selected').each(function(idx, $row) {
-                    row = self.table.fnGetData($row);
-                    records_id.push(row[0]);
-                });
-                var count = 0;
-                self.options.dimension.filter(function(d) {
-                    for (var i = 0; i < records_id.length; i++) {
-                        if (d[0] === records_id[i]) {
-                            count++;
-                            return true;
-                        }
-                    }
-                });
-
-            }
-            $.publish('/data/filter');
-        });
+        this.table = wb.viz.table()
+            .columns(columns)
+            .height(this.element.height() - 80)
+            .data(data)
+            .dimension(this.options.dimension)
+            .group(this.options.group)
+            .on('filter', function() {
+                $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
+            }.bind(this))
+            .editable(true)
+            .on('edit', function(entity, attr) {
+                $.publish('/entity/attribute/change', [entity, attr]);
+            })
+        ;
     },
-    // get the selected text as plain format
-    _selectionGet: function() {
-        // for webkit, mozilla, opera
-        if (window.getSelection)
-            return window.getSelection();
-        // for ie
-        else if (document.selection && document.selection.createRange && document.selection.type != "None")
-            return document.selection.createRange();
+    update: function() {
+        d3.select(this.element[0]).call(this.table);
     },
-
-    _markText: function(tag, classvalue) {
-        if (window.getSelection)
-        {
-            var selObj = selectionGet(), selRange, newElement, documentFragment;
-
-            if (selObj.anchorNode && selObj.getRangeAt)
-            {
-                selRange = selObj.getRangeAt(0);
-
-                // create to new element
-                newElement = document.createElement(tag);
-
-                // add the attribute to the new element
-                $(newElement).removeClass();
-                $(newElement).addClass(classvalue);
-
-                // extract to the selected text
-                documentFragment = selRange.extractContents();
-
-
-                // add the contents to the new element
-                newElement.appendChild(documentFragment);
-
-                selRange.insertNode(newElement);
-                selObj.removeAllRanges();
-
-                // if the attribute is "style", change styles to around tags
-//				if(tAttr=="style")
-//					affectStyleAround($(newElement),tVal);
-//				// for other attributes
-//				else
-//					affectStyleAround($(newElement),false);
-            }
-        }
-        // for ie
-        else if (document.selection && document.selection.createRange && document.selection.type != "None")
-        {
-            var range = document.selection.createRange();
-            var selectedText = range.htmlText;
-
-            var newText = '<'+ tTag +' '+tAttr+'="'+tVal+'">'+selectedText+'</'+tTag+'>';
-
-            document.selection.createRange().pasteHTML(newText);
-        }
+    reload: function() {
+        this.element.empty();
+        this.updateData();
+        this.update();
     },
-    /**
-     * Gets an XPath for an element which describes its hierarchical location.
-     */
-    _getElementXPath : function(element)
-    {
-        if (element && element.id)
-            return '//*[@id="' + element.id + '"]';
-        else
-            return this._getElementTreeXPath(element);
-    },
-
-    _getElementTreeXPath : function(element)
-    {
-        var paths = [];
-
-        // Use nodeName (instead of localName) so namespace prefix is included (if any).
-        for (; element && element.nodeType == 1; element = element.parentNode)
-        {
-            var index = 0;
-            for (var sibling = element.previousSibling; sibling; sibling = sibling.previousSibling)
-            {
-                // Ignore document type declaration.
-                if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE)
-                    continue;
-
-                if (sibling.nodeName == element.nodeName)
-                    ++index;
-            }
-
-            var tagName = element.nodeName.toLowerCase();
-            var pathIndex = (index ? "[" + (index+1) + "]" : "");
-            paths.splice(0, 0, tagName + pathIndex);
-        }
-
-        return paths.length ? "/" + paths.join("/") : null;
-    },
-
-    highlight: function() {
-    },
-    destroy: function() {
-    },
+    resize: function() {
+        this._super('resize');
+        this.element.find('.dataTables_scrollBody').css('height', (this.element.height() - 80))
+    }
 });
-SIIL.DataTable = function(div) {
-    // initialize DataTable
-    this.columns = [];
-    this.name = div.split("_")[0].split("#")[1]; // Temporary trick: use div name to distinguish data
 
-    this.table = $(div).dataTable({
-        "bJQueryUI": true,
-        "bDestroy": true,
-        'sScrollY': '100%',
-//      , "aoColumns": [ 
-//             {"sWidth": "1%"} , // column 1 will be hidden
-//             {"sWidth": "19%"} ,
-//             {"sWidth": "60%"},
-//             {"sWidth": "20%"},
-//        ],
-        // for multi select with ctrl and shift
-        "sRowSelect": "multi",
-        "sDom": "RlfrtipS",
-        "fnPreRowSelect": function(e, nodes, isSelect) {
-            if (e) {
-                mySelectList = myDeselectList = null;
-                if (e.shiftKey && nodes.length == 1) {
-                    myDeselectList = this.fnGetSelected();
-                    mySelectList = myGetRangeOfRows(cgTableObject, myLastSelection, nodes[0]);
-                } else {
-                    myLastSelection = nodes[0];
-                    if (!e.ctrlKey) {
-                        myDeselectList = this.fnGetSelected();
-                        if (!isSelect) {
-                            mySelectList = nodes;
+
+wb.viz.table = function() {
+    var margin = {top: 20, right: 30, bottom: 30, left: 50},
+        width = 500,
+        height = 300
+    ;
+    var dimension, group, data, columns;
+    var table;
+    var editable = false;
+    var dispatch = d3.dispatch('filter', 'edit');
+
+    function exports(selection) {
+        selection.each(function() {
+            if (!table) {
+                var table_str = '<table style="width:100%;"><thead><tr>';
+                for (var i = 0, len = columns.length; i < len; i++) {
+                    table_str += '<th>' + columns[i] + '</th>';
+                }
+                table_str += '</tr></thead></table>';
+                var $table = $(table_str).appendTo(this);
+
+                table = $table.dataTable({
+                    "bJQueryUI": true,
+                    "bDestroy": true,
+                    'sScrollY': height,
+                    'bPaginate': false,
+                    "sRowSelect": "multi", // for multi select with ctrl and shift
+                    "sDom": "Rlfrtip", // enable column resizing
+                });
+
+                table.fnAddData(data);
+                table.fnSetColumnVis(0,false); // hide the first column, which is id
+
+                // save data entry into DOM TODO: maybe this is not necessary?
+                var self = this;
+                table.$('tr').each(function(i, row) {
+                    var pos = table.fnGetPosition(this);
+                    var data = table.fnGetData(pos);
+                    $(row).data("id", data[0]);
+                });
+
+                table.$('tr').find("td:first").click(function(e) {
+                    if ( $(this.parentNode).hasClass('row_selected') ) {
+                        $(this.parentNode).removeClass('row_selected');
+                    } else {
+                        if (! e.shiftKey) {
+                            table.$('tr.row_selected').removeClass('row_selected');
                         }
+                        document.getSelection().removeAllRanges(); // disable text selection when shift+clik
+                        $(this.parentNode).addClass('row_selected');
                     }
+                    var selected_rows = table.$('tr.row_selected');
+                    if (selected_rows.length == 0) {
+                        dimension.filterAll();
+
+                        activitylog({
+                            operation: 'defilter',
+                            data: JSON.stringify({'window_type': 'table'})
+                        });
+                    } else {
+                        records_id = [];
+                        table.$('tr.row_selected').each(function(idx, $row) {
+                            row = table.fnGetData($row);
+                            records_id.push(row[0]);
+                        });
+                        dimension.filter(function(d) {
+                            if (d) {
+                                return records_id.indexOf(d) > -1;
+                            }
+                            return false;
+                        });
+                        activitylog({
+                            operation: 'filter',
+                            data: JSON.stringify({'window_type': 'table', 'filter_by': records_id})
+                        });
+
+                    }
+                    dispatch.filter();
+                });
+
+                if (editable) {
+                    $('td', table.fnGetNodes()).editable("entity/attributes", {
+                        tooltip: "Double click to edit",
+                        cancel: "Cancel",
+                        submit: "Save",
+                        event: "dblclick",
+                        indicator: '<img src="/static/dashboard/img/wait.gif">',
+                        placeholder: "",
+                        callback: function( sValue, y ) {
+                            var aPos = table.fnGetPosition( this );
+                            table.fnUpdate( sValue, aPos[0], aPos[2] );
+                            dispatch.edit();
+                        },
+                        submitdata: function ( value, settings ) {
+                            var column = table.fnGetPosition( this )[2];
+                            var attr = table.fnSettings().aoColumns[column].sTitle.toLowerCase();
+                            return {
+                                id: $(this.parentNode).data("id"),
+                                attribute: attr,
+                            };
+                        }
+                    });
                 }
             }
-            return true;
-        },
-        "fnRowSelected":   mySelectEventHandler,
-        "fnRowDeselected": mySelectEventHandler,
-//      , "aaData": d 
-//        "sPaginationType": "full_numbers"
-    });
-//  $('div.dataTables_scrollBody').height($('div.dataTables_wrapper').height());
-
-    function mySelectEventHandler(nodes) {
-        if (myDeselectList) {
-            var nodeList = myDeselectList;
-            myDeselectList = null;
-            this.fnDeselect(nodeList);
-        }
-        if (mySelectList) {
-            var nodeList = mySelectList;
-            mySelectList = null;
-            this.fnSelect (nodeList);
-        }
-    }
-
-    function myGetRangeOfRows(oDataTable, fromNode, toNode) {
-        var
-            fromPos = oDataTable.fnGetPosition(fromNode),
-            toPos = oDataTable.fnGetPosition(toNode);
-        oSettings = oDataTable.fnSettings(),
-            fromIndex = $.inArray(fromPos, oSettings.aiDisplay),
-            toIndex = $.inArray(toPos, oSettings.aiDisplay),
-            result = [];
-
-        if (fromIndex >= 0 && toIndex >= 0 && toIndex != fromIndex) {
-            for (var i=Math.min(fromIndex,toIndex); i < Math.max(fromIndex,toIndex); i++) {
-                var dataIndex = oSettings.aiDisplay[i];
-                result.push(oSettings.aoData[dataIndex].nTr);
+            // filter table
+            var filter = '';
+            group.all().forEach(function(d) {
+                if (d.key && d.value) {
+                    filter += '^' + d.key + '$|';
+                }
+            });
+            filter = filter.substring(0, filter.length - 1); // remove the last '|' character
+            if (!filter) {
+                // trick: if filter is blank, the default action datatable will take is to show all data
+                // to avoid that, set filter to something impossible
+                filter = '^$';
             }
-        }
-        return result.length>0?result:null;
+            table.fnFilter(filter, 0, true); // 2nd param: which column to filter; 3rd param: to use regular expression or not
+
+
+        });
     }
+
+    exports.margin = function(_) {
+        if (!arguments.length) return margin;
+        margin = _;
+        return exports;
+    };
+
+    exports.dimension = function(_) {
+        if (!arguments.length) return dimension;
+        dimension = _;
+        return exports;
+    };
+
+    exports.filter = function(_) {
+
+        return exports;
+    };
+
+    exports.group = function(_) {
+        if (!arguments.length) return group;
+        group = _;
+        return exports;
+    };
+
+    exports.height = function(_) {
+        if (!arguments.length) return height;
+        height = _;
+        return exports;
+    };
+
+    exports.width = function(_) {
+        if (!arguments.length) return width;
+        width = _;
+        return exports;
+    };
+
+    exports.columns = function(_) {
+        if (!arguments.length) return columns;
+        columns = _;
+        return exports;
+    };
+
+    exports.data = function(_) {
+        if (!arguments.length) return data;
+        data = _;
+        return exports;
+    };
+
+    exports.editable = function(_) {
+        if (!arguments.length) return editable;
+        editable = _;
+        return exports;
+    };
+
+    return d3.rebind(exports, dispatch, 'on');
 };
-
-SIIL.DataTable.prototype.resize = function() {
-//      $('div.dataTables_scrollBody').height($('div.dataTables_wrapper').height());
-    this.table.fnAdjustColumnSizing();
-}
-
-SIIL.DataTable.prototype.update = function() {
-    // prepare data for DataTable
-    if (dDate == null) {
-        return;
-    }
-    var data = [];
-    switch (this.name) {
-        case "location":
-            dFootprint.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push([d.key[0], d.key[1]].concat([d.value]));
-                }
-            });
-            break;
-        case "message":
-            dMessage.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push(d.key);
-                }
-            }); break;
-        case "event":
-            dEvent.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push(d.key);
-                }
-            });
-            break;
-        case "resource":
-            dResource.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push(d.key.concat([d.value]));
-                }
-            });
-            break;
-        case "person":
-            dPerson.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push(d.key.concat([d.value]));
-                }
-            });
-            break;
-        case "organization":
-            dOrganization.group().top(Infinity).forEach(function(d) {
-                if (d.value != 0 && d.key[0] != undefined) {
-                    data.push(d.key.concat([d.value]));
-                }
-            });
-            break;
-    }
-    this.table.fnClearTable();
-    this.table.fnAddData(data);
-    if (this.name != 'message') {
-        this.table.fnSetColumnVis(0, false); // set column 1 - id invisible
-    }
-
-    var self = this;
-    this.table.$('tr').click(function(e) {
-        if ( $(this).hasClass('row_selected') ) {
-            $(this).removeClass('row_selected');
-        } else {
-            if (! e.shiftKey) {
-                self.table.$('tr.row_selected').removeClass('row_selected');
-            }
-            document.getSelection().removeAllRanges(); // disable text selection when shift+clik
-            $(this).addClass('row_selected');
-        }
-        var selected_rows = self.table.$('tr.row_selected');
-        if (selected_rows.length == 0) {
-            switch (self.name) {
-                case "location":
-                    dFootprint.filterAll();
-                    break;
-                case "message":
-                    dMessage.filterAll();
-                    break;
-                case "event":
-                    dEvent.filterAll();
-                    break;
-                case "resource":
-                    dResource.filterAll();
-                    break;
-                case "person":
-                    dPerson.filterAll();
-                    break;
-                case "organization":
-                    dOrganization.filterAll();
-                    break;
-            }
-        } else {
-            records_id = [];
-            self.table.$('tr.row_selected').each(function(idx, $row) {
-                row = self.table.fnGetData($row);
-                records_id.push(row[0]);
-            });
-            var count = 0;
-            switch (self.name) {
-                case "location":
-                    dFootprint.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-                case "message":
-                    dMessage.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-                case "event":
-                    dEvent.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-                case "resource":
-                    dResource.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-                case "person":
-                    dPerson.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-                case "organization":
-                    dOrganization.filter(function(d) {
-                        for (var i = 0; i < records_id.length; i++) {
-                            if (d[0] === records_id[i]) {
-                                count++;
-                                return true;
-                            }
-                        }
-                    });
-                    break;
-            }
-        }
-        renderAllExcept([self.name + 'Table']);
-    });
-
-    this.table.$('tr').mouseover(function() {
-        if (self.name == 'location') {
-            var data = self.table.fnGetData(this);
-            highlight(data[0]); // data[0]: event id
-        }
-    });
-
-//        function fnGetSelected (OTableLocal) {
-//            alert('hi');
-//        }
-};
-
-SIIL.DataTable.prototype.destroy = function() {
-    this.table.remove();
-};
-
-

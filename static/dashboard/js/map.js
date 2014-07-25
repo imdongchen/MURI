@@ -1,19 +1,32 @@
-$.widget("viz.vizmap", $.viz.vizcontainer, {
-    options: {
-        dimension : null,
-    },
+$.widget("viz.vizmap", $.viz.vizbase, {
     _create: function() {
+        this.options.extend.maximize = this.resize.bind(this);
+        this.options.extend.restore = this.resize.bind(this);
+        this.options.base.resizeStop = this.resize.bind(this);
+        this.options.base.dragStop = this.resize.bind(this);
+        this._super("_create");
         this.element.addClass("vizmap");
-        this.element.addClass("viz");
-        
-        this.map = null;
-        this.layers = [];
+        this.element.data("viz", "vizVizmap");
 
-        var map = new OpenLayers.Map(this.element.attr("id"));
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.Navigation({
-            zoomWheelEnabled: true,
-        }));
+        this.layers = [];
+        this.features = [];
+
+        var map = new OpenLayers.Map({
+            div: this.element.attr("id"),
+            eventListeners: {
+                featureover: function(e) {
+                    this.highlight(e.feature);
+                }.bind(this),
+                featureout: function(e) {
+                    this.unhighlight(e.feature);
+                }.bind(this)
+            }
+        });
+//        this.element.css("overflow", "hidden")
+        var ghyb = new OpenLayers.Layer.Google(
+            "Google Hybrid",
+            {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 22}
+        );
         var gphy = new OpenLayers.Layer.Google(
             "Google Physical",
             {type: google.maps.MapTypeId.TERRAIN}
@@ -22,30 +35,26 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
             "Google Streets", // the default
             {numZoomLevels: 22}
         );
-        var ghyb = new OpenLayers.Layer.Google(
-            "Google Hybrid",
-            {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 22}
-        );
         var gsat = new OpenLayers.Layer.Google(
             "Google Satellite",
             {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
         );
 
-        map.addLayers([gphy, gmap, ghyb, gsat]);
+        map.addLayers([ghyb, gphy, gmap, gsat]);
 
-        var pointlayer = new OpenLayers.Layer.Vector("Points", {
+        this.pointlayer = new OpenLayers.Layer.Vector("Points", {
             styleMap: new OpenLayers.StyleMap({
                 'default': new OpenLayers.Style({
-                    externalGraphic: '{{STATIC_URL}}dashboard/img/red_pin.png'
-                  , pointRadius: 16 
+                    externalGraphic: STATIC_URL + 'dashboard/img/red_pin.png'
+                  , pointRadius: 16
                 }),
                 'select':  new OpenLayers.Style({
-                    externalGraphic: '{{STATIC_URL}}dashboard/img/blue_pin.png'
-                  , pointRadius: 16 
+                    externalGraphic: STATIC_URL + 'dashboard/img/blue_pin.png'
+                  , pointRadius: 16
                 })
             })
         });
-        var linelayer = new OpenLayers.Layer.Vector("Lines", {
+        this.linelayer = new OpenLayers.Layer.Vector("Lines", {
             styleMap: new OpenLayers.StyleMap({
                 'default': new OpenLayers.Style({
                     strokeWidth: 3
@@ -60,7 +69,8 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
                 })
             })
         });
-        map.addLayers([pointlayer, linelayer]);
+        this.layers.push(this.pointlayer, this.linelayer);
+        map.addLayers([this.pointlayer, this.linelayer]);
 
         map.setCenter(new OpenLayers.LonLat(44.42200, 33.32500).transform(
             new OpenLayers.Projection("EPSG:4326"),
@@ -68,20 +78,26 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         ), 12); // zoom level
 
         var controlPanel = new OpenLayers.Control.Panel();
+        map.addControl(new OpenLayers.Control.LayerSwitcher());
+        map.addControl(new OpenLayers.Control.Navigation({
+            zoomWheelEnabled: true,
+        }));
         var mapControls = {
             select: new OpenLayers.Control.SelectFeature(
-                        [linelayer, pointlayer],
+                        this.layers,
                         {
                             clickout: true, toggle: true,
                             multiple: false, hover: false,
                             toggleKey: "ctrlKey", // ctrl key removes from selection
                             multipleKey: "shiftKey", // shift key adds to selection
-                            onSelect: this.filterByLocation,
-                            onUnselect: this.filterByLocation,
+                            onSelect: this.filterByLocation.bind(this),
+                            onUnselect: this.filterByLocation.bind(this),
                             box: true
                         }
                     )
-            , navigate: new OpenLayers.Control.Navigation()
+            , navigate: new OpenLayers.Control.Navigation({
+                zoomWheelEnabled: true
+            })
         };
         for (var key in mapControls) {
             map.addControl(mapControls[key]);
@@ -89,66 +105,118 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         }
         map.addControl(controlPanel);
 
+        var navCtrls = map.getControlsByClass('OpenLayers.Control.Navigation');
+        for (var i = 0; i < navCtrls.length; i++) {
+            navCtrls[i].enableZoomWheel();
+        }
+
+        this.updateData();
+
         this.map = map;
-        this.linelayer = linelayer;
-        this.pointlayer = pointlayer;
+
         this.mapControls = mapControls;
 
-        this._super("_create");
         this.update();
+
     },
-    update: function() {
-        var linelayer = this.linelayer;
-        var pointlayer = this.pointlayer;
-        linelayer.removeAllFeatures();
-        pointlayer.removeAllFeatures();
-
-        var points = [], lines = [];
-
-        this.options.dimension.group().top(Infinity).forEach(function(d, i) {
-            // d = {key: [id, name, shape, srid], value: Integer}
-            var fp = d.key;
-            if (fp[0] != undefined && d.value != 0) {
-                if (fp[2] != undefined) { // has shape attr
-                    if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
-                        points.push(fp[2]);
+    updateData: function() {
+        var point_feas = [], line_feas = [];
+        var features = this.features;
+        this.options.group.all().forEach(function(d) {
+            if (d.key) {
+                var location = wb.store.entity[d.key];
+                var geometry = location.primary.geometry;
+                if (geometry) {
+                    if (geometry.geometry instanceof OpenLayers.Geometry.Point) {
+                        point_feas.push(geometry);
+                    } else if (geometry.geometry instanceof OpenLayers.Geometry.LineString) {
+                        line_feas.push(geometry);
                     }
-                    else {
-                        lines.push(fp[2]);
-                    }
+                    features.push(geometry);
                 }
             }
         });
-        linelayer.addFeatures(lines);
-        pointlayer.addFeatures(points);
-        linelayer.redraw();
-        pointlayer.redraw();
-    }, 
-    highlight: function (features_id) {
-        for (var i = 0; i < this.highlightedFeatures.length; i++) {
-            this.mapControls['select'].unhighlight(this.highlightedFeatures[i]);
-        }
-        this.highlightedFeatures = [];
-        for (var i = 0; i < this.map.popups.length; i++) {
-            this.map.removePopup(this.map.popups[i]);
-        }
-
-        var layers = [linelayer, pointlayer];
-        for (var i = 0; i < features_id.length; i++) {
-            for (var j = 0; j < layers.length; j++) {
-                var found = false;
-                var locallayer = layers[j];
-                for (var k = 0, len = locallayer.features.length; k < len; k++) {
-                    if (locallayer.features[k].attributes.id == features_id[i]) {
-                        this._showDetails(locallayer.features[k]);
-                        this.mapControls['select'].highlight(locallayer.features[k]);
-                        this.highlightedFeatures.push(locallayer.features[k]);
-                        found = true;
-                        break;
+        this.linelayer.addFeatures(line_feas);
+        this.pointlayer.addFeatures(point_feas);
+        this.linelayer.redraw();
+        this.pointlayer.redraw();
+        this.features = this.pointlayer.features.concat(this.linelayer.features);
+    },
+    update: function() {
+        this.features.forEach(function(fea) {
+            fea.style = {display: 'none'};
+        });
+        var features = this.features;
+        this.options.group.all().forEach(function(d) {
+            if (d.key && d.value) {
+                features.some(function(fea) {
+                    if (fea.attributes.id === d.key) {
+                        fea.style = null;
+                        return true;
                     }
-                }
-                if (found == true) break;
+                })
             }
+        });
+        this.linelayer.redraw();
+        this.pointlayer.redraw();
+
+    },
+    reload: function() {
+        this.updateData();
+        this.update();
+    },
+    highlight: function (feature) {
+        var entity = wb.store.entity[feature.attributes.id];
+        var primary = entity.primary;
+        var popup = '<div id="map-popup" class="entity-tooltip"><table>';
+        popup += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + '</th><td>' + primary.name + '</td></tr>';
+        for (var attr in primary) {
+            if (attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                popup += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + '</th><td>' + primary[attr] + '</td></tr>';
+            }
+        }
+        popup += '</table></div>';
+
+        feature.popup = new OpenLayers.Popup.FramedCloud(
+                "location_info",
+                feature.geometry.getBounds().getCenterLonLat(),
+                new OpenLayers.Size(200,150),
+                popup,
+                null,
+                true
+        );
+
+        this.map.addPopup(feature.popup, true);
+
+        // for (var i = 0; i < this.highlightedFeatures.length; i++) {
+        //     this.mapControls['select'].unhighlight(this.highlightedFeatures[i]);
+        // }
+        // this.highlightedFeatures = [];
+        // for (var i = 0; i < this.map.popups.length; i++) {
+        //     this.map.removePopup(this.map.popups[i]);
+        // }
+        //
+        // var layers = [linelayer, pointlayer];
+        // for (var i = 0; i < features_id.length; i++) {
+        //     for (var j = 0; j < layers.length; j++) {
+        //         var found = false;
+        //         var locallayer = layers[j];
+        //         for (var k = 0, len = locallayer.features.length; k < len; k++) {
+        //             if (locallayer.features[k].attributes.id == features_id[i]) {
+        //                 this._showDetails(locallayer.features[k]);
+        //                 this.mapControls['select'].highlight(locallayer.features[k]);
+        //                 this.highlightedFeatures.push(locallayer.features[k]);
+        //                 found = true;
+        //                 break;
+        //             }
+        //         }
+        //         if (found == true) break;
+        //     }
+        // }
+    },
+    unhighlight: function(feature) {
+        if (feature.popup) {
+            this.map.removePopup(feature.popup);
         }
     },
 
@@ -156,7 +224,7 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
         $("#footprint_popup #footprint_name").text(feature.attributes.name);
         $("#footprint_popup #footprint_id").text(feature.attributes.id);
         var content = $('#footprint_popup').css('display', '').clone();
-        
+
         feature.popup = new OpenLayers.Popup.FramedCloud(
                 "footprint_info",
                 feature.geometry.getBounds().getCenterLonLat(),
@@ -180,241 +248,41 @@ $.widget("viz.vizmap", $.viz.vizcontainer, {
 
         if (selectedFeas.length == 0) {
             this.options.dimension.filterAll();
+            activitylog({
+                operation: 'defilter',
+                data: JSON.stringify({'window_type': 'map'})
+            })
         } else {
-            // filter event data by above feature ids
-            var count = 0;
-            this.options.dimension.filter(function(fp) { // fp is an array [id, name, shape, srid]
-                if (fp[0] == undefined) {
-                    return false;
-                }
-                for (var j = 0; j < selectedFeas.length; j++) {
-                    if (fp[0] === selectedFeas[j]) {
-                        count ++;
-                        return true; 
-                    }
+            this.options.dimension.filter(function(d) {
+                if (d) {
+                    return selectedFeas.indexOf(d) > -1;
                 }
                 return false;
             });
-            console.log(count);
+            activitylog({
+                operation: 'filter',
+                data: JSON.stringify({'window_type': 'map', 'filter_by': selectedFeas})
+            })
         }
-        renderAllButMap(); // global function
+        $.publish('/data/filter', this.element.attr("id"))
     },
 
-    updateSize: function() {
+    resize: function() {
         this.map.updateSize();
     },
 
     destroy: function() {
         this.map.destroy();
         this._super("_destroy");
-    },
+    }
 });
-SIIL.Map = function(div) {
-    this.map = null;
-    var linelayer = null;
-    var pointlayer = null;
-    var polygonlayer = null;
 
-    this.highlightedFeatures = [];
 
-    // if div starts with '#', delete it
-    if (div.substring(0,1) == '#') {
-        div = div.substring(1);
-    }
-    var map = new OpenLayers.Map(div);
-    map.addControl(new OpenLayers.Control.LayerSwitcher());
-    
-    var gphy = new OpenLayers.Layer.Google(
-        "Google Physical",
-        {type: google.maps.MapTypeId.TERRAIN}
-    );
-    var gmap = new OpenLayers.Layer.Google(
-        "Google Streets", // the default
-        {numZoomLevels: 22}
-    );
-    var ghyb = new OpenLayers.Layer.Google(
-        "Google Hybrid",
-        {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 22}
-    );
-    var gsat = new OpenLayers.Layer.Google(
-        "Google Satellite",
-        {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
-    );
-
-    map.addLayers([gphy, gmap, ghyb, gsat]);
-
-    pointlayer = new OpenLayers.Layer.Vector("Locations", {
-        styleMap: new OpenLayers.StyleMap({
-            'default': new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}dashboard/img/red_pin.png'
-              , pointRadius: 16 
-            }),
-            'select':  new OpenLayers.Style({
-                externalGraphic: '{{STATIC_URL}}dashboard/img/blue_pin.png'
-              , pointRadius: 16 
-            })
-        })
-    });
-    linelayer = new OpenLayers.Layer.Vector("Routes", {
-        styleMap: new OpenLayers.StyleMap({
-            'default': new OpenLayers.Style({
-                strokeWidth: 3
-              , strokeColor: '#FF0000'
-              , fillColor: '#FFDB73'
-              , fillOpacity: 0.4
-
-            }),
-            'select': new OpenLayers.Style({
-                strokeWidth: 3
-              , strokeColor: '#0000FF'
-            })
-        })
-    });
-    map.addLayers([pointlayer, linelayer]);
-
-    map.setCenter(new OpenLayers.LonLat(44.42200, 33.32500).transform(
-        new OpenLayers.Projection("EPSG:4326"),
-        map.getProjectionObject()
-    ), 12); // zoom level
-
-    var controlPanel = new OpenLayers.Control.Panel();
-    var mapControls = {
-        select: new OpenLayers.Control.SelectFeature(
-                    [linelayer, pointlayer],
-                    {
-                        clickout: true, toggle: true,
-                        multiple: false, hover: false,
-                        toggleKey: "ctrlKey", // ctrl key removes from selection
-                        multipleKey: "shiftKey", // shift key adds to selection
-                        onSelect: filterByLocation,
-                        onUnselect: filterByLocation,
-                        box: true
-                    }
-                )
-        , navigate: new OpenLayers.Control.Navigation()
-    };
-    for (var key in mapControls) {
-        map.addControl(mapControls[key]);
-        controlPanel.addControls([mapControls[key]]);
-    }
-    map.addControl(controlPanel);
-
-    this.map = map;
-    var self = this;
-        
-        // add behavior to html
-    //    for (var i=map.layers.length-1; i>=0; --i) {
-    //        map.layers[i].animationEnabled = true;
-    //    }
-
-    this.update = function() {
-        linelayer.removeAllFeatures();
-        pointlayer.removeAllFeatures();
-
-        var points = [], lines = [];
-
-        dFootprint.group().top(Infinity).forEach(function(d, i) {
-            // d = {key: [id, name, shape, srid], value: Integer}
-            var fp = d.key;
-            if (fp[0] != undefined && d.value != 0) {
-                if (fp[2] != undefined) { // has shape attr
-                    if (fp[2].geometry instanceof OpenLayers.Geometry.Point) {
-                        points.push(fp[2]);
-                    }
-                    else {
-                        lines.push(fp[2]);
-                    }
-                }
-            }
+wb.viz.map = function() {
+    function exports(selection) {
+        selection.each(function() {
         });
-        linelayer.addFeatures(lines);
-        pointlayer.addFeatures(points);
-        linelayer.redraw();
-        pointlayer.redraw();
-    };
-
-    this.highlight = function (features_id) {
-        for (var i = 0; i < self.highlightedFeatures.length; i++) {
-            mapControls['select'].unhighlight(self.highlightedFeatures[i]);
-        }
-        self.highlightedFeatures = [];
-        for (var i = 0; i < self.map.popups.length; i++) {
-            self.map.removePopup(self.map.popups[i]);
-        }
-
-        var layers = [linelayer, pointlayer];
-        for (var i = 0; i < features_id.length; i++) {
-            for (var j = 0; j < layers.length; j++) {
-                var found = false;
-                var locallayer = layers[j];
-                for (var k = 0, len = locallayer.features.length; k < len; k++) {
-                    if (locallayer.features[k].attributes.id == features_id[i]) {
-                        showDetails(locallayer.features[k]);
-                        mapControls['select'].highlight(locallayer.features[k]);
-                        self.highlightedFeatures.push(locallayer.features[k]);
-                        found = true;
-                        break;
-                    }
-                }
-                if (found == true) break;
-            }
-        }
-    };
-
-    var showDetails = function(feature) {
-        $("#footprint_popup #footprint_name").text(feature.attributes.name);
-        $("#footprint_popup #footprint_id").text(feature.attributes.id);
-        var content = $('#footprint_popup').css('display', '').clone();
-        
-        feature.popup = new OpenLayers.Popup.FramedCloud(
-                "footprint_info",
-                feature.geometry.getBounds().getCenterLonLat(),
-                new OpenLayers.Size(200,150),
-                content.html(),
-                null,
-                true
-        );
-
-        self.map.addPopup(feature.popup, true);
     }
 
-    function filterByLocation(feature) {
-        var selectedFeas = []; // selected feature ids
-        // get the id of all selected features
-        this.layers.forEach(function(layer) {
-            for (var i = 0, len = layer.selectedFeatures.length; i < len; i++) {
-                selectedFeas.push(layer.selectedFeatures[i].attributes.id);
-            }
-        });
-
-        if (selectedFeas.length == 0) {
-            dFootprint.filterAll();
-        } else {
-            // filter event data by above feature ids
-            var count = 0;
-            dFootprint.filter(function(fp) { // fp is an array [id, name, shape, srid]
-                if (fp[0] == undefined) {
-                    return false;
-                }
-                for (var j = 0; j < selectedFeas.length; j++) {
-                    if (fp[0] === selectedFeas[j]) {
-                        count ++;
-                        return true; 
-                    }
-                }
-                return false;
-            });
-            console.log(count);
-        }
-        renderAllButMap();
-    }
-
-    this.updateSize = function() {
-        map.updateSize();
-    };
-
-    this.destroy = function() {
-        map.destroy();
-        this = null;
-    };
+    return exports;
 };

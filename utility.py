@@ -1,8 +1,9 @@
 import xlrd
-from dashboard.models import *
 from dateutil import parser
 from django.contrib.gis.geos import Point
 import mgrs
+from dashboard.models import *
+from annotation.models import *
 
 def importEntitiesFromFile(filename):
     book = xlrd.open_workbook(filename)
@@ -11,11 +12,11 @@ def importEntitiesFromFile(filename):
         if sheet.name == "Event":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                event = Event(name=row[0], 
+                event = Event(name=row[0],
                         entity_type='event',
-                        security_info=row[1], 
-                        types=row[2], 
-                        category=row[3], 
+                        security_info=row[1],
+                        types=row[2],
+                        category=row[3],
                         date_begin=formatDate(row[4]),
                         date_end=formatDate(row[5]),
                         date_as_of=formatDate(row[6]),
@@ -29,10 +30,10 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Organization":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                org= Organization(name=row[0], 
+                org= Organization(name=row[0],
                         entity_type='organization',
-                        security_info=row[1], 
-                        types=row[2], 
+                        security_info=row[1],
+                        types=row[2],
                         date_as_of=formatDate(row[3]),
                         date_first_info=formatDate(row[4]),
                         affiliation=row[5],
@@ -49,10 +50,10 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Equipment":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                equip= Equipment(name=row[0], 
+                equip= Equipment(name=row[0],
                         entity_type='resource',
                         resource_type='equipment',
-                        security_info=row[1], 
+                        security_info=row[1],
                         date_as_of=formatDate(row[4]),
                         date_first_info=formatDate(row[5]),
                         affiliation=row[6],
@@ -67,9 +68,9 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Place":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                footprint= Footprint(name=row[0], 
+                footprint= Footprint(name=row[0],
                         entity_type='place',
-                        security_info=row[1], 
+                        security_info=row[1],
                         date_as_of=formatDate(row[2]),
                         date_begin=formatDate(row[3]),
                         date_first_info=formatDate(row[4]),
@@ -82,16 +83,16 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Person":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                person= Person(name=row[0], 
+                person= Person(name=row[0],
                         entity_type='person',
-                        security_info=row[1], 
-                        first_name=row[2], 
-                        middle_name=row[3], 
-                        last_name=row[4], 
-                        prefix=row[5], 
-                        suffix=row[6], 
-                        primary_citizenship=row[7], 
-                        secondary_citizenship=row[8], 
+                        security_info=row[1],
+                        first_name=row[2],
+                        middle_name=row[3],
+                        last_name=row[4],
+                        prefix=row[5],
+                        suffix=row[6],
+                        primary_citizenship=row[7],
+                        secondary_citizenship=row[8],
                         nationality=row[9],
                         date_begin=formatDate(row[10]),
                         date_end=formatDate(row[11]),
@@ -113,10 +114,10 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Weapon":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                weapon= Weapon(name=row[0], 
+                weapon= Weapon(name=row[0],
                         entity_type='resource',
                         resource_type='weapon',
-                        security_info=row[1], 
+                        security_info=row[1],
                         affiliation=row[3],
                         allegiance=row[4],
                         condition=row[6],
@@ -136,10 +137,10 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Vehicle":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                vehicle= Vehicle(name=row[0], 
+                vehicle= Vehicle(name=row[0],
                         entity_type='resource',
                         resource_type='vehicle',
-                        security_info=row[1], 
+                        security_info=row[1],
                         date_as_of=formatDate(row[6]),
                         date_first_info=formatDate(row[7]),
                         affiliation=row[8],
@@ -165,10 +166,10 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Facility":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                facility= Facility(name=row[0], 
+                facility= Facility(name=row[0],
                         entity_type='resource',
                         resource_type='facility',
-                        security_info=row[1], 
+                        security_info=row[1],
                         types=row[2],
                         date_as_of=formatDate(row[6]),
                         date_begin=formatDate(row[7]),
@@ -190,19 +191,19 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Document":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                doc= Document(name=row[0], 
+                doc= Document(name=row[0],
                         entity_type='resource',
                         resource_type='document',
-                        security_info=row[1], 
-                        title=row[2], 
-                        title_short=row[3], 
-                        description=row[4], 
-                        author=row[6], 
-                        is_broken_link=formatBool(row[8]), 
-                        url=formatBool(row[9]), 
-                        language=row[12], 
-                        medium=row[13], 
-                        types=row[15], 
+                        security_info=row[1],
+                        title=row[2],
+                        title_short=row[3],
+                        description=row[4],
+                        author=row[6],
+                        is_broken_link=formatBool(row[8]),
+                        url=formatBool(row[9]),
+                        language=row[12],
+                        medium=row[13],
+                        types=row[15],
                         date_published=formatDate(row[20]),
                         date_approved=formatDate(row[21]),
                         date_begin=formatDate(row[22]),
@@ -213,12 +214,12 @@ def importEntitiesFromFile(filename):
         elif sheet.name == "Unit":
             for rownum in range(1, sheet.nrows):
                 row = sheet.row_values(rownum)
-                unit= Unit(name=row[1], 
+                unit= Unit(name=row[1],
                         entity_type='unit',
-                        security_info=row[0], 
-                        unit_number=row[2], 
-                        unit_type=row[3], 
-                        echelon=row[4], 
+                        security_info=row[0],
+                        unit_number=row[2],
+                        unit_type=row[3],
+                        echelon=row[4],
                         date_as_of=formatDate(row[5]),
                         date_first_info=formatDate(row[6]),
                         affiliation=row[7],
@@ -270,12 +271,12 @@ def importRelationshipsFromFile(filename):
                     row = sheet.row_values(rownum)
                     source = Entity.objects.get(guid=row[2])
                     target = Entity.objects.get(guid=row[5])
-                    relationship= Relationship( 
-                            source=source, 
-                            target=target, 
-                            description=row[6], 
-                            types=row[7], 
-                            frequency=row[8], 
+                    relationship= Relationship(
+                            source=source,
+                            target=target,
+                            description=row[6],
+                            types=row[7],
+                            frequency=row[8],
                             intelligence_evaluation=row[9],
                             date_begin=formatDate(row[10]),
                             date_end=formatDate(row[11]),
@@ -293,15 +294,15 @@ def importIEDFromFile(filename):
     with open(filename, 'rb') as f:
         reader = csv.reader(f, delimiter=',', quotechar='"')
         for row in reader:
-            event = Event(name='IED', 
+            event = Event(name='IED',
                     entity_type='event',
-                    types=row[2], 
-                    category=row[3], 
+                    types=row[2],
+                    category=row[3],
                     description=row[4],
                     date_begin=formatDate(row[1])
                     )
             event.save()
-            footprint= Footprint( 
+            footprint= Footprint(
                     entity_type='place',
                     date_begin=formatDate(row[1]),
                     shape=formatGeometryFromLatLon(float(row[17]), float(row[18])))
@@ -325,7 +326,7 @@ def formatDate(datestring):
     return
 
 def formatGeometry(mgrsStr):
-    # mgrs: mgrs format 
+    # mgrs: mgrs format
     if mgrsStr != None and mgrsStr != "":
         try:
             m = mgrs.MGRS()
@@ -340,3 +341,17 @@ def formatBool(boolstring):
     return boolstring.lower() == "true"
 
 
+def create_relationship_between_dataentry_and_entity():
+    annotations = Annotation.objects.all()
+    count = 0
+    for ann in annotations:
+        dataentry = ann.dataentry
+        entities = ann.entities.all()
+        for entity in entities:
+            rel, created = Relationship.objects.get_or_create(source=None, target=entity, dataentry=dataentry)
+            if created:
+                rel.relation = 'contain'
+                rel.date = dataentry.date
+                rel.save()
+                count = count + 1
+    print 'Created ' + str(count) ' relationships'

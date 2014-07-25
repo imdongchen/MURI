@@ -11,6 +11,8 @@ class Migration(SchemaMigration):
         # Adding model 'Annotation'
         db.create_table(u'annotation_annotation', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('start', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('end', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('startOffset', self.gf('django.db.models.fields.IntegerField')()),
             ('endOffset', self.gf('django.db.models.fields.IntegerField')()),
             ('message', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard.Message'])),
@@ -38,15 +40,17 @@ class Migration(SchemaMigration):
     models = {
         u'annotation.annotation': {
             'Meta': {'object_name': 'Annotation'},
+            'end': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'endOffset': ('django.db.models.fields.IntegerField', [], {}),
             'entities': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['dashboard.Entity']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dashboard.Message']"}),
+            'start': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'startOffset': ('django.db.models.fields.IntegerField', [], {})
         },
         u'dashboard.entity': {
             'Meta': {'object_name': 'Entity'},
-            'affiliation': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'affiliation': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
             'allegiance': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'date_as_of': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'date_begin': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
@@ -57,22 +61,15 @@ class Migration(SchemaMigration):
             'guid': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'intelligence_evaluation': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'security_info': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
+            'security_info': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
         },
         u'dashboard.message': {
             'Meta': {'object_name': 'Message'},
             'content': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['dashboard.Entity']", 'null': 'True', 'through': u"orm['dashboard.TagInMessage']", 'blank': 'True'}),
             'uid': ('django.db.models.fields.CharField', [], {'max_length': '10'})
-        },
-        u'dashboard.taginmessage': {
-            'Meta': {'object_name': 'TagInMessage'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dashboard.Message']"}),
-            'tag': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dashboard.Entity']"})
         }
     }
 

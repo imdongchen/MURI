@@ -157,7 +157,7 @@ table thead th div.DataTables_sort_wrapper span {
  */
 table {
 	margin: 0 auto;
-	width: 100%;
+	width: auto;
 	clear: both;
 	border-collapse: collapse;
 }
@@ -497,12 +497,12 @@ tr.even.gradeU td.sorting_3 {
  * Row highlighting example
  */
 
-tr.even:hover td {
+tr.even td:first:hover {
 	background-color: #B0BED9;
 }
 
 
-tr.odd:hover td {
+tr.odd td:first:hover {
 	background-color: #9FAFD1;
 }
 

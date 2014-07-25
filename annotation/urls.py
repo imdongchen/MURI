@@ -3,8 +3,7 @@ from views import *
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^annotations$', get_or_create_annotation),
-    url(r'^annotations/(\d+)$', process_annotation),
-    url(r'^annotation/tag$', tag),
+    url(r'^annotation/(\d+)$', annotation),
+    url(r'^annotation$', annotation),
+    url(r'^annotations$', annotations),
 )
-

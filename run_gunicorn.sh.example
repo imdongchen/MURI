@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+NUM_WORKERS=3
+VE_DIR="/Users/dong/GoogleDrive/Projects/MURI/code/ENV"
+PROJECT_DIR="/Users/dong/GoogleDrive/Projects/MURI/code/MURI"
+# user/group to run as
+USER=dong
+source $VE_DIR/bin/activate
+cd $PROJECT_DIR
+# exec $VE_DIR/bin/gunicorn_django -b 0.0.0.0:9003 -w $NUM_WORKERS \
+gunicorn dashboard.wsgi:application -b 0.0.0.0:9003 -w $NUM_WORKERS \
+    --user=$USER --log-level=info \
+    --log-file=-
