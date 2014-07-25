@@ -43,6 +43,8 @@ path.dragline {
 #network-filterbar {
     list-style-type: none;
     width: 100%;
+    background-color: #ECEDF7;
+    padding: 8px 0 1px 0;
 }
 #network-filterbar li {
     display: inline;
@@ -56,4 +58,8 @@ path.dragline {
 }
 #network-tooltip table tr {
     border: solid thin #ccc;
+}
+
+#network-viewer {
+    display:none;
 }
