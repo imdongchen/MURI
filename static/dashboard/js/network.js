@@ -7,13 +7,55 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.element.addClass("viz viznetwork");
         this.element.data("viz", "vizViznetwork")
 
-        var images = ['person', 'organization', 'location', 'event', 'dataentry', 'resource']
-        var filterbar = '<ul id="network-filterbar">';
-        for (var i = 0; i < images.length; i++) {
-            filterbar += '<li><input type="checkbox" id="' + images[i] +'-check"/><label for="' + images[i] + '-check">' + images[i] + '</label>';
+        var ENTITY = ['dataentry', 'person', 'organization', 'location', 'event', 'resource']
+        var filterbar = '<div id="network-filterbar"><ul>';
+        for (var i = 0; i < ENTITY.length; i++) {
+            filterbar += '<li><input type="checkbox" id="' + ENTITY[i] +'-check" checked value="' + ENTITY[i] + '" style="margin-right: 5px;"/><label for="' + ENTITY[i] + '-check">' + ENTITY[i] + '</label>';
         }
-        filterbar += '</ul>';
-        // this.element.append($(filterbar)); // TODO: add this filter bar after filter function is completed
+        filterbar += '</ul></div>';
+        var _this = this;
+        this.element.append($(filterbar))
+            .find(':checkbox')
+            .change(function() {
+                var display = '';
+                if (! this.checked) {
+                    // hide node and associated links
+                    display = 'none';
+                }
+                var value = this.value;
+                _this.svg.selectAll('.node').transition().style('display', function(o) {
+                    if (value === 'dataentry') {
+                        if (o.primary === undefined) {
+                            return display;
+                        } else {
+                            return this.style.display;
+                        }
+                    } else {
+                        if (o.primary && o.primary.entity_type === value) {
+                            return display;
+                        } else {
+                            return this.style.display;
+                        }
+                    }
+                });
+                _this.svg.selectAll('.link').transition().style('display', function(o) {
+                    if (value === 'dataentry') {
+                        if (o.source.primary === undefined || o.target.primary === undefined) {
+                            return display;
+                        } else {
+                            return this.style.display;
+                        }
+                    } else {
+                        if ((o.source.primary && o.source.primary.entity_type === value) || (o.target.primary && o.target.primary.entity_type === value)) {
+                            return display;
+                        } else {
+                            return this.style.display;
+                        }
+                    }
+                });
+            }); // TODO: add this filter bar after filter function is completed
+
+
         this.margin = {top: 35, bottom: 5, left: 13, right: 5};
         this.width  = this.element.width() - this.margin.left - this.margin.right;
         this.height = this.element.height() - this.margin.top - this.margin.bottom;
@@ -48,11 +90,11 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr('height', this.height)
             .attr("pointer-events", "all")
         ;
-        // define node images
-        for (var i = 0; i < images.length; i++) {
+        // define node image
+        for (var i = 0; i < ENTITY.length; i++) {
             this.svg.append('svg:defs')
-                .append('svg:pattern').attr('id', 'img-'+images[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
-                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + images[i] + '.png')
+                .append('svg:pattern').attr('id', 'img-'+ENTITY[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
+                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + ENTITY[i] + '.png')
             ;
         }
 
@@ -205,7 +247,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 .classed('hidden', false)
                 .attr('d', 'M' + _this.mousedown_node.x + ',' + _this.mousedown_node.y + 'L' + _this.mousedown_node.x + ',' + _this.mousedown_node.y);
 
-            _this.restart();
+            // _this.restart();
+            _this.force.stop();
         })
 
         this.node.on("mouseup", function(d) {
@@ -246,7 +289,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             _this.selected_node = null;
 
             // pop up relationship form
-            var editor = '<div><form><label for="relation">Relationship:</label><input name="relation" id="relation"/>';
+            var editor = '<div style="position: absolute;"><form><label for="relation">Relationship:</label><input name="relation" id="relation"/>';
             editor += '<br><input type="button" value="Cancel"/><input type="submit" value="Save"/>';
             editor += '</form></div>';
             var $editor = _this.element.append($(editor)
@@ -262,7 +305,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                     rel: link.rel
                 }, function(d) {
                     var rel = d.relationship;
-                    $.publish('/relationship/add', rel);
+                    $.publish('/relationship/add', [[rel]]);
                     wb.notify('1 relationship added!', 'success');
 
                     activitylog({
@@ -556,9 +599,9 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr("class", "link")
             .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
             .style('marker-end', function(d) { return 'url(#end-arrow)'; })
-            .on("contextmenu", function(data, index) {
+            .on("mouseover", function(data, index) {
                 var position = d3.mouse(this)
-                d3.select("#network_contextmenu")
+                d3.select("#network-viewer")
                     .style('position', 'absolute')
                     .style('left', position[0] + "px")
                     .style('top', position[1] + "px")
@@ -566,6 +609,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 d3.event.preventDefault();
             })
         ;
+        // this.selected_link && this.selected_link.style('stroke-dasharray', '10,2');
+
         this.link.append('svg:title')
             .text(function(d) { return d.rel; })
         ;

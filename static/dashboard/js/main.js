@@ -213,7 +213,7 @@ $.subscribe('/data/reload', function(e, except) {
     var dataentry_table_id = $('.dataentrytable').attr('id');
     for (var j = 0; j < wb.vartifacts.length; j++) {
         var panel = wb.vartifacts[j];
-        if (except.indexOf(panel.attr("id")) < 0) {
+        if (except && except.indexOf(panel.attr("id")) < 0) {
             var viz = panel.data("viz");
             panel.data(viz).reload();
         }
