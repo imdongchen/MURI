@@ -39,6 +39,10 @@ $(document).ready(function () {
                 dimension: wb.dim.relationship,
                 group: wb.group.relationship
             });
+        } else if (viz_name === 'notepad') {
+            viz = $('<div>').viznotepad({
+                title: 'Notepad'
+            });
         }
 
         if (viz) {

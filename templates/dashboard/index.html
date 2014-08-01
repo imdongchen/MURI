@@ -39,6 +39,9 @@
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/DataTables-1.9.4/plugin/ColReorderWithResize.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/lib/jEditable/jquery.jeditable.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/js/usng.js' %}"></script>
+<script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/ckeditor-4.4.3/ckeditor.js' %}"></script>
+<!-- <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/ckeditor-4.3/core/loader.js' %}"></script> -->
+<!-- <link rel="stylesheet" type="ext/css" href="{% static 'dashboard/lib/ckeditor-4.3/styles.css' %}"> -->
 <!-- end for annotation -->
 
 {% compress js %}
@@ -48,6 +51,7 @@
 <script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/notification.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/activitylog.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/notepad.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/table.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/timeline.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/map.js' %}"></script>
@@ -79,7 +83,7 @@
 
     <div id="progressbar"><div class="progress-label">Loading...</div></div>
     <div id="network-viewer">
-        <span>
+        <span id="network-viewer-controls">
             <button title="edit" class="annotator-edit">Edit</button>
             <button title="delete" class="annotator-delete">Delete</button>
         </span>
