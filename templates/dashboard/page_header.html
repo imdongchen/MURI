@@ -73,6 +73,7 @@
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadE" value="threadE"> SYNCOIN E: Sunni Criminal </label></a> </li>
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadF" value="threadF"> SYNCOIN F: Rashid IED Cell </label></a> </li>
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="all" value="all"> Select All </label></a> </li>
+                <li><a id="upload-data-btn" href="#">Upload Data</a> </li>
             </ul>
         </li>
         <li><a href="#">Table</a>
@@ -91,3 +92,10 @@
         <li><a class="viz-opts" id="workbench-btn" href="#">Workbench</a></li>
     </ul>
 </nav>
+
+<div id='upload-data-dialog'>
+    <form id='upload-data-form' enctype='multipart/form-data'>
+        <input type='file' name='uploadField'>
+        <input type='button' value='Upload'>
+    </form>
+</div>

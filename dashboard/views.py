@@ -11,6 +11,12 @@ from itertools import chain
 import copy
 import settings
 
+
+def upload_data(request):
+    print request.FILES
+    return HttpResponse('success')
+
+
 def index(request):
     bbox    = request.REQUEST.getlist('map')
     time    = request.REQUEST.getlist('time')

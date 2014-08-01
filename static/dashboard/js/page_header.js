@@ -54,4 +54,19 @@ $(function() {
         else $(this).find('span').html('&#x25BC;')
     });
 
+    $('#upload-data-btn').click(function() {
+        window.upload_dialog = $('#upload-data-dialog').dialog({
+            title: 'Upload Data',
+        });
+    });
+
+    $('#upload-data-form input:button').click(function(e) {
+        var formData = new FormData($('#upload-data-form'));
+        $.post('data/upload', formData, function(res) {
+            console.log(res);
+        });
+        window.upload_dialog.dialog('close');
+    });
+
+
 });

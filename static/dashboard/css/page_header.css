@@ -151,3 +151,7 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
     font: bold 14px Arial, Helvetica;
     color: #fff;
 }
+
+#upload-data-dialog {
+    display: none;
+}
