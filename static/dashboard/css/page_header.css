@@ -126,6 +126,13 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
 
 /*--------------------*/
 
+#dataset-list li label {
+    width: '180px';
+}
+#dataset-list li label input[type=checkbox] {
+    margin:  2px 5px !important;
+}
+
 #inputs input {
     background: #f1f1f1;
     padding: 6px 5px;

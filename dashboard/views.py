@@ -60,9 +60,15 @@ def index(request):
     else:
         PREFIX_URL = ''
 
+    datasets = Dataset.objects.all()
+    dataset_dict = {}
+    for ds in datasets:
+        dataset_dict[ds.name] = ds.dataentry_set.count()
+
     return render(request, 'dashboard/index.html', Context({
         "dialogs": dialogs,
-        "PREFIX_URL": PREFIX_URL
+        "PREFIX_URL": PREFIX_URL,
+        "datasets": dataset_dict
     }))
 
 
