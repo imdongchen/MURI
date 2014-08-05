@@ -94,8 +94,12 @@
 </nav>
 
 <div id='upload-data-dialog'>
-    <form id='upload-data-form' enctype='multipart/form-data'>
-        <input type='file' name='uploadField'>
-        <input type='button' value='Upload'>
+    <form id='upload-data-form' enctype='multipart/form-data' method='POST'>
+        <p class='message'></p>
+        <label for='dataset-name'>Dataset Name: </label><input id='dataset-name' name='dataset-name'><br><br>
+        <input type='file' name='uploadField' accept='.csv, .txt'><br/>
+        <input type='submit' value='Upload'><br/><br/>
+        <span>*Note: only .csv file is accepted at this moment. The file should be structured as </span><br>
+        <code>line number [tab] content [tab] date</code>
     </form>
 </div>

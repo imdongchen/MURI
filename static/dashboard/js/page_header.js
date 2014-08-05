@@ -54,18 +54,32 @@ $(function() {
         else $(this).find('span').html('&#x25BC;')
     });
 
+    // pop out upload data dialog
     $('#upload-data-btn').click(function() {
         window.upload_dialog = $('#upload-data-dialog').dialog({
             title: 'Upload Data',
+            width: 378,
+            height: 250
         });
     });
 
-    $('#upload-data-form input:button').click(function(e) {
-        var formData = new FormData($('#upload-data-form'));
-        $.post('data/upload', formData, function(res) {
-            console.log(res);
-        });
-        window.upload_dialog.dialog('close');
+    // using jquery form plugin to serialize file input
+    $('#upload-data-form').ajaxForm({
+        url: 'data/upload',
+        success: function(data) {
+            window.upload_dialog.dialog('close');
+            wb.notify('New dataset added!', 'success')
+        },
+        error: function(res) {
+            $('#upload-data-form .message').text('Upload failed: ' + res.responseText).show();
+            $('#upload-data-form input:submit')[0].disabled = false;
+        }
+    });
+    $('#upload-data-form').submit(function(e) {
+        e.preventDefault();
+        $(this).find('input:submit')[0].disabled = true;
+        $(this).ajaxSubmit();
+        return false;
     });
 
 

@@ -20,7 +20,7 @@ $.widget('wb.notification', {
 wb.notify = function(message, status) {
     // status could be 'error', 'info', 'success'
     // status defaults to 'info'
-    
+
     if (!message) {
         return;
     }
@@ -29,7 +29,7 @@ wb.notify = function(message, status) {
     var $notification = $('#notification');
     if ($notification) {
         $notification.addClass('notification-' + status).html(message);
-        setTimeout(wb.unnotify, 5000);
+        setTimeout(wb.unnotify, 3000);
     }
 };
 

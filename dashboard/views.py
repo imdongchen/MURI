@@ -1,6 +1,5 @@
 from django.shortcuts import render
-from models import *
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 import json
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -9,12 +8,39 @@ from django.template import Context
 from django.db.models import Q
 from itertools import chain
 import copy
+from dateutil import parser
+from django.contrib.auth.decorators import login_required
+import csv
+
 import settings
+from models import *
 
-
+@login_required
 def upload_data(request):
-    print request.FILES
+    dataset_name = request.POST.get('dataset-name', '')
+    if dataset_name == '':
+        return HttpResponseBadRequest()
+
+
+    dataset, created = Dataset.objects.get_or_create(
+        name=dataset_name,
+        created_by=request.user
+    )
+    f =  request.FILES['uploadField']
+    reader = csv.reader(f, delimiter='\t', quotechar='"')
+    for row in reader:
+        try:
+            dataentry = DataEntry.objects.create(
+                content=row[1].strip(), # remove extra whitespace
+                dataset=dataset,
+                date=parser.parse(row[2])
+            )
+        except Exception as e:
+            print 'Warning: data file upload failed: ', e
+            error = 'Data file format unaccepted!'
+            return HttpResponseBadRequest(error)
     return HttpResponse('success')
+
 
 
 def index(request):

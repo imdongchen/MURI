@@ -155,3 +155,15 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
 #upload-data-dialog {
     display: none;
 }
+
+#upload-data-form {
+    margin: 20px 20px;
+    font-size: 1em !important;
+}
+#upload-data-form input {
+    margin-left: 10px;
+}
+#upload-data-form .message {
+    display: none;
+    color: red;
+}
