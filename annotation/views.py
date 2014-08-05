@@ -248,7 +248,7 @@ def annotations(request):
                     annotation.entity = entity
                     annotation.save()
                     res['annotations'].append(annotation.serialize())
-                    
+
         res['entity'] = entity.get_attr()
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
