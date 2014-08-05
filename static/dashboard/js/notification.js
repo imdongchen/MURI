@@ -39,3 +39,8 @@ wb.unnotify = function() {
         $notification.removeClass().addClass('notification');
     }
 };
+
+$(function() {
+    // click to hide notification bar
+    $('#notification').click(wb.unnotify);
+});
