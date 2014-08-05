@@ -28,7 +28,7 @@ run_gunicorn.sh
 /logs/
 /.idea/
 .idea/
-/workbench/migrations/
+/notepad/migrations/
 /annotation/migrations/
 
 # IDE configuration file
