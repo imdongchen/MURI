@@ -83,7 +83,16 @@ class Entity(models.Model):
 class Dataset(models.Model):
     name = models.CharField(max_length=500)
     created_by = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
-    create_at  = models.DateTimeField(default=datetime.now, verbose_name='created at')
+    created_at  = models.DateTimeField(default=datetime.now, verbose_name='created at')
+
+    def get_attr(self):
+        attr = {}
+        attr['id'] = self.id
+        attr['name'] = self.name
+        attr['created_by'] = self.created_by.username if self.created_by != None else None
+        attr['created_at'] = self.created_at.strftime('%m/%d/%Y') if self.created_at else None
+        attr['entries'] = self.dataentry_set.count()
+        return attr
 
 
 class DataEntry(models.Model):

@@ -17,10 +17,10 @@ from models import *
 
 @login_required
 def upload_data(request):
+    res = {}
     dataset_name = request.POST.get('dataset-name', '')
     if dataset_name == '':
         return HttpResponseBadRequest()
-
 
     dataset, created = Dataset.objects.get_or_create(
         name=dataset_name,
@@ -28,6 +28,7 @@ def upload_data(request):
     )
     f =  request.FILES['uploadField']
     reader = csv.reader(f, delimiter='\t', quotechar='"')
+    count = 0
     for row in reader:
         try:
             dataentry = DataEntry.objects.create(
@@ -35,11 +36,13 @@ def upload_data(request):
                 dataset=dataset,
                 date=parser.parse(row[2])
             )
+            count += 1
         except Exception as e:
             print 'Warning: data file upload failed: ', e
             error = 'Data file format unaccepted!'
             return HttpResponseBadRequest(error)
-    return HttpResponse('success')
+    res[dataset.id] = dataset.get_attr()
+    return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
 
@@ -63,8 +66,9 @@ def index(request):
     datasets = Dataset.objects.all()
     dataset_dict = {}
     for ds in datasets:
-        dataset_dict[ds.name] = ds.dataentry_set.count()
+        dataset_dict[ds.id] = ds.get_attr()
 
+    print dataset_dict
     return render(request, 'dashboard/index.html', Context({
         "dialogs": dialogs,
         "PREFIX_URL": PREFIX_URL,
@@ -107,11 +111,11 @@ def data(request):
     ele = res['ele']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
     ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource']
 
-    dataset_names = request.POST.getlist('datasets[]')
+    dataset_id = request.POST.getlist('datasets[]')
 
-    if dataset_names and len(dataset_names):
+    if dataset_id and len(dataset_id):
         # step 1: get requested datasets
-        datasets = Dataset.objects.filter(name__in=dataset_names)
+        datasets = Dataset.objects.filter(id__in=dataset_id)
         # step 2: get data entries in requested datasets
         data_entries = DataEntry.objects.filter(dataset__in=datasets).order_by('-date')
         for de in data_entries:

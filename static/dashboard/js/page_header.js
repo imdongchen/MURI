@@ -8,6 +8,9 @@ $(function() {
         },function() {
                 $(this).find("ul").hide().animate({opacity: 0}, 200);
                 $(this).removeClass("active");
+                if ($(this).hasClass('dataset')) {
+                    $.publish('/dataset/update'); // update dataset when the menu hides
+                }
         }
     );
 
@@ -21,24 +24,8 @@ $(function() {
         $('#viz_nav ul li ul li input[type="checkbox"]').prop('checked', this.checked);
     });
 
-    $('#viz_nav input[type="checkbox"]').change(function() {
-        window.dataset = [];
-        if (!$(this).prop('checked')) {
-            $('#viz_nav input[name="all"]').prop('checked', false);
-        }
-        $('#viz_nav input[type="checkbox"]:checked').each(function() {
-            var val = $(this).val();
-            if (val === 'all') {
-                window.dataset = [];
-                window.dataset.push(val);
-            } else {
-                window.dataset.push(val);
-            }
-        });
 
-        $.publish('/dataset/update');
-    });
-
+    // signup and login
     $('#login-trigger').click(function(){
         $(this).next('#login-content').slideToggle();
         $(this).toggleClass('active');
@@ -54,6 +41,7 @@ $(function() {
         else $(this).find('span').html('&#x25BC;')
     });
 
+
     // pop out upload data dialog
     $('#upload-data-btn').click(function() {
         window.upload_dialog = $('#upload-data-dialog').dialog({
@@ -68,7 +56,16 @@ $(function() {
         url: 'data/upload',
         success: function(data) {
             window.upload_dialog.dialog('close');
-            wb.notify('New dataset added!', 'success')
+            for (var id in data) {
+                var attr = data[id];
+                var li = "<li> <a href='#'><label><input type='checkbox' name='" + attr.name
+                    + "' value='"+ attr.name+ "'>"
+                    + attr.name + " (" + attr.entries + " entries)</label></a> </li>";
+                $(li).insertBefore($('#upload-data-btn').parent());
+            }
+
+            $.extend(wb.store.dataset, data);
+            wb.notify('New dataset added!', 'success');
         },
         error: function(res) {
             $('#upload-data-form .message').text('Upload failed: ' + res.responseText).show();

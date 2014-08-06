@@ -12,14 +12,10 @@ $(document).ready(function() {
         value: false
     });
 
-    // TODO: load datasets first
-    wb.store.dataset = {'1': {name: 'Sunni Criminal'}};
-    var selected_datasets = {'datasets': ['Sunni Criminal']};
-
     $.ajax({
         url: 'data',
         type: 'POST',
-        data: {datasets: ['Sunni Criminal', 'test']},
+        data: {datasets: [1]}, // initialize by requesting a dataset
         success: function(res) {
 
             wb.store.relationship = res.relationship_dict;
@@ -89,6 +85,69 @@ function toOLGeometry(entity) {
 
 
 // Event subscriptions
+
+// add or remove datasets
+$.subscribe('/dataset/update', function() {
+    var now_selected_ds = $('ul#dataset-list').find('input:checkbox:checked').map(function() {
+        return $(this).val();
+    });
+    var pre_selected_ds = _.values(wb.store.datasets).map(function(attr) {
+        if (attr.selected) return attr.id;
+    });
+    var to_add = $(now_selected_ds).not(pre_selected_ds).get(); // to_add = now - pre
+    var to_remove = $(pre_selected_ds).not(now_selected_ds).get(); // to_remove = pre - now
+    addDatasets(to_add);
+    removeDatasets(to_remove);
+    $.publish('/data/reload');
+});
+
+function addDatasets(ds) {
+    // request data entries
+    // ds: array of dataset id
+    $.ajax({
+        url: 'data',
+        type: 'POST',
+        data: {dataset: ds},
+        success: function(res) {
+            wb.datafilter.add(res.ele);
+            $.extend(wb.store.entity, res.entity_dict);
+            $.extend(wb.store.relationship, res.relationship_dict);
+            $.extend(wb.store.dataentry, res.dataentry_dict);
+            ds.forEach(function(d) {
+                wb.store.dataset[d].selected = false;
+            });
+        }
+    });
+}
+
+function removeDatasets(ds) {
+    // remove local dataentry, including crossfilter and store.dataentry
+    // ds: array of dataset id
+
+    // find all related data entries
+    var entries = _.values(wb.store.dataentry).map(function(d) {
+        if (ds.indexOf(d.dataset) > -1) {
+            var id = d.id
+            delete wb.store.dataentry[id];
+            return id;
+        }
+    });
+
+    for (var dim in wb.dim) {
+        wb.dim[dim].filterAll();
+    }
+    wb.dim.dataentry.filter(function(d) {
+        return entries.indexOf(d) > -1;
+    });
+    // delete
+    wb.datafilter.remove();
+    // defilter
+    wb.dim.dataentry.filterAll();
+
+    ds.forEach(function(d) {
+        wb.store.dataset[d].selected = false;
+    });
+}
 
 // do when a visual artifact is closed
 $.subscribe("/viz/close", function(e, panel_id, panel_title) {

@@ -64,11 +64,11 @@
 <nav id='viz_nav' class="blue">
     <ul class="clear">
         <li><label class='logo' ><img src="{% static 'dashboard/img/logo-tran.png' %}" style="height:37px;"></label></li>
-        <li>
+        <li class='dataset'>
             <a id="datasource_btn" href="#">Dataset</a>
             <ul id="dataset-list">
-                {% for name, num in datasets.items %}
-                <li> <a href='#'><label><input type='checkbox' name='{{name}}' value='{{name}}'>{{name}} ({{num}} entries)</label></a> </li>
+                {% for id, attr in datasets.items %}
+                <li> <a href='#'><label><input type='checkbox' name='{{attr.name}}' value='{{id}}'>{{attr.name}} ({{attr.entries}} entries)</label></a> </li>
                 <!-- <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadA" value="threadA"> SYNCOIN A: Bio-Wpns </label> </a></li>
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadB" value="threadB"> SYNCOIN B: Bathist Resurgence </label></a> </li>
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadC" value="threadC"> SYNCOIN C: Iranian Special Group </label></a> </li>
@@ -76,7 +76,6 @@
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadE" value="threadE"> SYNCOIN E: Sunni Criminal </label></a> </li>
                 <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadF" value="threadF"> SYNCOIN F: Rashid IED Cell </label></a> </li> -->
                 {% endfor %}
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="all" value="all"> Select All </label></a> </li>
                 <li><a id="upload-data-btn" href="#">Upload Data</a> </li>
             </ul>
         </li>
@@ -107,3 +106,7 @@
         <code>line number [tab] content [tab] date</code>
     </form>
 </div>
+
+<script>
+    wb.store.dataset = JSON.parse("{{datasets|safe}}");
+</script>
