@@ -65,6 +65,8 @@ $(document).ready(function() {
                 }
             });
 
+            $.publish('/data/loaded');
+
             $("#progressbar").remove();
         }
     })

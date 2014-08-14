@@ -79,5 +79,22 @@ $(function() {
         return false;
     });
 
+    $.subscribe('/data/loaded', function() {
+        var source = _.values(wb.store.entity).map(function(d) {
+            return { id: d.primary.id, value: d.primary.name };
+        });
+        $('#search-field').autocomplete({
+            source: source,
+        });
+    });
+
+    $.subscribe('/entity/change', function() {
+        var source = _.values(wb.store.entity).map(function(d) {
+            return { id: d.primary.id, value: d.primary.name };
+        });
+        $('#search-field').autocomplete({
+            source: source,
+        });
+    });
 
 });

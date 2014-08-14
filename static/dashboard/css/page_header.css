@@ -174,3 +174,18 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
     display: none;
     color: red;
 }
+
+#search-block {
+    margin-left: 50px;
+    margin-right: 50px;
+    width: 30%;
+    float: left;
+    line-height: 25px;
+    padding: 5px 5px;
+}
+#search-form #search-field {
+    width: 80%;
+}
+#search-form input[type='submit'] {
+    width: 15%;
+}

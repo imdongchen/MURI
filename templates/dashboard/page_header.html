@@ -7,17 +7,17 @@
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/page_header.css' %}">
 {% endblock %}
 {% if user.is_authenticated %}
-        <div id="user_greeting">
-            <span> Hello,&nbsp; </span>
-            <div style="display: inline" class="btn-group">
-                <a id='username' href="#" class="dropdown-toggle" data-toggle="dropdown">{{user.username}}! <span style="font-size:10px;">▼</span></a>
-                <ul class="dropdown-menu mydropdown-menu" role="menu">
-                    <li><a id="profile_btn" href="#">Profile</a> </li>
-                    <li><a id="activity_btn" href="#">Activities</a> </li>
-                    <li><a id='logout_btn' href="{% url 'users.views.logout' %}">Log out</a> </li>
-                </ul>
-            </div>
-        </div>
+<div id="user_greeting">
+    <span> Hello,&nbsp; </span>
+    <div style="display: inline" class="btn-group">
+        <a id='username' href="#" class="dropdown-toggle" data-toggle="dropdown">{{user.username}}! <span style="font-size:10px;">▼</span></a>
+        <ul class="dropdown-menu mydropdown-menu" role="menu">
+            <li><a id="profile_btn" href="#">Profile</a> </li>
+            <li><a id="activity_btn" href="#">Activities</a> </li>
+            <li><a id='logout_btn' href="{% url 'users.views.logout' %}">Log out</a> </li>
+        </ul>
+    </div>
+</div>
 {% else %}
 <div id='user_login'>
     <nav>
@@ -95,6 +95,13 @@
         <li><a class="viz-opts" id="notepad-btn" href="#">Notepad</a></li>
     </ul>
 </nav>
+
+<div id="search-block">
+    <form id="search-form">
+        <input id="search-field" placeholder="Search entity here">
+        <input type="submit" value="Search">
+    </form>
+</div>
 
 <div id='upload-data-dialog'>
     <form id='upload-data-form' enctype='multipart/form-data' method='POST'>
