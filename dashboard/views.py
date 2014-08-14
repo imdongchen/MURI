@@ -76,6 +76,14 @@ def index(request):
     }))
 
 
+def dataset(request):
+    datasets = Dataset.objects.all()
+    dataset_dict = {}
+    for ds in datasets:
+        dataset_dict[ds.id] = ds.get_attr()
+    return HttpResponse(json.dumps(dataset_dict), mimetype='application/json')
+
+
 def data(request):
     """
     this provides the basic data structure for client
@@ -116,8 +124,6 @@ def data(request):
     if dataset_id and len(dataset_id):
         # step 1: get requested datasets
         datasets = Dataset.objects.filter(id__in=dataset_id)
-        for ds in datasets:
-            dataset_dict[ds.id] = ds.get_attr()
         # step 2: get data entries in requested datasets
         data_entries = DataEntry.objects.filter(dataset__in=datasets).order_by('-date')
         for de in data_entries:

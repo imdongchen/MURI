@@ -1,75 +1,50 @@
 wb.datafilter = null;
 wb.dim = {}; // dimensions created by crossfilter
 wb.group = {};
-wb.store = {}; // store to host data such as data entries and entities
+wb.store = {
+    entity: {},
+    dataentry:{},
+    dataset: {},
+    relationship: {},
+}; // store to host data such as data entries and entities
 wb.vartifacts = [];
 wb.ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource'];
 
 
 $(document).ready(function() {
-    // show progress bar before data is loaded
-    $("#progressbar").progressbar({
-        value: false
+
+    // get a list of dataset at the very beginning
+    $.ajax({
+        url: 'dataset',
+        type: 'GET',
+        success: function(res) {
+            wb.store.dataset = res;
+        }
     });
 
-    $.ajax({
-        url: 'data',
-        type: 'POST',
-        data: {datasets: [1]}, // initialize by requesting a dataset
-        success: function(res) {
+    // initialize underlying data structure
+    wb.datafilter = crossfilter();
+    wb.dim.dataentry = wb.datafilter.dimension(function(d) { return d.dataentry; });
+    wb.dim.relationship = wb.datafilter.dimension(function(d) { return d.relationship; });
+    wb.dim.date = wb.datafilter.dimension(function(d) { return d.date; });
+    wb.dim.person = wb.datafilter.dimension(function(d) { return d.person; });
+    wb.dim.location = wb.datafilter.dimension(function(d) { return d.location; });
+    wb.dim.event = wb.datafilter.dimension(function(d) { return d.event; });
+    wb.dim.resource = wb.datafilter.dimension(function(d) { return d.resource; });
+    wb.dim.organization = wb.datafilter.dimension(function(d) { return d.organization; });
+    wb.group.dataentry = wb.dim.dataentry.group();
+    wb.group.relationship = wb.dim.relationship.group();
+    wb.group.date = wb.dim.date.group();
+    wb.group.person = wb.dim.person.group();
+    wb.group.location = wb.dim.location.group();
+    wb.group.event = wb.dim.event.group();
+    wb.group.resource = wb.dim.resource.group();
+    wb.group.organization = wb.dim.organization.group();
 
-            $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
-
-            wb.store.dataset = res.dataset_dict;
-            wb.store.relationship = res.relationship_dict;
-            wb.store.dataentry = res.dataentry_dict;
-            wb.store.entity = res.entity_dict;
-
-            // wb.setupDatasetList();
-
-            res.ele.forEach(function(d, i) {
-                d.date = d.date ? new Date(d.date) : null;
-            });
-
-            wb.datafilter = crossfilter(res.ele);
-            wb.dim.dataentry = wb.datafilter.dimension(function(d) { return d.dataentry; });
-            wb.dim.relationship = wb.datafilter.dimension(function(d) { return d.relationship; });
-            wb.dim.date = wb.datafilter.dimension(function(d) { return d.date; });
-            wb.dim.person = wb.datafilter.dimension(function(d) { return d.person; });
-            wb.dim.location = wb.datafilter.dimension(function(d) { return d.location; });
-            wb.dim.event = wb.datafilter.dimension(function(d) { return d.event; });
-            wb.dim.resource = wb.datafilter.dimension(function(d) { return d.resource; });
-            wb.dim.organization = wb.datafilter.dimension(function(d) { return d.organization; });
-            wb.group.dataentry = wb.dim.dataentry.group();
-            wb.group.relationship = wb.dim.relationship.group();
-            wb.group.date = wb.dim.date.group();
-            wb.group.person = wb.dim.person.group();
-            wb.group.location = wb.dim.location.group();
-            wb.group.event = wb.dim.event.group();
-            wb.group.resource = wb.dim.resource.group();
-            wb.group.organization = wb.dim.organization.group();
-
-            _.values(wb.store.dataentry).forEach(function(d) {
-                d.date = d.date ? new Date(d.date) : null;
-            });
-            _.values(wb.store.relationship).forEach(function(d) {
-                d.date = d.date ? new Date(d.date) : null;
-            });
-
-            wb.group.location.all().forEach(function(d) {
-                if (d.key) {
-                    var location = wb.store.entity[d.key];
-                    if (location.primary.geometry) {
-                        location.primary.geometry = toOLGeometry(location);
-                    }
-                }
-            });
-
-            $.publish('/data/loaded');
-
-            $("#progressbar").remove();
-        }
-    })
+    // load some sample data, otherwise the app is blank..
+    addDatasets(['1']);
+    $.publish('/data/loaded');
+    $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
 });
 
 // override toString to easy display location entity
@@ -108,10 +83,11 @@ function toOLGeometry(entity) {
 // add or remove datasets
 $.subscribe('/dataset/update', function() {
     var now_selected_ds = $('ul#dataset-list').find('input:checkbox:checked').map(function() {
-        return $(this).val();
+        return parseInt($(this).val());
     });
-    var pre_selected_ds = _.values(wb.store.datasets).map(function(attr) {
-        if (attr.selected) return attr.id;
+    var pre_selected_ds = [];
+    _.values(wb.store.dataset).forEach(function(attr) {
+        if (attr.selected) pre_selected_ds.push(attr.id);
     });
     var to_add = $(now_selected_ds).not(pre_selected_ds).get(); // to_add = now - pre
     var to_remove = $(pre_selected_ds).not(now_selected_ds).get(); // to_remove = pre - now
@@ -123,20 +99,47 @@ $.subscribe('/dataset/update', function() {
 function addDatasets(ds) {
     // request data entries
     // ds: array of dataset id
-    $.ajax({
-        url: 'data',
-        type: 'POST',
-        data: {dataset: ds},
-        success: function(res) {
-            wb.datafilter.add(res.ele);
-            $.extend(wb.store.entity, res.entity_dict);
-            $.extend(wb.store.relationship, res.relationship_dict);
-            $.extend(wb.store.dataentry, res.dataentry_dict);
-            ds.forEach(function(d) {
-                wb.store.dataset[d].selected = false;
-            });
-        }
-    });
+
+    if (ds && ds.length) {
+        // show progress bar before data is loaded
+        $("#progressbar").show().progressbar({
+            value: false
+        });
+        $.ajax({
+            url: 'data',
+            type: 'POST',
+            data: {datasets: ds},
+            success: function(res) {
+                // data formatting
+                res.ele.forEach(function(d, i) {
+                    d.date = d.date ? new Date(d.date) : null;
+                });
+                _.values(res.dataentry_dict).forEach(function(d) {
+                    d.date = d.date ? new Date(d.date) : null;
+                });
+                _.values(res.relationship_dict).forEach(function(d) {
+                    d.date = d.date ? new Date(d.date) : null;
+                });
+                _.values(res.entity_dict).forEach(function(d) {
+                    if (d.primary.entity_type === 'location') {
+                        if (d.primary.geometry && typeof d.primary.geometry === 'string') { // if geometry is still in wkt format
+                            d.primary.geometry = toOLGeometry(d);
+                        }
+                    }
+                });
+
+                wb.datafilter.add(res.ele);
+                $.extend(wb.store.entity, res.entity_dict);
+                $.extend(wb.store.relationship, res.relationship_dict);
+                $.extend(wb.store.dataentry, res.dataentry_dict);
+                ds.forEach(function(d) {
+                    wb.store.dataset[d].selected = true;
+                });
+
+                $("#progressbar").hide();
+            }
+        });
+    }
 }
 
 function removeDatasets(ds) {
@@ -144,28 +147,34 @@ function removeDatasets(ds) {
     // ds: array of dataset id
 
     // find all related data entries
-    var entries = _.values(wb.store.dataentry).map(function(d) {
-        if (ds.indexOf(d.dataset) > -1) {
-            var id = d.id
-            delete wb.store.dataentry[id];
-            return id;
+    if (ds && ds.length) {
+        $("#progressbar").show().progressbar({
+            value: false
+        });
+        var entries = _.values(wb.store.dataentry).map(function(d) {
+            if (ds.indexOf(d.dataset) > -1) {
+                var id = d.id
+                delete wb.store.dataentry[id];
+                return id;
+            }
+        });
+
+        for (var dim in wb.dim) {
+            wb.dim[dim].filterAll();
         }
-    });
+        wb.dim.dataentry.filter(function(d) {
+            return entries.indexOf(d) > -1;
+        });
+        // delete
+        wb.datafilter.remove();
+        // defilter
+        wb.dim.dataentry.filterAll();
 
-    for (var dim in wb.dim) {
-        wb.dim[dim].filterAll();
+        ds.forEach(function(d) {
+            wb.store.dataset[d].selected = false;
+        });
+        $("#progressbar").hide();
     }
-    wb.dim.dataentry.filter(function(d) {
-        return entries.indexOf(d) > -1;
-    });
-    // delete
-    wb.datafilter.remove();
-    // defilter
-    wb.dim.dataentry.filterAll();
-
-    ds.forEach(function(d) {
-        wb.store.dataset[d].selected = false;
-    });
 }
 
 // do when a visual artifact is closed

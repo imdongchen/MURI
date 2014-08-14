@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', index),
     url(r'^data$', data),
+    url(r'^dataset$', dataset),
     url(r'^data/upload$', upload_data),
     url(r'^entity/attributes$', entity_attr),
     url(r'^relationship$', relationship),

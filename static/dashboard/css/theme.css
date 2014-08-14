@@ -26,13 +26,13 @@
 #progressbar {
     position: absolute;
     top: 40%;
-    left: 50%;
+    left: 45%;
     width: 400px;
-    margin: 0 0 0 -150px;
+    margin: 0 0 0 -130px;
 }
 .progress-label {
     position: absolute;
-    left: 45%;
+    left: 40%;
     top: 4px;
     font-weight: bold;
     text-shadow: 1px 1px 0 #fff;
