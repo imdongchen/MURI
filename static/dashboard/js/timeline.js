@@ -78,38 +78,37 @@ wb.viz.timeline = function() {
             var svg = d3.select(this).select('svg');
             var gbrush;
             if (svg.empty()) {
-                svg = d3.select(this)
-                    .append('svg')
-                    .append('g')
+                svg = d3.select(this).append('svg');
+                g = svg.append('g')
                     .attr('transform', 'translate(' + margin.left + "," + margin.top + ')')
                 ;
 
-                svg.append("clipPath")
+                g.append("clipPath")
                     .attr("id", "clip")
                     .append("rect")
                 ;
 
-                svg.selectAll(".bar")
+                g.selectAll(".bar")
                     .data(["background", "foreground"])
                     .enter().append("path")
                     .attr("class", function(d) { return d + " bar"; })
                     .datum(group.all())
                 ;
 
-                svg.selectAll(".foreground.bar")
+                g.selectAll(".foreground.bar")
                     .attr("clip-path", "url(#clip)")
                 ;
 
-                svg.append('g')
+                g.append('g')
                     .attr('class', 'axis x')
                 ;
-                svg.append('g')
+                g.append('g')
                     .attr('class', 'axis y')
                 ;
 
                 brush.x(scaleX);
                 // Initialize the brush component with pretty resize handles.
-                gBrush = svg.append("g")
+                gBrush = g.append("g")
                     .attr("class", "brush")
                     .call(brush)
                 ;
