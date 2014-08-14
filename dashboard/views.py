@@ -67,8 +67,8 @@ def index(request):
     dataset_dict = {}
     for ds in datasets:
         dataset_dict[ds.id] = ds.get_attr()
-
-    print dataset_dict
+    #
+    # print dataset_dict
     return render(request, 'dashboard/index.html', Context({
         "dialogs": dialogs,
         "PREFIX_URL": PREFIX_URL,
@@ -107,8 +107,8 @@ def data(request):
             }
         }
     """
-    res = {'ele': [], 'entity_dict': {}, 'dataentry_dict': {}, 'relationship_dict': {}}
-    ele = res['ele']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
+    res = {'ele': [], 'dataset_dict': {}, 'entity_dict': {}, 'dataentry_dict': {}, 'relationship_dict': {}}
+    ele = res['ele']; dataset_dict = res['dataset_dict']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
     ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource']
 
     dataset_id = request.POST.getlist('datasets[]')
@@ -116,6 +116,8 @@ def data(request):
     if dataset_id and len(dataset_id):
         # step 1: get requested datasets
         datasets = Dataset.objects.filter(id__in=dataset_id)
+        for ds in datasets:
+            dataset_dict[ds.id] = ds.get_attr()
         # step 2: get data entries in requested datasets
         data_entries = DataEntry.objects.filter(dataset__in=datasets).order_by('-date')
         for de in data_entries:

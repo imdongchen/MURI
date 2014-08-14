@@ -18,9 +18,14 @@ $(document).ready(function() {
         data: {datasets: [1]}, // initialize by requesting a dataset
         success: function(res) {
 
+            $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
+
+            wb.store.dataset = res.dataset_dict;
             wb.store.relationship = res.relationship_dict;
             wb.store.dataentry = res.dataentry_dict;
             wb.store.entity = res.entity_dict;
+
+            // wb.setupDatasetList();
 
             res.ele.forEach(function(d, i) {
                 d.date = d.date ? new Date(d.date) : null;
@@ -68,6 +73,18 @@ $(document).ready(function() {
 // override toString to easy display location entity
 OpenLayers.Feature.Vector.prototype.toString = function() {
     return this.geometry.toString();
+}
+
+wb.setupDatasetList = function() {
+    var dataset = wb.store.dataset;
+    for (var key in dataset) {
+        var name = dataset[key].name;
+        var entries = dataset[key].entries;
+        var line = '<li><a href="#"><label><input type="checkbox" name="' + name
+            + '"value="' + key + '">' + name + '(' + entries
+            + ')<label></a></li>';
+        $('#dataset-list').prepend($(line));
+    }
 }
 
 function toOLGeometry(entity) {
