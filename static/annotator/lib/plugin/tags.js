@@ -230,6 +230,19 @@ Annotator.Plugin.Tags = (function(_super) {
                 }
             })
         ;
+
+        // update autocomplete when new entity is added
+        $.subscribe('/entity/change', function() {
+            var opts = [];
+            for (var key in wb.store.entity) {
+                var entity = wb.store.entity[key];
+                opts.push({
+                    id: key,
+                    value: entity.primary.name
+                });
+            }
+            $(field).find('.tag_name').autocomplete('option', 'source', opts);
+        });
     };
 
     Tags.prototype.updateTitleField = function(field, annotation) {
@@ -307,7 +320,12 @@ Annotator.Plugin.Tags = (function(_super) {
         if (! annotation.tag) {
             annotation.tag = {};
         }
-        annotation.tag.name = $(field).find('.tag_name').val();
+        var name = $(field).find('.tag_name').val();
+        if (name) {
+            annotation.tag.name = name;
+        } else {
+            alert ('Entity name is required!'); // TODO: more elegant form validation
+        }
     },
 
     Tags.prototype.setAnnotationTag = function(field, annotation) {
@@ -317,6 +335,8 @@ Annotator.Plugin.Tags = (function(_super) {
         var entity_type = $(field).find('.selectize-entity').val();
         if (entity_type) {
             annotation.tag.entity_type = entity_type;
+        } else {
+            alert ('Entity type is required!'); // TODO: more elegant form validation
         }
     };
 
