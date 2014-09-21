@@ -19,6 +19,10 @@ $(document).ready(function() {
         type: 'GET',
         success: function(res) {
             wb.store.dataset = res;
+            // load some sample data, otherwise the app is blank..
+            addDatasets(['1']);
+            $.publish('/data/loaded');
+            $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
         }
     });
 
@@ -41,10 +45,6 @@ $(document).ready(function() {
     wb.group.resource = wb.dim.resource.group();
     wb.group.organization = wb.dim.organization.group();
 
-    // load some sample data, otherwise the app is blank..
-    addDatasets(['1']);
-    $.publish('/data/loaded');
-    $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
 });
 
 // override toString to easy display location entity

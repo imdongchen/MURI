@@ -20,6 +20,10 @@
     PREFIX_URL = "{{ PREFIX_URL | escapejs }}";
 </script>
 
+<!-- enjoyhint library -->
+<link href="{% static 'dashboard/lib/enjoyhint/enjoyhint.css' %}" rel="stylesheet">
+<script src="{% static 'dashboard/lib/enjoyhint/enjoyhint.js' %}"></script>
+
 <!-- for annotation -->
 <script src="{% static 'annotator/lib/util.js' %}"></script>
 <script src="{% static 'annotator/lib/console.js' %}"></script>
@@ -57,6 +61,7 @@
 <script type="text/javascript" src="{% static 'dashboard/js/timeline.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/map.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/network.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/js/help.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/main.js' %}"></script>
 {% endcompress %}
 

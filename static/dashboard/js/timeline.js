@@ -69,6 +69,7 @@ wb.viz.timeline = function() {
             scaleX = d3.time.scale()
                 .domain(d3.extent(_.pluck(group.all(), 'key')))
                 .rangeRound([0, width])
+                .nice(d3.time.week)
             ;
             scaleY = d3.scale.linear()
                 .domain([0, d3.max(_.pluck(group.all(), 'value'))])

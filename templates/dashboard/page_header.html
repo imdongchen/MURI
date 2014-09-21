@@ -4,83 +4,37 @@
 {% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/page_header.js' %}"></script>
 {% endcompress %}
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/page_header.css' %}">
+<!-- <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/page_header.css' %}"> -->
 {% endblock %}
-{% if user.is_authenticated %}
-<div id="user_greeting">
-    <span> Hello,&nbsp; </span>
-    <div style="display: inline" class="btn-group">
-        <a id='username' href="#" class="dropdown-toggle" data-toggle="dropdown">{{user.username}}! <span style="font-size:10px;">▼</span></a>
-        <ul class="dropdown-menu mydropdown-menu" role="menu">
-            <li><a id="profile_btn" href="#">Profile</a> </li>
-            <li><a id="activity_btn" href="#">Activities</a> </li>
-            <li><a id='logout_btn' href="{% url 'users.views.logout' %}">Log out</a> </li>
-        </ul>
-    </div>
-</div>
-{% else %}
-<div id='user_login'>
-    <nav>
-        <ul>
-            <li id="login">
-                <a id="login-trigger" href="#">
-                    Log in <span>▼</span>
-                </a>
-                <div id="login-content" class="content">
-                    <form action='{% url "users.views.login" %}' method="post">
-                        <fieldset id="inputs">
-                            <input id="username" name="username" placeholder="Your user name" required>
-                            <input id="password" type="password" name="password" placeholder="Password" required>
-                        </fieldset>
-                        <fieldset id="actions">
-                            <input type="submit" id="submit" value="Log in">
-                            <!-- <label><input type="checkbox" checked="checked"> Keep me signed in</label> -->
-                        </fieldset>
-                    </form>
-                </div>
-            </li>
-            <li id="signup">
-                <a id='signup-trigger' href="#">
-                    Sign Up <span>▼</span>
-                </a>
-                <div id="signup-content" class="content">
-                    <form action='{% url "users.views.register" %}' method="post">
-                        <fieldset id="inputs">
-                            <input id="username" name="username" placeholder="Your user name" required>
-                            <input id="email" type="email" name="email" placeholder="Your email address" required>
-                            <input id="password" type="password" name="password" placeholder="Password" required>
-                        </fieldset>
-                        <fieldset id="actions">
-                            <input type="submit" id="submit" value="Sign up">
-                        </fieldset>
-                    </form>
-                </div>
-            </li>
-        </ul>
-    </nav>
-</div>
-{% endif %}
 
-<nav id='viz_nav' class="blue">
-    <ul class="clear">
-        <li><label class='logo' ><img src="{% static 'dashboard/img/logo-tran.png' %}" style="height:37px;"></label></li>
-        <li class='dataset'>
-            <a id="datasource_btn" href="#">Dataset</a>
-            <ul id="dataset-list">
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Analyst's Workbench</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav viz">
+        <li class='dataset dropdown'>
+            <a id="datasource_btn" href="#" class="dropdown-toggle" data-toggle="dropdown">Dataset<span class="caret"></span></a>
+            <ul id="dataset-list" class="dropdown-menu">
                 {% for id, attr in datasets.items %}
-                <li> <a href='#'><label><input type='checkbox' name='{{attr.name}}' value='{{id}}'>{{attr.name}} ({{attr.entries}} entries)</label></a> </li>
-                <!-- <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadA" value="threadA"> SYNCOIN A: Bio-Wpns </label> </a></li>
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadB" value="threadB"> SYNCOIN B: Bathist Resurgence </label></a> </li>
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadC" value="threadC"> SYNCOIN C: Iranian Special Group </label></a> </li>
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadD" value="threadD"> SYNCOIN D: Sectarian Conflict </label></a> </li>
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadE" value="threadE"> SYNCOIN E: Sunni Criminal </label></a> </li>
-                <li><a href="#"><label style="width:180px;"><input type="checkbox" name="threadF" value="threadF"> SYNCOIN F: Rashid IED Cell </label></a> </li> -->
+                <li> <a href='#'><label><input type='checkbox' name='{{attr.name}}' value='{{id}}'>{{attr.name}} ({{attr.entries}} entries)</label></a>
                 {% endfor %}
-                <li><a id="upload-data-btn" href="#">Upload Data</a> </li>
+                <li><a id="upload-data-btn" href="#">Upload Data</a>
             </ul>
         </li>
-        <li><a href="#">Table</a>
-            <ul>
+        <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Table<span class="caret"></a>
+            <ul class="dropdown-menu">
                 <li><a class="viz-opts" id="dataentry_table-btn" href="#">Data Entry</a></li>
                 <li><a class="viz-opts" id="person_table-btn" href="#">People</a></li>
                 <li><a class="viz-opts" id="organization_table-btn" href="#">Organizations</a></li>
@@ -93,17 +47,60 @@
         <li><a class="viz-opts" id="map-btn" href="#" >Map</a></li>
         <li><a class="viz-opts" id="network-btn" href="#">Network</a></li>
         <li><a class="viz-opts" id="notepad-btn" href="#">Notepad</a></li>
+      </ul>
+      <form class="navbar-form navbar-left" role="search">
+        <div class="form-group">
+          <input id="search-field" type="text" class="form-control" placeholder="Search entity here...">
+        </div>
+        <button type="submit" class="btn btn-default">Search</button>
+      </form>
+      <ul class="nav navbar-nav navbar-right">
+      {% if user.is_authenticated %}
+      <li class="dropdown">
+        <a id="username" href="#" class="dropdown-toggle" data-toggle="dropdown">{{user.username}} <span class="caret"></span></a>
+        <ul class="dropdown-menu mydropdown-menu" role="menu">
+            <li><a id="profile_btn" href="#">Profile</a> </li>
+            <li><a id="activity_btn" href="#">Activities</a> </li>
+            <li><a id='logout_btn' href="{% url 'users.views.logout' %}">Log out</a> </li>
+        </ul>
+      </li>
+      {% else %}
+      <li class="dropdown login">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Log In<span class="caret"></span></a>
+        <div class="content dropdown-menu" id="login-content">
+            <form action='{% url "users.views.login" %}' method="post">
+                <fieldset id="inputs">
+                    <input id="username" name="username" placeholder="Your user name" required>
+                    <input id="password" type="password" name="password" placeholder="Password" required>
+                </fieldset>
+                <fieldset id="actions">
+                    <input type="submit" class="submit" value="Log in">
+                    <!-- <label><input type="checkbox" checked="checked"> Keep me signed in</label> -->
+                </fieldset>
+            </form>
+        </div>
+      </li>
+      <li class="dropdown login">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Sign Up <span class="caret"></span></a>
+        <div id="signup-content" class="content dropdown-menu">
+            <form action='{% url "users.views.register" %}' method="post">
+                <fieldset id="inputs">
+                    <input id="username" name="username" placeholder="Your user name" required>
+                    <input id="email" type="email" name="email" placeholder="Your email address" required>
+                    <input id="password" type="password" name="password" placeholder="Password" required>
+                </fieldset>
+                <fieldset id="actions">
+                    <input type="submit" class="submit" value="Sign up">
+                </fieldset>
+            </form>
+        </div>
+      </li>
     </ul>
+    {% endif %}
+  </div>
 </nav>
 
-<div id="search-block">
-    <form id="search-form">
-        <input id="search-field" placeholder="Search entity here">
-        <input type="submit" value="Search">
-    </form>
-</div>
-
-<div id='upload-data-dialog'>
+<div id='upload-data-dialog' style="display: none;">
     <form id='upload-data-form' enctype='multipart/form-data' method='POST'>
         <p class='message'></p>
         <label for='dataset-name'>Dataset Name: </label><input id='dataset-name' name='dataset-name'><br><br>

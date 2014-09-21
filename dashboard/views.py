@@ -15,6 +15,7 @@ import csv
 import settings
 from models import *
 
+
 @login_required
 def upload_data(request):
     res = {}

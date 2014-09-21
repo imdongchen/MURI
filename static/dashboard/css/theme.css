@@ -1,5 +1,5 @@
 .ui-widget-header {
-    background: #C5CEFF; !important
+    background: #c5ceff !important;
 }
 
 .ui-widget.ui-dialog {
@@ -9,17 +9,71 @@
     border-radius: 0 !important;
 }
 
-#page_header {
-    padding: 0px;
-    margin: 0px;
-    /*background: url('../img/board-frame-dark.jpg') repeat-x;*/
-    width: 100%;
-    height: 40px;
-    background-color: #4D6CBB;
-}
+/* #page_header { */
+/*     padding: 0px; */
+/*     margin: 0px; */
+/*     /*background: url('../img/board-frame-dark.jpg') repeat-x;*/ */
+/*     width: 100%; */
+/*     height: 40px; */
+/*     background-color: #4d6cbb; */
+/* } */
 
 .ui-dialog-content {
     overflow: scroll;
+}
+
+
+/* override bootstrap style */
+.navbar-default {
+  background-color: #4d6cbb;
+}
+.navbar-default .navbar-brand:hover, .navbar-default .navbar-brand, .navbar-default .navbar-brand:focus {
+  color: white;
+}
+.navbar-default .navbar-nav>li>a {
+  color: white;
+}
+
+
+/* user login and signup */
+.login form input {
+    background: #f1f1f1;
+    padding: 6px 5px;
+    margin: 0 0 5px 0;
+    width: 238px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px #ccc inset;
+}
+
+.login form .submit {
+    background-color: #4d6cbb;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.5);
+    border: 0;
+    float: right;
+    height: 30px;
+    padding: 0;
+    width: 100px;
+    cursor: pointer;
+    font: bold 14px arial, helvetica;
+    color: #fff;
+}
+
+
+.login .content {
+/*     position: absolute; */
+/*     /*top: 24px;*/ */
+/*     right: 0; */
+/*     z-index: 999; */
+/*     background: #fff; */
+/*     background-image: linear-gradient(top, #fff, #eee); */
+    padding: 15px !important;
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,.9);
+    border-radius: 3px 0 3px 3px;
+/*     border: 1px solid #ccc; */
 }
 
 
@@ -39,8 +93,25 @@
   }
 
 html, body {
-    font: 12px Sans serif;
+    font: 12px sans serif;
     /*background-image: url('../img/board-lg.jpg');*/
 /*    position: relative;
 */
+}
+
+
+#upload-data-dialog {
+    display: none;
+}
+
+#upload-data-form {
+    margin: 20px 20px;
+    font-size: 1em !important;
+}
+#upload-data-form input {
+    margin-left: 10px;
+}
+#upload-data-form .message {
+    display: none;
+    color: red;
 }
