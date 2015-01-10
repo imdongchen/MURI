@@ -17,6 +17,9 @@ $(function() {
   ];
 
   //set script config
-  wb.help.main.setScript(main_hint_steps);
-  wb.help.main.runScript();
+  if (!$.cookie('hinted')) {
+    wb.help.main.setScript(main_hint_steps);
+    wb.help.main.runScript();
+    $.cookie('hinted', true);
+  }
 });

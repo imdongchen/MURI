@@ -21,8 +21,8 @@
 </script>
 
 <!-- enjoyhint library -->
-<link href="{% static 'dashboard/lib/enjoyhint/enjoyhint.css' %}" rel="stylesheet">
 <script src="{% static 'dashboard/lib/enjoyhint/enjoyhint.js' %}"></script>
+<script src="{% static 'dashboard/lib/d3-tip/d3-tip.js' %}"></script>
 
 <!-- for annotation -->
 <script src="{% static 'annotator/lib/util.js' %}"></script>
@@ -45,6 +45,8 @@
 <script type="text/javascript" src="{% static 'dashboard/lib/jEditable/jquery.jeditable.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/js/usng.js' %}"></script>
 <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/ckeditor-4.4.3/ckeditor.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/lib/bootstrap-notify/bootstrap-notify.js' %}"></script>
+<script type="text/javascript" src="{% static 'dashboard/lib/jquery.cookie.js' %}"></script>
 <!-- <script type="text/javascript" language="javascript" src="{% static 'dashboard/lib/ckeditor-4.3/core/loader.js' %}"></script> -->
 <!-- <link rel="stylesheet" type="ext/css" href="{% static 'dashboard/lib/ckeditor-4.3/styles.css' %}"> -->
 <!-- end for annotation -->
@@ -66,19 +68,22 @@
 {% endcompress %}
 
 {% compress css %}
+<link href="{% static 'dashboard/lib/bootstrap-notify/bootstrap-notify.css' %}" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/d3-tip/d3-tip.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/notification.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/table.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/timeline.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/map.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/network.css' %}">
+<link href="{% static 'dashboard/lib/enjoyhint/enjoyhint.css' %}" rel="stylesheet">
 {% endcompress %}
 
 {% endblock %}
 
 {% block page-header %}
     {% include 'dashboard/page_header.html' %}
-    <div id='notification' class='notification'>
+    <div id='notification' class='notification top-right'>
     </div>
 {% endblock %}
 {% block page-body %}
@@ -90,13 +95,15 @@
     <div id="progressbar"><div class="progress-label">Updating Data...</div></div>
     <div id="network-viewer">
         <span id="network-viewer-controls">
-            <button title="edit" class="annotator-edit">Edit</button>
-            <button title="delete" class="annotator-delete">Delete</button>
+          <button type="button" title="delete" class="close delete"><span class="glyphicon glyphicon-remove"></span></button>
+          <button type="button" title="edit" class="close edit"><span class="glyphicon glyphicon-pencil"></span></button>
         </span>
-        <div>
-            attribute here
-        </div>
-        <table>
-        </table>
+    </div>
+    <div id="network-editor">
+        <form>
+          <label for="relation">Relationship:</label>
+          <input name="relation" id="relation"/>' <br>
+          <input type="button" value="Cancel"/><input type="submit" value="Save"/>';
+        </form>
     </div>
 {% endblock %}

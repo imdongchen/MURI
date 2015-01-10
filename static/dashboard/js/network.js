@@ -83,12 +83,17 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             })
         ;
 
+        this.tip = d3.tip().attr('class', 'd3-tip').html(function(d) {
+          return $('#network-viewer').html();
+        });
+
         this.svg = d3.select(this.element[0])
             .each(function() { this.focus(); })
             .append("svg:svg")
             .attr('width', this.width)
             .attr('height', this.height)
             .attr("pointer-events", "all")
+            // .call(this.tip)
         ;
         // define node image
         for (var i = 0; i < ENTITY.length; i++) {
@@ -289,13 +294,10 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             _this.selected_node = null;
 
             // pop up relationship form
-            var editor = '<div style="position: absolute;"><form><label for="relation">Relationship:</label><input name="relation" id="relation"/>';
-            editor += '<br><input type="button" value="Cancel"/><input type="submit" value="Save"/>';
-            editor += '</form></div>';
-            var $editor = _this.element.append($(editor)
+            var $editor = $('#network-editor').show()
                 .css('top', (_this.mouseup_node.y + _this.mousedown_node.y)/2.0)
                 .css('left', (_this.mouseup_node.x + _this.mousedown_node.x)/2.0)
-            );
+            ;
             $editor.find('form').submit(function(e) {
                 var rel = $(this).find('#relation').val();
                 link.rel = rel;
@@ -600,13 +602,30 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
             .style('marker-end', function(d) { return 'url(#end-arrow)'; })
             .on("mouseover", function(data, index) {
-                var position = d3.mouse(this)
+                $('#network-viewer .attr-list').remove();
+                var str = "<ul class='attr-list'>";
+                str += "<li>Relation: " + data.relation + "</li>";
+                str += "<li>Date: " + wb.utility.formatDate(data.date) + "</li>";
+                str += "</ul>";
+                $(str).appendTo($('#network-viewer'));
+
+                $('#network-viewer').data('link', data);
+
+                var width = $('#network-viewer').outerWidth();
+                var height = $('#network-viewer').outerHeight();
                 d3.select("#network-viewer")
                     .style('position', 'absolute')
-                    .style('left', position[0] + "px")
-                    .style('top', position[1] + "px")
+                    .style('left', d3.event.pageX - width/2 + "px")
+                    .style('top', (d3.event.pageY - height - 10) + "px")
                     .style('display', 'block');
                 d3.event.preventDefault();
+            })
+            .on("mouseout", function(data, index) {
+              setTimeout(function() {
+                if (!$('#network-viewer:hover').length) {
+                  $('#network-viewer').hide();
+                }
+              }, 300);
             })
         ;
         // this.selected_link && this.selected_link.style('stroke-dasharray', '10,2');
@@ -734,12 +753,26 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
 });
 
 
+$(function() {
+  // register events for network-viewer here
+  // TODO: consider putting the code somewhere else to make a nicer structure
+  $('#network-viewer').mouseleave(function() {
+    $(this).hide();
+  });
 
-wb.viz.network = function() {
-    function exports(selection) {
-        selection.each(function() {
-        });
-    }
+  $('#network-viewer .edit').click(function() {
 
-    return exports;
-};
+  });
+
+  $('#network-viewer .delete').click(function(event) {
+    var item = $(event.target).parents('#network-viewer');
+    var link = item.data('link');
+    $.post('relationship', {
+      source: link.source,
+      target: link.target,
+      rel: link.rel
+    }, function(rel) { // return deleted relationship
+      $.publish('relationship/delete', [rel]);
+    });
+  });
+})
