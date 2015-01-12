@@ -43,6 +43,10 @@ $(document).ready(function () {
             viz = $('<div>').viznotepad({
                 title: 'Notepad'
             });
+        } else if (viz_name === 'message') {
+          viz = $('<div>').vizmessage({
+            title: 'Message'
+          });
         }
 
         if (viz) {

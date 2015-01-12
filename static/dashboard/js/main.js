@@ -8,10 +8,23 @@ wb.store = {
     relationship: {},
 }; // store to host data such as data entries and entities
 wb.vartifacts = [];
+wb.users = {}; // all users
+wb.online_users = {}; // current online users
 wb.ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource'];
 
 
 $(document).ready(function() {
+    $.get('account/all', function(users) {
+      // get all user, prepared for broadcasting messages
+      for (var i = 0, len = users.length; i < len; i++) {
+        var u = users[i];
+        if (! (u.id in wb.users)) {
+          wb.users[u.id] = u;
+          wb.users[u.id].color = wb.utility.randomColor();
+        }
+      }
+
+    });
 
     // get a list of dataset at the very beginning
     $.ajax({
@@ -44,7 +57,6 @@ $(document).ready(function() {
     wb.group.event = wb.dim.event.group();
     wb.group.resource = wb.dim.resource.group();
     wb.group.organization = wb.dim.organization.group();
-
 });
 
 // override toString to easy display location entity

@@ -6,5 +6,6 @@ urlpatterns = patterns('',
     url(r'^login$', login),
     url(r'^register$', register),
     url(r'^logout$', logout),
+    url(r'^all$', get_all_users),
 )
 

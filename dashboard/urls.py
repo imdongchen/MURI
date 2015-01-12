@@ -18,6 +18,7 @@ urlpatterns = patterns('',
     url(r'^annotation/', include('annotation.urls')),
     url(r'^account/', include('users.urls')),
     url(r'^logs/', include('activitylog.urls')),
+    url(r'^sync/', include('sync.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

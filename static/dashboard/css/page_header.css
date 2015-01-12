@@ -189,3 +189,7 @@ nav.blue li ul li.arrow {background: url(../img/arrowtop.png) top left no-repeat
 #search-form input[type='submit'] {
     width: 15%;
 }
+
+.userlist-item span {
+  padding: 10px 15px;
+}
