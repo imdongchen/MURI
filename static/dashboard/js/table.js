@@ -15,6 +15,11 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
 
         this.update();
     },
+
+    _destroy: function() {
+      this._destroyAnnotator();
+    },
+
     updateData: function() {
         var data = [];
         this.options.group.all().forEach(function(d) {
@@ -66,9 +71,36 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
             ele.annotator("destroy");
         }
     },
+
     _resetAnnotator: function() {
         this._destroyAnnotator();
         this._setupAnnotator();
+    },
+
+    addAnnotations: function(annotations) {
+      for (var i = 0, len = annotations.length; i < len; i++) {
+        this.addAnnotation(annotations[i]);
+      }
+    },
+
+    addAnnotation: function(annotation) {
+      var ele = this.element.closest(".ui-dialog");
+      var annotator = ele.data('annotator');
+      if (annotator) {
+        var store = annotator.plugins['Store'];
+        var i = wb.utility.indexOf(annotation, store.annotations);
+        if (i < 0) {
+          store.registerAnnotation(annotation);
+          annotator.setupAnnotation(annotation);
+        } else {
+          var old_ann = store.annotations[i];
+          $.extend(old_ann, annotation);
+          $(old_ann.highlights).data('annotation', old_ann)
+        }
+
+
+      }
+
     },
     resize: function() {
         this._super('resize');

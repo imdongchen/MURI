@@ -1,5 +1,7 @@
 $.subscribe('/data/loaded', function() {
 });
+
+
 ishout.on('message', function(data) {
   for (var i = 0; i < wb.vartifacts.length; i++) {
     var viz = wb.vartifacts[i];
@@ -10,6 +12,7 @@ ishout.on('message', function(data) {
   }
 
 });
+
 
 ishout.on('userlist', function(data) {
   // get all users online
@@ -34,9 +37,44 @@ ishout.on('userlist', function(data) {
       .css('color', color)
     ;
   }
+});
 
+ishout.on('entity.create', function(entity) {
+  if (! (entity.primary.id in wb.store.entity)) {
+    wb.store.entity[entity.primary.id] = entity;
+  }
+});
+
+
+// new annotation received
+ishout.on('annotation.create', function(data) {
+  var annotations = [data.annotation] || data.annotations,
+      entity = data.entity,
+      relationships = [data.relationship] || data.relationships
+  ;
+
+  // if the annotation is created by the user itself, do nothing
+  if (annotations[0].created_by === wb.USER)  return ;
+
+  // render annotation--add annotation to annotator
+  for (var i = 0; i < wb.vartifacts.length; i++) {
+    var viz = wb.vartifacts[i];
+    if (viz.data('viz') === 'vizVizdataentrytable') {
+      // look for message window
+      viz.data('vizVizdataentrytable').addAnnotations(annotations);
+    }
+  }
+
+  // add entity and relationship to underlying data structure
+  $.publish('/entity/change', entity);
+  $.publish('/relationship/add', [relationships]);
+
+  wb.utility.notify(wb.users[annotations[0].created_by].name + ' created an '
+                    + entity.primary.entity_type + ' '
+                    + entity.primary.name);
 
 });
+
 
 ishout.init();
 ishout.joinRoom('main'); // todo: avoid hard coded room

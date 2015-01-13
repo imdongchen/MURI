@@ -8,6 +8,7 @@ from django.contrib.gis.geos import fromstr
 from django.http import QueryDict
 from activitylog.views import serverlog
 
+import sync
 
 def get_or_create_entity(json):
     created = False
@@ -110,6 +111,10 @@ def annotation(request, id=0):
             res['annotation'] = annotation.serialize()
             res['relationship'] = relationship.get_attr()
             res['entity'] = entity.get_attr()
+
+            # sync annotation
+            sync.views.annotation_create(res)
+
             return HttpResponse(json.dumps(res), mimetype='application/json')
 
     elif request.method == 'PUT':
@@ -170,10 +175,10 @@ def annotation(request, id=0):
 def annotations(request):
     if request.method == 'GET':
         annotations = []
-        if request.user.is_authenticated():
-            anns = Annotation.objects.filter(created_by=request.user)
-        else:
-            anns = Annotation.objects.all() # TODO: limit annotations to corresponding datasets
+        # if request.user.is_authenticated():
+        #     anns = Annotation.objects.filter(created_by=request.user)
+        # else:
+        anns = Annotation.objects.all() # TODO: limit annotations to corresponding datasets
 
         for ann in anns:
             annotations.append(ann.serialize())

@@ -67,6 +67,7 @@ Annotator = (function(_super) {
         this._setupDynamicStyle();
         this.adder = $(this.html.adder).appendTo(this.wrapper).hide();
         Annotator._instances.push(this);
+        return this;
     }
 
     Annotator.prototype._setupWrapper = function() {

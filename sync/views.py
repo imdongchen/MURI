@@ -12,10 +12,9 @@ from models import Message
 
 ishout_client = iShoutClient()
 
-@login_required
-def annotation_create(request):
-    res = 'error'
-    return HttpResponse(res)
+
+def annotation_create(data):
+    ishout_client.broadcast('annotation.create', data)
 
 
 @login_required
@@ -31,8 +30,10 @@ def annotation_delete(request):
 
 
 @login_required
-def entity_create(request):
+def entity_create(entity):
     res = 'error'
+    ishout_client.broadcast('entity.create', entity.get_attr())
+
     return HttpResponse(res)
 
 

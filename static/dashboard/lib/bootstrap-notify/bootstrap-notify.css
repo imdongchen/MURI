@@ -3,10 +3,10 @@
   z-index: 9999;
 }
 
-/* Positioning */ 
+/* Positioning */
 .notifications.top-right {
   right: 10px;
-  top: 25px;
+  top: 35px;
 }
 
 .notifications.top-left {
@@ -28,4 +28,15 @@
 .notifications > div {
   position: relative;
   margin: 5px 0px;
+}
+
+.alert .close {
+  right: -21px;
+  position: relative;
+  line-height: 20px;
+}
+
+.alert {
+  padding: 8px 35px 8px 14px;
+
 }

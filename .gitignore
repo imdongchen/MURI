@@ -25,6 +25,7 @@ pip-log.txt
 run_gunicorn.sh
 /dashboard/migrations/
 /activitylog/migrations/
+/sync/migrations/
 /logs/
 /.idea/
 .idea/

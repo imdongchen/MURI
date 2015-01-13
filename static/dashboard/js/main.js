@@ -242,6 +242,7 @@ $.subscribe('/entity/change', function(e, entity) {
 });
 
 
+
 function delete_relationships(relationships) {
     // defilter first
     for (var dim in wb.dim) {

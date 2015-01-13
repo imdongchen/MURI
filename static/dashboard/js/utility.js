@@ -41,3 +41,30 @@ wb.utility.randomColor = function() {
     }
     return color;
 }
+
+
+// Search for item in an array of items,
+// if the id of the item equals the id of
+// an item in items, return the index of
+// the item, if no item is found, return
+// -1. This function only returns
+// the first item that matches. Logically,
+// the id is unique in the system, so there
+// should be at most one item matches.
+wb.utility.indexOf = function(item, items) {
+  for (var i = 0, len = items.length; i < len; i++) {
+    if (item.id == items[i].id) {
+      return i;
+    }
+  }
+  return -1;
+};
+
+
+wb.utility.notify = function(msg, type) {
+  $('.notifications').notify({
+    message: {text: msg},
+    type: type,
+    fadeOut: {enabled: true, delay: 3000}
+  }).show();
+}

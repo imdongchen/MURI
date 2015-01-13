@@ -27,6 +27,9 @@ class Annotation(models.Model):
         }]
         ann['anchor']   = self.dataentry.id
         ann['tag'] = {'id': self.entity.id, 'entity_type': self.entity.entity_type}
+        ann['created_at'] = self.created_at.strftime('%m/%d/%Y-%H:%M:%S')
+        if self.created_by:
+            ann['created_by'] = self.created_by.id
 
         return ann
 
