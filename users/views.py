@@ -6,8 +6,6 @@ from django.core.urlresolvers import reverse
 
 import json
 
-import sync
-
 # Create your views here.
 def login(request):
     if request.method == 'POST':
@@ -17,7 +15,6 @@ def login(request):
             user = authenticate(username=username, password=psd)
             if user:
                 auth_login(request, user)
-                sync.send_userlist()
                 return redirect('dashboard.views.index')
         return HttpResponse('Log in failed: user name and password do not match!<a href="'+ reverse('dashboard.views.index')+'">Try again</a>')
     return

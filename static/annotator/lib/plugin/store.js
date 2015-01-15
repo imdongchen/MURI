@@ -3,6 +3,7 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOfId = function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i].id === item.id) return i; } return -1; };
 
 Annotator.Plugin.Store = (function(_super) {
     __extends(Store, _super);
@@ -88,7 +89,7 @@ Annotator.Plugin.Store = (function(_super) {
             $.publish("/entity/change", entity);
             $.publish("/relationship/add", [relationships]);
             // Annotator.showNotification(Annotator._t("Added " + annotations.length + " new annotations!"), Annotator.Notification.SUCCESS);
-            wb.notify(annotations.length + ' annotations added!', 'success');
+            wb.utility.notify(annotations.length + ' annotations added!', 'success');
         });
     };
 
@@ -105,7 +106,7 @@ Annotator.Plugin.Store = (function(_super) {
 
                 $.publish('/entity/change', entity);
                 $.publish("/relationship/add", [[relationship]]);
-                wb.notify('1 annotation added!', 'success');
+                wb.utility.notify('1 annotation added!', 'success');
             });
         } else {
             return this.updateAnnotation(annotation, {});
@@ -145,7 +146,7 @@ Annotator.Plugin.Store = (function(_super) {
             }
 
             // Annotator.showNotification(Annotator._t("Updated " + to_update.length + " annotations!"), Annotator.Notification.SUCCESS);
-            wb.notify(annotations.length + ' annotations updated!', 'success');
+            wb.utility.notify(annotations.length + ' annotations updated!', 'success');
         });
     };
 
@@ -173,7 +174,7 @@ Annotator.Plugin.Store = (function(_super) {
                     $.publish('/entity/change', [entity]);
                 }
                 _this.updateAnnotation(annotation, ann);
-                wb.notify('1 annotation updated!', 'success');
+                wb.utility.notify('1 annotation updated!', 'success');
             }));
         }
     };
@@ -187,7 +188,7 @@ Annotator.Plugin.Store = (function(_super) {
 
                 _this.unregisterAnnotation(annotation);
                 $.publish('/relationship/delete', [[relationship]]);
-                wb.notify('1 annotation deleted', 'success');
+                wb.utility.notify('1 annotation deleted', 'success');
             });
         } else {
             _this.unregisterAnnotation(annotation);
@@ -207,7 +208,7 @@ Annotator.Plugin.Store = (function(_super) {
                 });
                 $.publish('/relationship/delete', [relationships]);
                 // Annotator.showNotification(Annotator._t("Deleted " + to_delete.length + " annotations!"), Annotator.Notification.SUCCESS);
-                wb.notify(annotations.length + ' annotations deleted', 'success');
+                wb.utility.notify(annotations.length + ' annotations deleted', 'success');
             });
         }
     };
@@ -218,6 +219,7 @@ Annotator.Plugin.Store = (function(_super) {
 
     Store.prototype.unregisterAnnotation = function(annotation) {
         return this.annotations.splice(this.annotations.indexOf(annotation), 1);
+        // return this.annotations.splice(__indexOfId.call(this.annotations, annotation), 1);
     };
 
     Store.prototype.updateAnnotation = function(annotation, data) {
@@ -400,7 +402,7 @@ Annotator.Plugin.Store = (function(_super) {
                 message = Annotator._t("Sorry something went wrong with the annotation store");
         }
         // Annotator.showNotification(message, Annotator.Notification.ERROR);
-        wb.notify(message, 'error');
+        wb.utility.notify(message, 'error');
         return console.error(Annotator._t("API request failed:") + (" '" + xhr.status + "'"));
     };
 

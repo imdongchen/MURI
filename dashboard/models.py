@@ -21,7 +21,7 @@ def get_model_attr(instance):
             field_type = field.get_internal_type()
             value = getattr(instance, field_name)
             if field_type == 'DateTimeField':
-                primary[field_name] = value.strftime('%m/%d/%Y') if value else None
+                primary[field_name] = value.strftime('%m/%d/%Y-%H:%M:%S') if value else None
             elif field_type == 'GeometryField':
                 primary[field_name] = value.wkt if value else None
             elif field_type == 'ForeignKey':

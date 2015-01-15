@@ -9,7 +9,7 @@ wb.store = {
 }; // store to host data such as data entries and entities
 wb.vartifacts = [];
 wb.users = {}; // all users
-wb.online_users = {}; // current online users
+wb.online_users = []; // current online users id
 wb.ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource'];
 
 
@@ -318,4 +318,28 @@ $.subscribe('/data/reload', function(e, except) {
             panel.data(viz).reload();
         }
     }
+});
+
+
+// refresh online user list
+$.subscribe('/userlist', function(e, users) {
+  wb.online_users = users;
+  //
+  // render current user list on page header
+  $('#userlist').empty();
+  for (var i = 0; i < wb.online_users.length; i++) {
+    var id = wb.online_users[i];
+    // do not show current user
+    if (id == wb.USER) continue;
+
+    var name = wb.users[id].name;
+    var color = wb.users[id].color;
+    var li = $('<li class="userlist-item dropdown"></li>')
+      .appendTo($('#userlist'));
+
+    $('<span class="label label-primary"></span>').appendTo(li)
+      .text(name)
+      .css('color', color)
+    ;
+  }
 });

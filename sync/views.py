@@ -13,20 +13,19 @@ from models import Message
 ishout_client = iShoutClient()
 
 
-def annotation_create(data):
+def annotation_create(data, user):
+    data['user']= user.id
     ishout_client.broadcast('annotation.create', data)
 
 
-@login_required
-def annotation_update(request):
-    res = 'error'
-    return HttpResponse(res)
+def annotation_update(data, user):
+    data['user']= user.id
+    ishout_client.broadcast('annotation.update', data)
 
 
-@login_required
-def annotation_delete(request):
-    res = 'error'
-    return HttpResponse(res)
+def annotation_delete(data, user):
+    data['user']= user.id
+    ishout_client.broadcast('annotation.delete', data)
 
 
 @login_required
@@ -103,12 +102,7 @@ def send_userlist():
     room_status = ishout_client.get_room_status('main') # todo: avoid hardcoded room name
     print room_status
     users = User.objects.filter(id__in=room_status['members'])
-    user_info = {}
-    for user in users:
-        user_info[user.id] = {
-            'id': user.id,
-            'name': user.username
-        }
+    user_info = [user.id for user in users]
 
     ishout_client.broadcast('userlist', user_info)
 

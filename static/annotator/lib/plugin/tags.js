@@ -362,7 +362,7 @@ Annotator.Plugin.Tags = (function(_super) {
             var primary = entity.primary;
             table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
             for (var attr in primary) {
-                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && attr !== 'created_at' && primary[attr]) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
                 }
             }
@@ -371,6 +371,12 @@ Annotator.Plugin.Tags = (function(_super) {
                 if (attr) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + other[attr] + '</td></tr>';
                 }
+            }
+            if (annotation.created_by) {
+              table += '<tr><th>Created by: </th><td>' + wb.users[annotation.created_by].name + '</td></tr>';
+            }
+            if (annotation.created_at) {
+              table += '<tr><th>Created at: </th><td>' + annotation.created_at + '</td></tr>';
             }
             table += '</table>';
             $(field).append($(table));

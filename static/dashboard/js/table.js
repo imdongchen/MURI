@@ -93,15 +93,55 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
           store.registerAnnotation(annotation);
           annotator.setupAnnotation(annotation);
         } else {
-          var old_ann = store.annotations[i];
-          $.extend(old_ann, annotation);
-          $(old_ann.highlights).data('annotation', old_ann)
+          store.updateAnnotation(store.annotations[i], annotation);
         }
+      }
+    },
 
+    updateAnnotations: function(annotations) {
+      for (var i = 0, len = annotations.length; i < len; i++) {
+        this.updateAnnotation(annotations[i]);
+      }
+    },
 
+    updateAnnotation: function(annotation) {
+      var ele = this.element.closest(".ui-dialog");
+      var annotator = ele.data('annotator');
+      if (annotator) {
+        var store = annotator.plugins['Store'];
+        var i = wb.utility.indexOf(annotation, store.annotations);
+        if (i < 0) {
+          store.registerAnnotation(annotation);
+          annotator.setupAnnotation(annotation);
+        } else {
+          $(store.annotations[i].highlights).removeClass()
+              .addClass('annotator-hl annotator-hl-' + annotation.tag.entity_type)
+          ;
+          store.updateAnnotation(store.annotations[i], annotation);
+        }
       }
 
     },
+
+    deleteAnnotations: function(annotations) {
+      for (var i = 0, len = annotations.length; i < len; i++) {
+        this.deleteAnnotation(annotations[i]);
+      }
+    },
+
+    deleteAnnotation: function(annotation) {
+      var ele = this.element.closest(".ui-dialog");
+      var annotator = ele.data('annotator');
+      if (annotator) {
+        var store = annotator.plugins['Store'];
+        var i = wb.utility.indexOf(annotation, store.annotations);
+        if (i >= 0) {
+          $(store.annotations[i].highlights).removeClass();
+          store.unregisterAnnotation(store.annotations[i]);
+        }
+      }
+    },
+
     resize: function() {
         this._super('resize');
         this.element.find('.dataTables_scrollBody').css('height', (this.element.height() - 80))

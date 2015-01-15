@@ -97,8 +97,5 @@ $(function() {
         });
     });
 
-    // get online users and render them on top
-    $.get('sync/userlist', function(data) {
-    });
 
 });

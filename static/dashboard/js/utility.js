@@ -64,7 +64,7 @@ wb.utility.indexOf = function(item, items) {
 wb.utility.notify = function(msg, type) {
   $('.notifications').notify({
     message: {text: msg},
-    type: type,
+    type: type || 'info',
     fadeOut: {enabled: true, delay: 3000}
   }).show();
 }

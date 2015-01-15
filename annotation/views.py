@@ -113,7 +113,7 @@ def annotation(request, id=0):
             res['entity'] = entity.get_attr()
 
             # sync annotation
-            sync.views.annotation_create(res)
+            sync.views.annotation_create(res, request.user)
 
             return HttpResponse(json.dumps(res), mimetype='application/json')
 
@@ -147,6 +147,8 @@ def annotation(request, id=0):
 
                 res['annotation'] = annotation.serialize()
                 res['entity'] = entity.get_attr()
+
+                sync.views.annotation_update(res, request.user)
                 return HttpResponse(json.dumps(res), mimetype='application/json')
         else:
             print 'Error: no annotation id received'
@@ -161,9 +163,13 @@ def annotation(request, id=0):
                 return HttpResponseNotFound()
             else:
                 relationship = Relationship.objects.get(target=annotation.entity, dataentry=annotation.dataentry, relation='contain')
+                res['entity'] = annotation.entity.get_attr()
                 res['relationship'] = relationship.get_attr()
+                res['annotation'] = annotation.serialize()
                 relationship.delete()
                 annotation.delete()
+
+                sync.views.annotation_delete(res, request.user)
                 return HttpResponse(json.dumps(res), mimetype='application/json')
         else:
             return HttpResponseBadRequest()
@@ -219,6 +225,10 @@ def annotations(request):
                 res['annotations'].append(annotation.serialize())
                 res['relationships'].append(relationship.get_attr())
         res['entity'] = entity.get_attr()
+
+        # sync annotation
+        sync.views.annotation_create(res, request.user)
+
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
     elif request.method == 'PUT':
@@ -255,6 +265,7 @@ def annotations(request):
                     res['annotations'].append(annotation.serialize())
 
         res['entity'] = entity.get_attr()
+        sync.views.annotation_update(res, request.user)
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
     elif request.method == 'DELETE':
@@ -266,11 +277,14 @@ def annotations(request):
             except Annotation.DoesNotExist:
                 print 'Error: annotation not found: ', ann
             else:
+                res['entity'] = annotation.entity.get_attr()
                 relationships = Relationship.objects.filter(target=annotation.entity, dataentry=annotation.dataentry, relation='contain')
                 for rel in relationships:
                     res['relationships'].append(rel.get_attr())
                     rel.delete()
+                res['annotations'].append(annotation.serialize())
                 annotation.delete()
+        sync.views.annotation_delete(res, request.user)
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
