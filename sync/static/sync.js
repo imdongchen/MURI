@@ -136,8 +136,76 @@ ishout.on('annotation.delete', function(data) {
 
 
 ishout.on('relationship.create', function(data) {
-  rel = data.relationship;
+  if (data.user == wb.USER) return;
+
+  var rel = data.relationship;
   $.publish('/relationship/add', [[rel]]);
+
+  if (rel.primary.source) {
+    // relationship between two entities
+    wb.utility.notify(wb.users[data.user].name + ' creates relationship '
+                      + rel.primary.relation + ' between '
+                      + wb.store.entity[rel.primary.source].primary.name + ' and '
+                      + wb.store.entity[rel.primary.target].primary.name                    );
+
+  } else {
+    // relationship between entity and dataentry
+    wb.utility.notify(wb.users[data.user].name + ' creates relationship '
+                      + rel.primary.relation + ' between dataentry and '
+                      + wb.store.entity[rel.primary.target]
+                    );
+
+  }
+});
+
+
+ishout.on('relationship.update', function(data) {
+  if (data.user == wb.USER) return;
+
+  var rel = data.relationship;
+  $.publish('/relationship/update', [[rel]]);
+
+  if (rel.primary.source) {
+    // relationship between two entities
+    wb.utility.notify(wb.users[data.user].name + ' updates relationship '
+                      + rel.primary.relation + ' between '
+                      + wb.store.entity[rel.primary.source].primary.name + ' and '
+                      + wb.store.entity[rel.primary.target].primary.name
+                    );
+
+  } else {
+    // relationship between entity and dataentry
+    wb.utility.notify(wb.users[data.user].name + ' updates relationship '
+                      + rel.primary.relation + ' between dataentry and '
+                      + wb.store.entity[rel.primary.target]
+                    );
+
+  }
+});
+
+
+ishout.on('relationship.delete', function(data) {
+  if (data.user == wb.USER) return;
+
+  var rel = data.relationship;
+  $.publish('/relationship/delete', [[rel]]);
+
+  if (rel.primary.source) {
+    // relationship between two entities
+    wb.utility.notify(wb.users[data.user].name + ' deletes relationship '
+                      + rel.primary.relation + ' between '
+                      + wb.store.entity[rel.primary.source].primary.name + ' and '
+                      + wb.store.entity[rel.primary.target].primary.name
+                    );
+
+  } else {
+    // relationship between entity and dataentry
+    wb.utility.notify(wb.users[data.user].name + ' deletes relationship '
+                      + rel.primary.relation + ' between dataentry and '
+                      + wb.store.entity[rel.primary.target].primary.name
+                    );
+
+  }
 });
 
 

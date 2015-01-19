@@ -219,6 +219,27 @@ $.subscribe('/data/filter', function() {
 });
 
 
+// when either the source or the target of the relationship changes
+// i.e. in annotation an entity type is changed
+// Then the target of the relationship changes to another entity
+$.subscribe('/relationship/change', function(e, relationships) {
+    delete_relationships(relationships);
+    add_relationships(relationships);
+    $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
+});
+
+
+// when only the attribute of the relationship changes
+// the change does not involve the target or the source id
+$.subscribe('/relationship/update', function(e, relationships) {
+  relationships.forEach(function(rel) {
+    rel.primary.date = wb.utility.Date(rel.primary.date);
+    wb.store.relationship[rel.id] = rel;
+  });
+
+});
+
+
 $.subscribe('/relationship/add', function(e, relationships) {
     add_relationships(relationships);
     $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
@@ -298,14 +319,6 @@ function add_relationships(relationships) {
 
     wb.datafilter.add(facts);
 }
-
-// do when an annotation changes its entity type, meaning the relationship between data entry and entity needs to be changed
-// also, it means the data crossfilter needs to be chagned
-$.subscribe('/relationship/change', function(e, relationships) {
-    delete_relationships(relationships);
-    add_relationships(relationships);
-    $.publish('/data/reload', [$(".dataentrytable").attr("id")]);
-});
 
 // do when data crossfilter is changed, and all visual artifacts need to reload data
 $.subscribe('/data/reload', function(e, except) {

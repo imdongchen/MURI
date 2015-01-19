@@ -348,6 +348,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
           } else {
             // because only the attribute of the relationship changes, we do
             // not need to publish the event
+            $.publish('/relationship/update', [[rel]]);
             wb.utility.notify('1 relationship updated!', 'success');
           }
 

@@ -240,7 +240,7 @@ class Relationship(models.Model):
     date        = models.DateTimeField(null=True, blank=True)
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
     attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
-    create_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
+    created_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
     created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
 
     def __unicode__(self):

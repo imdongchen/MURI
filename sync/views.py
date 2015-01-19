@@ -53,17 +53,14 @@ def relationship_create(data, user):
     ishout_client.broadcast('relationship.create', data)
 
 
-
-@login_required
-def relationship_update(request):
-    res = 'error'
-    return HttpResponse(res)
+def relationship_update(data, user):
+    data['user']= user.id
+    ishout_client.broadcast('relationship.update', data)
 
 
-@login_required
-def relationship_delete(request):
-    res = 'error'
-    return HttpResponse(res)
+def relationship_delete(data, user):
+    data['user']= user.id
+    ishout_client.broadcast('relationship.delete', data)
 
 
 @login_required

@@ -71,7 +71,6 @@ def index(request):
     for ds in datasets:
         dataset_dict[ds.id] = ds.get_attr()
     #
-    # print dataset_dict
     return render(request, 'dashboard/index.html', Context({
         "dialogs": dialogs,
         "PREFIX_URL": PREFIX_URL,
@@ -144,7 +143,8 @@ def data(request):
             annotations = []
             if request.user.is_authenticated():
                 # if the user is logged in, get only his annotations; TODO: get annotations of the group the user belongs to
-                annotations = de.annotation_set.filter(created_by=request.user)
+                # annotations = de.annotation_set.filter(created_by=request.user)
+                annotations = de.annotation_set.all()
             else:
                 # if the user is not logged, get all annotations
                 annotations = de.annotation_set.all()
@@ -259,6 +259,8 @@ def relationship(request):
         rel = Relationship.objects.get(id=int(id))
         res['relationship'] = rel.get_attr()
         rel.delete()
+
+        sync.views.relationship_delete(res, request.user)
 
         return HttpResponse(json.dumps(res), mimetype='application/json')
 
