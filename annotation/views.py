@@ -270,6 +270,7 @@ def annotations(request):
 
     elif request.method == 'DELETE':
         res = {'annotations': [], 'entity': {}, 'relationships': []};
+        print request.body
         data = json.loads(request.body)
         for ann in data:
             try:

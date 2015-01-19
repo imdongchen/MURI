@@ -18,7 +18,7 @@
 
 <!-- enjoyhint library -->
 <script src="{% static 'dashboard/lib/enjoyhint/enjoyhint.js' %}"></script>
-<script src="{% static 'dashboard/lib/d3-tip/d3-tip.js' %}"></script>
+<!-- <script src="{% static 'dashboard/lib/d3&#45;tip/d3&#45;tip.js' %}"></script> -->
 
 <!-- for sync -->
 {% ishout_js %}
@@ -56,7 +56,6 @@
 <script type="text/javascript" src="{% static 'dashboard/js/utility.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/vizbase.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/layout.js' %}"></script>
-<script type="text/javascript" src="{% static 'dashboard/js/notification.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/activitylog.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/notepad.js' %}"></script>
 <script type="text/javascript" src="{% static 'dashboard/js/table.js' %}"></script>
@@ -70,9 +69,7 @@
 
 {% compress css %}
 <link href="{% static 'dashboard/lib/bootstrap-notify/bootstrap-notify.css' %}" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard/lib/d3-tip/d3-tip.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/theme.css' %}">
-<link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/notification.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/table.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/timeline.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/map.css' %}">
@@ -101,17 +98,4 @@
     </div>
 
     <div id="progressbar"><div class="progress-label">Updating Data...</div></div>
-    <div id="network-viewer">
-        <span id="network-viewer-controls">
-          <button type="button" title="delete" class="close delete"><span class="glyphicon glyphicon-remove"></span></button>
-          <button type="button" title="edit" class="close edit"><span class="glyphicon glyphicon-pencil"></span></button>
-        </span>
-    </div>
-    <div id="network-editor">
-        <form>
-          <label for="relation">Relationship:</label>
-          <input name="relation" id="relation"/>' <br>
-          <input type="button" value="Cancel"/><input type="submit" value="Save"/>';
-        </form>
-    </div>
 {% endblock %}

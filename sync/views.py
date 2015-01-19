@@ -48,10 +48,10 @@ def entity_delete(request):
     return HttpResponse(res)
 
 
-@login_required
-def relationship_create(request):
-    res = 'error'
-    return HttpResponse(res)
+def relationship_create(data, user):
+    data['user']= user.id
+    ishout_client.broadcast('relationship.create', data)
+
 
 
 @login_required

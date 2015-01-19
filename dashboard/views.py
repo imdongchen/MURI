@@ -15,6 +15,8 @@ import csv
 import settings
 from models import *
 
+import sync
+
 
 @login_required
 def upload_data(request):
@@ -206,63 +208,6 @@ def data(request):
     return HttpResponse(json.dumps(res), mimetype='application/json')
 
 
-#### abandoned ####
-# def prepareNetwork(request):
-#     if request.method == 'GET':
-#         response = {}
-#         response['nodes'] = []
-#         response['links'] = []
-#         node_types = request.GET.getlist('entities[]', None)
-#         filter_id = request.GET.getlist('messages_id[]', None)
-#
-#         if node_types == None or filter_id == None:
-#             return
-#
-#         graph   = nx.DiGraph()
-#
-#     # construct network on 'co-occurrance'
-#         msgs = Message.objects.filter(id__in=filter_id)
-#         annotations = []
-#         for msg in msgs:
-#             if request.user.is_authenticated():
-#                 annotations = msg.annotation_set.filter(created_by=request.user)
-#             else:
-#                 annotations = msg.annotation_set.all()
-#             if len(annotations) > 0:
-#                 graph.add_node('m'+str(msg.id), msg.getKeyAttr())
-#                 for ann in annotations:
-#                     entities = ann.entities.all().select_subclasses()
-#                     for ent in entities:
-#                         graph.add_node(ent.id, ent.getKeyAttr())
-#                         graph.add_edge('m'+str(msg.id), ent.id, rel='contains')
-#                         targets = ent.findTargets()
-#                         sources = ent.findSources()
-#                         for target in targets:
-#                             rels = Relationship.objects.filter(source=ent,target=target)
-#                             graph.add_node(target.id, target.getKeyAttr())
-#                             for rel in rels:
-#                                 graph.add_edge(ent.id, target.id, rel=rel.description)
-#                         for source in sources:
-#                             rels = Relationship.objects.filter(source=source,target=ent)
-#                             graph.add_node(source.id, source.getKeyAttr())
-#                             for rel in rels:
-#                                 graph.add_edge(source.id, ent.id, rel=rel.description)
-
-#       linked_entities = list(events.select_subclasses())
-
-#       for eve in events:
-#           entities = list(chain(eve.findTargets(), eve.findSources()))
-#           linked_entities += entities
-#       for entity in linked_entities:
-#           graph.add_node(entity.id, entity.getKeyAttr())
-
-#       relations = Relationship.objects.filter( Q(source__in=linked_entities) & Q(target__in=linked_entities) )
-#       for relation in relations:
-#           graph.add_edge(relation.source.id, relation.target.id, relation.getAllAttr())
-
-    #     return HttpResponse(json_graph.dumps(graph), mimetype='application/json')
-    # return
-
 
 def relationship(request):
     """
@@ -274,6 +219,7 @@ def relationship(request):
         source = request.POST.get('source', '')
         target = request.POST.get('target', '')
         rel    = request.POST.get('rel', '')
+        desc   = request.POST.get('desc', '')
 
         if source == '' or target == '':
             return
@@ -291,9 +237,28 @@ def relationship(request):
         user = None
         if request.user.is_authenticated():
             user = request.user
-        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel, created_by=user)
+        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel, created_by=user, description=desc)
         rel.save()
         res['relationship'] = rel.get_attr()
+        res['created'] = created;
+
+        if created:
+            sync.views.relationship_create(res, request.user)
+        else:
+            sync.views.relationship_update(res, request.user)
+
+        return HttpResponse(json.dumps(res), mimetype='application/json')
+    elif request.method == 'DELETE':
+        data = json.loads(request.body)
+        id     = data.get('id')
+
+        # only consider deleting relationship between two entities
+        # the request to delete relationship between dataentry and entity
+        # is more complex
+        # leave it for later
+        rel = Relationship.objects.get(id=int(id))
+        res['relationship'] = rel.get_attr()
+        rel.delete()
 
         return HttpResponse(json.dumps(res), mimetype='application/json')
 

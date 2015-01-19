@@ -67,4 +67,17 @@ wb.utility.notify = function(msg, type) {
     type: type || 'info',
     fadeOut: {enabled: true, delay: 3000}
   }).show();
-}
+};
+
+
+wb.utility.mousePosition = function(e, offsetEl) {
+  var offset, _ref1;
+  if ((_ref1 = $(offsetEl).css('position')) !== 'absolute' && _ref1 !== 'fixed' && _ref1 !== 'relative') {
+    offsetEl = $(offsetEl).offsetParent()[0];
+  }
+  offset = $(offsetEl).offset();
+  return {
+    top: e.pageY - offset.top,
+    left: e.pageX - offset.left
+  };
+};

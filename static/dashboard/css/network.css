@@ -30,48 +30,31 @@ path.dragline {
     shape-rendering: crispEdges;
 }
 
-#relation_form {
-    display: none;
-    z-index: 999;
-    width: 150px;
-    position: absolute;
-}
-#relation {
-    width: 100px;
-}
-
-#network-filterbar {
+.network-filterbar {
     list-style-type: none;
     width: 100%;
     background-color: #ECEDF7;
     padding: 8px 0 1px 0;
 }
-#network-filterbar li {
+
+.network-filterbar li {
     display: inline;
     margin: 20px 10px;
 }
 
-#network-tooltip {
-    border: 1px solid #ccc;
-    box-shadow: 5px 5 2px #888888;
-    background-color: rgba(70, 128, 240, .1);
-}
-#network-tooltip table tr {
-    border: solid thin #ccc;
-}
-
-#network-viewer {
+.network-viewer {
     display:none;
     /* background-color: rgba(200, 200, 200, 0.98); */
-    background-color: rgba(0, 0, 0, .5);
+    background-color: rgba(0, 0, 0, .6);
     z-index: 999;
     /* padding: 12px; */
     border-radius: 2px;
     min-width: 265px;
-    font: 12px sans serif !important;
+    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font-weight: normal;
     color: rgb(255, 255, 255);
 }
-#network-viewer:after {
+.network-viewer:after {
   box-sizing: border-box;
   display: inline;
   font-size: 10px;
@@ -89,22 +72,77 @@ path.dragline {
   color: rgba(0, 0, 0, .5);
 }
 
-#network-viewer .close {
+.network-viewer .close {
   padding-left: 5px;
   font-size:14px;
   color: white;
 }
 
-#network-viewer ul {
+.network-viewer table {
+  margin: 10px 10px;
+}
+
+.network-viewer table th {
+  /* text-align: right; */
+}
+
+.network-viewer ul {
   list-style-type: none;
   padding-left:5px;
   padding-top: 12px;
 }
-#network-viewer ul li {
+.network-viewer ul li {
   /* margin-left:5px; */
+
 }
 
-#network-editor {
+.network-editor {
   display: none;
+  background-color: rgba(0, 0, 0, .6);
   position: absolute;
+  border-radius: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.network-editor .relationship-label {
+  padding: 5px 5px;
+}
+.network-editor input,
+.network-editor textarea {
+  background-color: rgba(0, 0, 0, .6);
+  color: white;
+
+}
+
+
+.network-editor form {
+  margin: 0;
+  padding: 5px 5px;
+  min-width: 256px;
+}
+
+.network-editor form input {
+  min-width: 100%;
+  border: 0;
+  padding: 10px 5px;
+}
+
+.network-editor form textarea {
+  min-width: 100%;
+  min-height: 30px;
+  padding: 10px 5px;
+  border: 0;
+
+}
+
+.network-editor button {
+  font-size: 150%;
+  float: right;
+  padding-right: 5px;
+  border: 0;
+  background: 0 0;
+}
+.network-editor button.save {
+  color: rgb(1, 4, 15);
 }

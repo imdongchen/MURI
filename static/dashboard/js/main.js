@@ -269,7 +269,6 @@ function add_relationships(relationships) {
 
         var fact = {};
         var primary = relationship.primary;
-        primary.date = wb.utility.Date(primary.date);
         wb.store.relationship[relationship.primary.id] = relationship;
 
         var source = wb.store.entity[primary.source];
@@ -311,12 +310,21 @@ $.subscribe('/relationship/change', function(e, relationships) {
 // do when data crossfilter is changed, and all visual artifacts need to reload data
 $.subscribe('/data/reload', function(e, except) {
     var dataentry_table_id = $('.dataentrytable').attr('id');
-    for (var j = 0; j < wb.vartifacts.length; j++) {
-        var panel = wb.vartifacts[j];
-        if (except && except.indexOf(panel.attr("id")) < 0) {
+    if (except && except.length) {
+      for (var j = 0; j < wb.vartifacts.length; j++) {
+          var panel = wb.vartifacts[j];
+          if (except.indexOf(panel.attr("id")) < 0) {
             var viz = panel.data("viz");
             panel.data(viz).reload();
-        }
+          }
+      }
+    } else {
+      for (var j = 0; j < wb.vartifacts.length; j++) {
+          var panel = wb.vartifacts[j];
+          var viz = panel.data("viz");
+          panel.data(viz).reload();
+      }
+
     }
 });
 

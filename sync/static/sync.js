@@ -135,6 +135,12 @@ ishout.on('annotation.delete', function(data) {
 });
 
 
+ishout.on('relationship.create', function(data) {
+  rel = data.relationship;
+  $.publish('/relationship/add', [[rel]]);
+});
+
+
 ishout.init(function() {
 
 });

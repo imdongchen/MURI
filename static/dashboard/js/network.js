@@ -7,85 +7,30 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.element.addClass("viz viznetwork");
         this.element.data("viz", "vizViznetwork")
 
-        var ENTITY = ['dataentry', 'person', 'organization', 'location', 'event', 'resource']
-        var filterbar = '<div id="network-filterbar"><ul>';
-        for (var i = 0; i < ENTITY.length; i++) {
-            filterbar += '<li><input type="checkbox" id="' + ENTITY[i] +'-check" checked value="' + ENTITY[i] + '" style="margin-right: 5px;"/><label for="' + ENTITY[i] + '-check">' + ENTITY[i] + '</label>';
-        }
-        filterbar += '</ul></div>';
-        var _this = this;
-        this.element.append($(filterbar))
-            .find(':checkbox')
-            .change(function() {
-                var display = '';
-                if (! this.checked) {
-                    // hide node and associated links
-                    display = 'none';
-                }
-                var value = this.value;
-                _this.svg.selectAll('.node').transition().style('display', function(o) {
-                    if (value === 'dataentry') {
-                        if (o.primary === undefined) {
-                            return display;
-                        } else {
-                            return this.style.display;
-                        }
-                    } else {
-                        if (o.primary && o.primary.entity_type === value) {
-                            return display;
-                        } else {
-                            return this.style.display;
-                        }
-                    }
-                });
-                _this.svg.selectAll('.link').transition().style('display', function(o) {
-                    if (value === 'dataentry') {
-                        if (o.source.primary === undefined || o.target.primary === undefined) {
-                            return display;
-                        } else {
-                            return this.style.display;
-                        }
-                    } else {
-                        if ((o.source.primary && o.source.primary.entity_type === value) || (o.target.primary && o.target.primary.entity_type === value)) {
-                            return display;
-                        } else {
-                            return this.style.display;
-                        }
-                    }
-                });
-            }); // TODO: add this filter bar after filter function is completed
+        this.ENTITY = ['dataentry', 'person', 'organization', 'location', 'event', 'resource']
 
+        this._setupUI();
+        this._setupEventListener();
+        this._setupForceLayout();
 
+        this.updateData();
+        this.update();
+
+    },
+
+    _setupForceLayout: function() {
         this.margin = {top: 35, bottom: 5, left: 13, right: 5};
         this.width  = this.element.width() - this.margin.left - this.margin.right;
         this.height = this.element.height() - this.margin.top - this.margin.bottom;
         this.nodeMap = {};
         this.nodes = [];
         this.links = [];
-        var _this = this;
-
-        d3.select("body")
-            .on("keydown", function() {
-                if (d3.event.shiftKey) {
-                    _this.mode = "filter";
-                }
-                else if (d3.event.altKey) {
-                    _this.mode = "draw";
-                }
-                else {
-                    _this.mode = "normal";
-                }
-                _this.setMode(_this.mode);
-            })
-            .on("keyup", function() {
-                _this.mode = "normal";
-                _this.setMode(_this.mode);
-            })
-        ;
-
-        this.tip = d3.tip().attr('class', 'd3-tip').html(function(d) {
-          return $('#network-viewer').html();
-        });
+        // mouse event vars
+        this.selected_node = null,
+        this.selected_link = null;
+        this.mousedown_link = null;
+        this.mousedown_node = null;
+        this.mouseup_node = null;
 
         this.svg = d3.select(this.element[0])
             .each(function() { this.focus(); })
@@ -93,13 +38,12 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr('width', this.width)
             .attr('height', this.height)
             .attr("pointer-events", "all")
-            // .call(this.tip)
         ;
         // define node image
-        for (var i = 0; i < ENTITY.length; i++) {
+        for (var i = 0; i < this.ENTITY.length; i++) {
             this.svg.append('svg:defs')
-                .append('svg:pattern').attr('id', 'img-'+ENTITY[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
-                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + ENTITY[i] + '.png')
+                .append('svg:pattern').attr('id', 'img-'+this.ENTITY[i]).attr('patternUnits', 'userSpaceOnUse').attr('x', '12').attr('y', '12').attr('height','24').attr('width','24')
+                .append('image').attr('x', '0').attr('y', '0').attr('width', 24).attr('height', 24).attr('xlink:href', STATIC_URL + 'dashboard/img/' + this.ENTITY[i] + '.png')
             ;
         }
 
@@ -133,7 +77,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .charge(-400)
             .linkDistance(120)
             .size([this.width, this.height])
-            .on("tick", tick)
+            .on("tick", this._tick.bind(this))
         ;
 
         // d3 behaviors
@@ -152,7 +96,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr('fill', 'white')
         ;
 
-
         this.link = this.svg.selectAll("path");
         this.node = this.svg.selectAll("g");
 
@@ -160,43 +103,266 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.drag_line = this.svg.append('svg:path')
             .attr('class', 'dragline hidden')
             .attr('d', 'M0,0L0,0');
-
-        // mouse event vars
-        this.selected_node = null,
-        this.selected_link = null;
-        this.mousedown_link = null;
-        this.mousedown_node = null;
-        this.mouseup_node = null;
-
-        this.updateData();
-        this.update();
-
-        function tick(e) {
-            // Push sources up and targets down to form a weak tree.
-            var k = 6 * e.alpha;
-
-            _this.link.attr('d', function(d) {
-                    var deltaX = d.target.x - d.source.x,
-                        deltaY = d.target.y - d.source.y,
-                        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
-                        normX = deltaX / dist,
-                        normY = deltaY / dist,
-                        sourcePadding = d.left ? 17 : 12,
-                        targetPadding = d.right ? 17 : 12,
-                        sourceX = d.source.x + (sourcePadding * normX),
-                        sourceY = d.source.y + (sourcePadding * normY),
-                        targetX = d.target.x - (targetPadding * normX),
-                        targetY = d.target.y - (targetPadding * normY);
-//                    return "M" + sourceX + "," + sourceY + "A" + dist + "," + dist + " 0 0,1 " + targetX + "," + targetY;
-                    return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
-                })
-            ;
-
-            _this.node.attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-        };
     },
+
+    _tick: function() {
+        this.link.attr('d', function(d) {
+                var deltaX = d.target.x - d.source.x,
+                    deltaY = d.target.y - d.source.y,
+                    dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+                    normX = deltaX / dist,
+                    normY = deltaY / dist,
+                    sourcePadding = d.left ? 17 : 12,
+                    targetPadding = d.right ? 17 : 12,
+                    sourceX = d.source.x + (sourcePadding * normX),
+                    sourceY = d.source.y + (sourcePadding * normY),
+                    targetX = d.target.x - (targetPadding * normX),
+                    targetY = d.target.y - (targetPadding * normY);
+//                    return "M" + sourceX + "," + sourceY + "A" + dist + "," + dist + " 0 0,1 " + targetX + "," + targetY;
+                return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+            })
+        ;
+
+        this.node.attr("transform", function(d) {
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+    },
+
+    _setupUI: function() {
+      // filter bar
+      var filterbar = '<div class="network-filterbar"><ul>';
+      for (var i = 0; i < this.ENTITY.length; i++) {
+          filterbar += '<li><input type="checkbox" id="'
+                      + this.ENTITY[i]
+                      + '-check" checked value="'
+                      + this.ENTITY[i]
+                      + '" style="margin-right: 5px;"/><label for="'
+                      + this.ENTITY[i]
+                      + '-check">'
+                      + this.ENTITY[i]
+                      + '</label>'
+          ;
+      }
+      filterbar += '</ul></div>';
+      this.element.append(filterbar);
+
+      // network viewer
+      var viewer = '\
+        <div class="network-viewer"> \
+            <span class="network-viewer-controls"> \
+              <button type="button" title="delete" class="close delete"><span class="glyphicon glyphicon-remove"></span></button> \
+              <button type="button" title="edit" class="close edit"><span class="glyphicon glyphicon-pencil"></span></button> \
+            </span> \
+        </div> \
+      ';
+      //
+      // network editor
+      var editor = '\
+        <div class="network-editor"> \
+            <div class="relationship-label"> \
+              <span class="rel-source"></span> \
+              <span class="glyphicon glyphicon-arrow-right"></span> \
+              <span class="rel-target"></span> \
+            </div> \
+            <form> \
+              <input name="relation" id="relation" placeholder="Relationship..."/>  \
+              <textarea name="description" id="desc" placeholder="Description..."/>  \
+              <button type="button" title="Save" class="save"><span class="glyphicon glyphicon-ok-circle"></span></button> \
+              <button type="button" title="cancel" class="cancel"><span class="glyphicon glyphicon-remove-circle"></span></button> \
+            </form> \
+        </div> \
+      ';
+      $(viewer).appendTo(this.element);
+      $(editor).appendTo(this.element);
+    },
+
+
+    _setupEventListener: function() {
+      d3.select('body')
+        .on("keydown", this._onSetMode.bind(this))
+        .on("keyup", this._onExitMode.bind(this));
+
+      $('.filterbar :checkbox').change(this._onSetFilter.bind(this));
+
+      $('.network-editor .save').click(this._onEditorSave.bind(this));
+      $('.network-editor .cancel').click(this._onEditorCancel.bind(this));
+
+      $('.network-viewer .delete').click(this._onViewerDelete.bind(this));
+      $('.network-viewer .edit').click(this._onViewerEdit.bind(this));
+
+      $('.network-viewer').mouseleave(function() {
+        $(this).hide();
+        $('.network-viewer').data('link', null);
+        $('.network-viewer').data('node', null);
+      });
+    },
+
+
+    _onSetFilter: function(e) {
+      var display = '';
+      var value = e.target.value;
+
+      if (! this.checked) {
+          // hide node and associated links
+          display = 'none';
+      }
+      this.svg.selectAll('.node').transition().style('display', function(o) {
+          if (value === 'dataentry') {
+              if (o.primary === undefined) {
+                  return display;
+              } else {
+                  return this.style.display;
+              }
+          } else {
+              if (o.primary && o.primary.entity_type === value) {
+                  return display;
+              } else {
+                  return this.style.display;
+              }
+          }
+      });
+      this.svg.selectAll('.link').transition().style('display', function(o) {
+          if (value === 'dataentry') {
+              if (o.source.primary === undefined || o.target.primary === undefined) {
+                  return display;
+              } else {
+                  return this.style.display;
+              }
+          } else {
+              if ((o.source.primary && o.source.primary.entity_type === value) || (o.target.primary && o.target.primary.entity_type === value)) {
+                  return display;
+              } else {
+                  return this.style.display;
+              }
+          }
+      });
+
+    },
+
+    _onSetMode: function(e) {
+      if (d3.event.shiftKey) {
+          this.mode = "filter";
+      }
+      else if (d3.event.altKey) {
+          this.mode = "draw";
+      }
+      else {
+          this.mode = "normal";
+      }
+      this.setMode(this.mode);
+    },
+
+    _onExitMode: function(e) {
+      this.mode = "normal";
+      this.setMode(this.mode);
+    },
+
+    _onViewerEdit: function(e) {
+      var $viewer = $('.network-viewer');
+      var link = $viewer.data('link');
+      var node = $viewer.data('node');
+
+      $viewer.hide();
+
+      if (link) {
+        this.showLinkEditor(link);
+      }
+      if (node) {
+        this.showNodeEditor(node);
+      }
+    },
+
+    _onViewerDelete: function(e) {
+      var $viewer = $('.network-viewer');
+      var link = $viewer.data('link');
+      var node = $viewer.data('node');
+
+      if (link) {
+        // delete a relationship
+        $.ajax({
+          url: 'relationship',
+          type: 'DELETE',
+          data: JSON.stringify({
+            source: link.source.id,
+            target: link.target.id,
+            rel: link.relation,
+            id: link.id
+          }),
+          contentType: 'application/json; charset=utf-8',
+          dataType: 'json',
+          success: function(d) { // return deleted relationship
+            $.publish('/relationship/delete', [[d.relationship]]);
+            wb.utility.notify('1 relationship deleted', 'success');
+          }
+        });
+      }
+      if (node) {
+        // delete an entity
+      }
+
+      $viewer.hide();
+
+    },
+
+    _onEditorCancel: function(e) {
+      $('.network-editor form')[0].reset();
+      $('.network-editor').hide();
+      var link = $('.network-editor').data('link');
+
+      // // delete the link
+      // var i = this.findLink(link);
+      // if (i >= 0) {
+      //   this.links.splice(i, 1);
+      // }
+      $('.network-editor').data('link', null);
+      this.selected_link = null;
+
+      this.restart();
+    },
+
+    _onEditorSave: function(e) {
+      var link = $('.network-editor').data('link');
+      var rel = $('.network-editor #relation').val();
+      var desc = $('.network-editor #desc').val();
+      link.relation = rel;
+      link.description = desc;
+      $.post('relationship', {
+          source: link.source.id,
+          target: link.target.id,
+          rel: rel,
+          desc: desc
+      }, function(d) {
+          $('.network-editor form')[0].reset();
+          $('.network-editor').hide();
+
+          // add attr to link
+          var rel = d.relationship;
+          link.id = rel.primary.id;
+          link.created_by = rel.primary.created_by;
+          link.created_at = rel.primary.created_at;
+
+          if (d.created) {
+            // the link could be created or simply updated
+            $.publish('/relationship/add', [[rel]]);
+            wb.utility.notify('1 relationship added!', 'success');
+          } else {
+            // because only the attribute of the relationship changes, we do
+            // not need to publish the event
+            wb.utility.notify('1 relationship updated!', 'success');
+          }
+
+
+          $('.network-editor').data('link', null);
+          this.selected_link = null;
+
+          activitylog({
+              operation: 'create relationship',
+              data: JSON.stringify({'window_type': 'network', 'id': d.id})
+          });
+      });
+
+    },
+
 
     setMode: function(mode) {
         this.exitAllModes();
@@ -293,34 +459,11 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             _this.selected_link = link;
             _this.selected_node = null;
 
-            // pop up relationship form
-            var $editor = $('#network-editor').show()
-                .css('top', (_this.mouseup_node.y + _this.mousedown_node.y)/2.0)
-                .css('left', (_this.mouseup_node.x + _this.mousedown_node.x)/2.0)
-            ;
-            $editor.find('form').submit(function(e) {
-                var rel = $(this).find('#relation').val();
-                link.rel = rel;
-                $.post('relationship', {
-                    source: link.source.id,
-                    target: link.target.id,
-                    rel: link.rel
-                }, function(d) {
-                    var rel = d.relationship;
-                    $.publish('/relationship/add', [[rel]]);
-                    wb.notify('1 relationship added!', 'success');
+            _this.showLinkEditor(link);
 
-                    activitylog({
-                        operation: 'create relationship',
-                        data: JSON.stringify({'window_type': 'network', 'id': d.id})
-                    });
-                });
-                $(this).parent().remove();
-                e.preventDefault();
-            });
 
             _this.restart();
-        })
+        });
 
     },
 
@@ -414,15 +557,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .on("dragend", dragend)
         );
         this.node
-            .on('mouseover', function(d) {
-                window.networkmouseovertimeout = setTimeout(function() {
-                    this.showTooltip(d)
-                }.bind(this), 1000); // delay for 1s to show tooltip
-            }.bind(this))
-            .on('mouseout', function(d) {
-                clearTimeout(window.networkmouseovertimeout);
-                this.hideTooltip();
-            }.bind(this))
+            .on('mouseover', this.showNodeInfo.bind(this))
+            .on('mouseout', this.hideNodeInfo)
         ;
 
         function dragstarted(d) {
@@ -464,8 +600,64 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.node.on('mousedown.drag', null);
     },
 
-    showTooltip: function(d) {
-        var tooltip = '<div id="network-tooltip" class="entity-tooltip"><table>'
+    showLinkEditor: function(l) {
+      var $editor = $('.network-editor').show()
+          // .css('top', (this.mouseup_node.y + this.mousedown_node.y)/2.0)
+          // .css('left', (this.mouseup_node.x + this.mousedown_node.x)/2.0)
+          .css('top', (l.source.y + l.target.y)/2.0)
+          .css('left', (l.source.x + l.target.x)/2.0)
+          .data('link', l)
+      ;
+
+      var node_type = l.source.id.split('-')[0];
+      if (node_type === 'dataentry') {
+        var source = 'dataentry';
+      } else {
+        var source = l.source.primary.name;
+      }
+      var target = l.target.primary.name;
+      $editor.find('.rel-source').text(source);
+      $editor.find('.rel-target').text(target);
+      // add link attributes if any
+      $editor.find('#relation').val(l.relation);
+      $editor.find('#desc').val(l.description);
+    },
+
+
+    showNodeEditor: function(d) {
+
+    },
+
+    showLinkInfo: function(l, i) {
+        $('.network-viewer .attr-list').remove();
+        var str = "<table class='attr-list'>";
+        for (var attr in l) {
+          if (attr !== 'source' && attr !== 'target' && attr !== 'id'
+              && attr !== 'created_by' && l[attr]) {
+            str += "<tr><th>" + wb.utility.capitalizeFirstLetter(attr)
+                  + ": </th><td>" + l[attr] + "</td></tr>";
+          }
+        }
+        str += "<tr><th>Created by: </th><td>" + wb.users[l.created_by].name + "</td></tr>";
+        str += "</table>";
+        $(str).appendTo($('.network-viewer'));
+
+        $('.network-viewer').data('link', l);
+
+        var pos = wb.utility.mousePosition(d3.event, this.element);
+        var width = $('.network-viewer').outerWidth();
+        var height = $('.network-viewer').outerHeight();
+        $('.network-viewer')
+          .css('left', pos.left - width/2 + 'px')
+          .css('top', pos.top - height - 10 + 'px')
+          .css('position', 'absolute')
+          .css('display', 'block')
+        ;
+    },
+
+    showNodeInfo: function(d) {
+        $('.network-viewer .attr-list').remove();
+        var tooltip = "<table class='attr-list'>";
         if (d.id) {
             var node = d.id.split('-');
             var node_type = node[0], node_id = node[1];
@@ -482,17 +674,37 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                     }
                 }
             }
-            tooltip += '</table></div>';
-            $(tooltip).appendTo(this.element).css({
-                position: 'absolute',
-                top: d.y + 'px',
-                left: d.x + 15 + 'px'
-            });
+            tooltip += '</table>';
+            $(tooltip).appendTo('.network-viewer')
+            $('.network-viewer').data('node', d);
+
+            var pos = wb.utility.mousePosition(d3.event, this.element);
+            var width = $('.network-viewer').outerWidth();
+            var height = $('.network-viewer').outerHeight();
+            d3.select(".network-viewer")
+                .style('position', 'absolute')
+                .style('left', pos.left - width/2 + "px")
+                .style('top', (pos.top - height - 10) + "px")
+                .style('display', 'block');
         }
     },
 
-    hideTooltip: function() {
-        $('#network-tooltip', this.element).remove();
+    hideLinkInfo: function() {
+        setTimeout(function() {
+          if (!$('.network-viewer:hover').length) {
+            $('.network-viewer').hide();
+            $('.network-viewer').data('link', null);
+          }
+        }, 300);
+    },
+
+    hideNodeInfo: function() {
+        setTimeout(function() {
+          if (!$('.network-viewer:hover').length) {
+            $('.network-viewer').hide();
+            $('.network-viewer').data('node', null);
+          }
+        }, 300);
     },
 
     findNode: function(id, node) {
@@ -500,16 +712,32 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         return this.nodeMap[node_id];
     },
 
-    addNode: function(id, node, relationship) {
+    findLink: function(link) {
+      if (link.id) {
+        for (var i = 0, len = this.links.length; i < len; i++) {
+          if (link.id === this.links[i].id) return i;
+        }
+        return -1;
+      } else {
+        for (var i = 0, len = this.links.length; i < len; i++) {
+          if (link.source === this.links[i].source
+             && link.target === this.links[i].target
+             && link.relation === this.links[i].relation) {
+               return i;
+             }
+        }
+        return -1;
+      }
+    },
+
+    addNode: function(id, node) {
         var existed_node = this.findNode(id, node);
         if (existed_node) {
-            existed_node.relationships.push(relationship.primary.id);
             return existed_node;
         } else {
             var node_id = node + '-' + id;
             var entity = $.extend({}, wb.store[node][id]);
             entity.id = node_id;
-            entity.relationships = [relationship.primary.id];
             this.nodeMap[node_id] = entity;
             this.nodes.push(entity);
             return entity;
@@ -517,21 +745,39 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     },
 
     addLink: function(source, target, source_node, target_node, relationship) {
-        var source_entity = this.addNode(source, source_node, relationship);
-        var target_entity = this.addNode(target, target_node, relationship);
-        this.links.push({
+        var source_entity = this.addNode(source, source_node);
+        var target_entity = this.addNode(target, target_node);
+        var link = {
             source: source_entity,
             target: target_entity,
-            confidence: 1,
+            // confidence: 1,
             relation: relationship.primary.relation,
-            description: '',
-            date: source_entity.date,
-            id: relationship.primary.id
-        });
+            description: relationship.primary.description,
+            date: relationship.primary.date,
+            id: relationship.primary.id,
+            created_by: relationship.primary.created_by,
+            created_at: relationship.primary.created_at
+        };
+        var i = this.findLink(link);
+        if (i < 0) {
+          this.links.push(link);
+          if (source_entity.relationships) {
+            source_entity.relationships.push(link.id);
+          } else {
+            source_entity.relationships = [link.id];
+          }
+          if (target_entity.relationships) {
+            target_entity.relationships.push(link.id);
+          } else {
+            target_entity.relationships = [link.id];
+          }
+        }
     },
 
     updateData: function() {
         var _this = this;
+
+        this.links = [];
 
         this.options.group.all().forEach(function(d) {
             if (d.key > 0) {
@@ -601,32 +847,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr("class", "link")
             .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
             .style('marker-end', function(d) { return 'url(#end-arrow)'; })
-            .on("mouseover", function(data, index) {
-                $('#network-viewer .attr-list').remove();
-                var str = "<ul class='attr-list'>";
-                str += "<li>Relation: " + data.relation + "</li>";
-                str += "<li>Date: " + wb.utility.formatDate(data.date) + "</li>";
-                str += "</ul>";
-                $(str).appendTo($('#network-viewer'));
-
-                $('#network-viewer').data('link', data);
-
-                var width = $('#network-viewer').outerWidth();
-                var height = $('#network-viewer').outerHeight();
-                d3.select("#network-viewer")
-                    .style('position', 'absolute')
-                    .style('left', d3.event.pageX - width/2 + "px")
-                    .style('top', (d3.event.pageY - height - 10) + "px")
-                    .style('display', 'block');
-                d3.event.preventDefault();
-            })
-            .on("mouseout", function(data, index) {
-              setTimeout(function() {
-                if (!$('#network-viewer:hover').length) {
-                  $('#network-viewer').hide();
-                }
-              }, 300);
-            })
+            .on("mouseover", this.showLinkInfo.bind(this))
+            .on("mouseout", this.hideLinkInfo);
         ;
         // this.selected_link && this.selected_link.style('stroke-dasharray', '10,2');
 
@@ -652,15 +874,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                     return "url(#img-dataentry)";
                 }
             })
-            // .on("mouseover", function(d) {
-            //     // enlarge target node
-            //     d3.select(this).attr('transform', 'scale(1.5)');
-            // })
             .on('mouseover', this.highlight)
-            // .on('mouseout', function(d) {
-            //     // unenlarge target node
-            //     d3.select(this).attr('transform', '');
-            // })
             .on('mouseout', this.unhighlight)
         ;
 
@@ -742,37 +956,19 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             return connected;
         }
     },
+
+
     unhighlight: function() {
-        d3.selectAll('.node circle').style('stroke-opacity', 1).style('fill-opacity', 1);
-        d3.selectAll('.link').style('stroke-opacity', 1);
-        d3.selectAll('.node-text').style('fill-opacity', 1);
-        d3.select(this).attr('transform', '');
+      d3.selectAll('.node circle')
+        .style('stroke-opacity', 1)
+        .style('fill-opacity', 1);
+      d3.selectAll('.link').style('stroke-opacity', 1);
+      d3.selectAll('.node-text').style('fill-opacity', 1);
+      d3.select(this).attr('transform', '');
     },
+
     destroy: function() {
-    }
+    },
 });
 
 
-$(function() {
-  // register events for network-viewer here
-  // TODO: consider putting the code somewhere else to make a nicer structure
-  $('#network-viewer').mouseleave(function() {
-    $(this).hide();
-  });
-
-  $('#network-viewer .edit').click(function() {
-
-  });
-
-  $('#network-viewer .delete').click(function(event) {
-    var item = $(event.target).parents('#network-viewer');
-    var link = item.data('link');
-    $.post('relationship', {
-      source: link.source,
-      target: link.target,
-      rel: link.rel
-    }, function(rel) { // return deleted relationship
-      $.publish('relationship/delete', [rel]);
-    });
-  });
-})

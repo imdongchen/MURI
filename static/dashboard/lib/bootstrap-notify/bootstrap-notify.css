@@ -1,6 +1,7 @@
 .notifications {
   position: fixed;
   z-index: 9999;
+  font-size: 120%;
 }
 
 /* Positioning */
