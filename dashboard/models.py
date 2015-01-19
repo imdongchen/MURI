@@ -8,6 +8,8 @@ from django.db.models.fields import FieldDoesNotExist
 from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.GeometryField"])
 
+from user.models import Group
+
 # Create your models here.
 def get_model_attr(instance):
     attr = {'primary': {}, 'other': {}}
@@ -78,6 +80,12 @@ class Entity(models.Model):
 
     def get_attr(self):
         return get_model_attr(self)
+
+
+class Case(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    groups = models.ManyToManyField(Group, null=True, blank=True)
 
 
 class Dataset(models.Model):

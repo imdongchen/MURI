@@ -39,3 +39,6 @@ run_gunicorn.sh
 
 # node modules
 /node_modules/
+
+dump.rdb
+/*/.ropeproject/
