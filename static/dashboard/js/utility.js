@@ -70,6 +70,7 @@ wb.utility.notify = function(msg, type) {
 };
 
 
+// return position relative to 'offsetEl'
 wb.utility.mousePosition = function(e, offsetEl) {
   var offset, _ref1;
   if ((_ref1 = $(offsetEl).css('position')) !== 'absolute' && _ref1 !== 'fixed' && _ref1 !== 'relative') {

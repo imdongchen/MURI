@@ -4,7 +4,6 @@
 {% compress js %}
 <script type="text/javascript" src="{% static 'dashboard/js/page_header.js' %}"></script>
 {% endcompress %}
-<!-- <link rel="stylesheet" type="text/css" href="{% static 'dashboard/css/page_header.css' %}"> -->
 {% endblock %}
 
 <nav class="navbar navbar-default" role="navigation">
@@ -23,14 +22,25 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav viz">
+        <li class="case dropdown">
+            <a id="case_btn" href="#" class="dropdown-toggle" data-toggle="dropdown">Cases<span class="caret"></span></a>
+            <ul id="case-list" class="dropdown-menu">
+                {% for case in cases %}
+                <li>
+                  <label>
+                    <input type='radio' name='cases' value='{{case.id}}'>{{case.name}}
+                  </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
         <li class='dataset dropdown'>
             <a id="datasource_btn" href="#" class="dropdown-toggle" data-toggle="dropdown">Dataset<span class="caret"></span></a>
             <ul id="dataset-list" class="dropdown-menu">
-                {% for id, attr in datasets.items %}
-                <li> <a href='#'><label><input type='checkbox' name='{{attr.name}}' value='{{id}}'>{{attr.name}} ({{attr.entries}} entries)</label></a>
-                {% endfor %}
-                <li><a id="upload-data-btn" href="#">Upload Data</a>
             </ul>
+        </li>
+        <li>
+          <a href="#" class="viz-opts" id="documents-btn">Documents</a>
         </li>
         <li>
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">Table<span class="caret"></a>

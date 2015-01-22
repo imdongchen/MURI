@@ -115,7 +115,7 @@ def annotation(request, id=0):
             # sync annotation
             sync.views.annotation_create(res, request.user)
 
-            return HttpResponse(json.dumps(res), mimetype='application/json')
+            return HttpResponse(json.dumps(res), content_type='application/json')
 
     elif request.method == 'PUT':
         # update annotation
@@ -149,7 +149,7 @@ def annotation(request, id=0):
                 res['entity'] = entity.get_attr()
 
                 sync.views.annotation_update(res, request.user)
-                return HttpResponse(json.dumps(res), mimetype='application/json')
+                return HttpResponse(json.dumps(res), content_type='application/json')
         else:
             print 'Error: no annotation id received'
             return HttpResponseBadRequest()
@@ -170,7 +170,7 @@ def annotation(request, id=0):
                 annotation.delete()
 
                 sync.views.annotation_delete(res, request.user)
-                return HttpResponse(json.dumps(res), mimetype='application/json')
+                return HttpResponse(json.dumps(res), content_type='application/json')
         else:
             return HttpResponseBadRequest()
 
@@ -188,7 +188,7 @@ def annotations(request):
 
         for ann in anns:
             annotations.append(ann.serialize())
-        return HttpResponse(json.dumps(annotations), mimetype='application/json')
+        return HttpResponse(json.dumps(annotations), content_type='application/json')
     elif request.method == 'POST':
         res = {'annotations': [], 'entity': {}, 'relationships': []};
         data = json.loads(request.body)
@@ -229,7 +229,7 @@ def annotations(request):
         # sync annotation
         sync.views.annotation_create(res, request.user)
 
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
     elif request.method == 'PUT':
         # update annotations
@@ -266,7 +266,7 @@ def annotations(request):
 
         res['entity'] = entity.get_attr()
         sync.views.annotation_update(res, request.user)
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
     elif request.method == 'DELETE':
         res = {'annotations': [], 'entity': {}, 'relationships': []};
@@ -285,7 +285,7 @@ def annotations(request):
                 res['annotations'].append(annotation.serialize())
                 annotation.delete()
         sync.views.annotation_delete(res, request.user)
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 def get_or_create_annotation(request):
@@ -298,7 +298,7 @@ def get_or_create_annotation(request):
 
         for ann in anns:
             annotations.append(ann.serialize())
-        return HttpResponse(json.dumps(annotations), mimetype='application/json')
+        return HttpResponse(json.dumps(annotations), content_type='application/json')
     if request.method == 'POST':
         res = None
         data = json.loads(request.body)
@@ -329,7 +329,7 @@ def get_or_create_annotation(request):
             log['operation'] = 'add annotation'
             log['data'] = json.dumps({'annotation_id': res['annotation']['id']})
             serverlog(request, log)
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
     if request.method == 'DELETE':
         res = {}
         data = json.loads(request.body)
@@ -341,7 +341,7 @@ def get_or_create_annotation(request):
                 return HttpResponseNotFound()
             else:
                 ann.delete()
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 
@@ -440,7 +440,7 @@ def process_annotation(request, id):
             return HttpResponseNotFound()
         else:
             ann.delete()
-            return HttpResponse(json.dumps(res), mimetype='application/json')
+            return HttpResponse(json.dumps(res), content_type='application/json')
     if request.method == 'PUT':
         try:
             ann = Annotation.objects.get(id=id)
@@ -453,7 +453,7 @@ def process_annotation(request, id):
 
             res = save_annotation(request, ann, data)
 
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 def tag(request):
@@ -473,4 +473,4 @@ def tag(request):
 
         res = entity.getKeyAttr()
 
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')

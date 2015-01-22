@@ -53,5 +53,5 @@ def get_all_users(request):
             'id': user.id,
             'name': user.username
         })
-    return HttpResponse(json.dumps(user_info), mimetype="application/json")
+    return HttpResponse(json.dumps(user_info), content_type="application/json")
 

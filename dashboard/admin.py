@@ -1,7 +1,8 @@
 # from django.contrib import admin
-from django.contrib.gis import admin 
+from django.contrib.gis import admin
 
 from dashboard.models import *
+
 
 class GoogleAdmin(admin.OSMGeoAdmin):
 #   extra_js = [GMAP.api_url + GMAP.key]
@@ -18,10 +19,8 @@ class GoogleAdmin(admin.OSMGeoAdmin):
 admin.site.register(Organization)
 admin.site.register(Location, GoogleAdmin)
 admin.site.register(Person)
-admin.site.register(Facility)
-admin.site.register(Document)
-admin.site.register(Vehicle)
 admin.site.register(Event)
-admin.site.register(Equipment)
-admin.site.register(Weapon)
 admin.site.register(Relationship)
+admin.site.register(Case)
+admin.site.register(Dataset)
+admin.site.register(DataEntry)

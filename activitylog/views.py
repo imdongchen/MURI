@@ -12,7 +12,7 @@ def activitylog(request):
             'data'    : request.POST['data']
         }
         serverlog(request, log)
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
     if request.method == 'GET':
         pass
 

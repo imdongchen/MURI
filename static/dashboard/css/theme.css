@@ -127,3 +127,8 @@ html, body {
   font-size: 100%;
   margin: 10px 5px;
 }
+
+.nav input[type=radio],
+.nav input[type=checkbox] {
+  margin: 4px 4px;
+}

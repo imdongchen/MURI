@@ -1,14 +1,13 @@
 from django.contrib.gis.db import models
 from model_utils.managers import InheritanceManager
 from django.template.defaultfilters import slugify
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.db.models.fields import FieldDoesNotExist
 
 from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.GeometryField"])
 
-from user.models import Group
 
 # Create your models here.
 def get_model_attr(instance):
@@ -83,13 +82,17 @@ class Entity(models.Model):
 
 
 class Case(models.Model):
-    title = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     groups = models.ManyToManyField(Group, null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
 
 
 class Dataset(models.Model):
     name = models.CharField(max_length=500)
+    case = models.ForeignKey(Case)
     created_by = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
     created_at  = models.DateTimeField(default=datetime.now, verbose_name='created at')
 
@@ -102,8 +105,11 @@ class Dataset(models.Model):
         attr['entries'] = self.dataentry_set.count()
         return attr
 
+    def __unicode__(self):
+        return self.name
 
 class DataEntry(models.Model):
+    name = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField()
     date  = models.DateTimeField(null=True, blank=True)
     dataset = models.ForeignKey(Dataset, null=True, blank=True)
@@ -189,54 +195,6 @@ class Resource(Entity):
         self.entity_type = 'resource'
         super(Resource, self).save(*args, **kwargs)
 
-
-class Equipment(Resource):
-    pass
-
-
-class Weapon(Resource):
-    make    = models.CharField(max_length=50, null=True, blank=True)
-    model   = models.CharField(max_length=50, null=True, blank=True)
-    equipment_code = models.CharField(max_length=50, null=True, blank=True)
-
-
-
-class Vehicle(Resource):
-    vin     = models.CharField(max_length=50, null=True, blank=True)
-    year    = models.CharField(max_length=10, null=True, blank=True)
-    make    = models.CharField(max_length=50, null=True, blank=True)
-    model   = models.CharField(max_length=50, null=True, blank=True)
-    license_number  = models.CharField(max_length=50, null=True, blank=True)
-    license_state  = models.CharField(max_length=50, null=True, blank=True)
-    license_country = models.CharField(max_length=50, null=True, blank=True)
-    color   = models.CharField(max_length=50, null=True, blank=True)
-    usage   = models.CharField(max_length=100, null=True, blank=True)
-    fuel_type = models.CharField(max_length=50, null=True, blank=True)
-
-
-
-class Facility(Resource):
-    types     = models.CharField(max_length=100, null=True, blank=True)
-    primary_function = models.CharField(max_length=100, null=True, blank=True)
-    BE_number = models.CharField(max_length=50, null=True, blank=True)
-    PIN       = models.CharField(max_length=50, null=True, blank=True)
-
-    class Meta:
-        verbose_name_plural = "facilities"
-
-
-
-class Document(Resource):
-    title   = models.CharField(max_length=100, null=True, blank=True)
-    title_short = models.CharField(max_length=100, null=True, blank=True)
-    author  = models.CharField(max_length=100, null=True, blank=True)
-    is_broken_link   = models.NullBooleanField(null=True, blank=True)
-    url   = models.URLField(max_length=100, null=True, blank=True)
-    language  = models.CharField(max_length=50, null=True, blank=True)
-    medium    = models.CharField(max_length=50, null=True, blank=True)
-    types     = models.CharField(max_length=50, null=True, blank=True)
-    date_approved  = models.CharField(max_length=50, null=True, blank=True)
-    date_published  = models.CharField(max_length=50, null=True, blank=True)
 
 
 class Relationship(models.Model):

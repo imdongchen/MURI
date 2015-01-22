@@ -9,6 +9,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', index),
+    url(r'^cases$', get_cases),
     url(r'^data$', data),
     url(r'^dataset$', dataset),
     url(r'^data/upload$', upload_data),

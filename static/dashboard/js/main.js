@@ -26,18 +26,20 @@ $(document).ready(function() {
 
     });
 
-    // get a list of dataset at the very beginning
-    $.ajax({
-        url: 'dataset',
-        type: 'GET',
-        success: function(res) {
-            wb.store.dataset = res;
-            // load some sample data, otherwise the app is blank..
-            addDatasets(['1']);
-            $.publish('/data/loaded');
-            $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
-        }
-    });
+    // // get a list of dataset at the very beginning
+    // $.ajax({
+    //     url: 'dataset',
+    //     type: 'GET',
+    //     success: function(res) {
+    //         if (! $.isEmptyObject(res)) {
+    //           wb.store.dataset = res;
+    //           addDatasets(['1']);
+    //         }
+    //         // load some sample data, otherwise the app is blank..
+    //         $.publish('/data/loaded');
+    //         $('#dataset-list').find(':checkbox[value=1]').prop('checked', true);
+    //     }
+    // });
 
     // initialize underlying data structure
     wb.datafilter = crossfilter();
@@ -91,6 +93,26 @@ function toOLGeometry(entity) {
 
 
 // Event subscriptions
+
+// change case
+$.subscribe('/case/change', function(e, id) {
+  $.get('dataset', {
+    case: id
+  }, function(datasets) {
+    // add datasets to top menu
+    var html = '';
+    for (var id in datasets) {
+      html += '<li><a href="#"><label><input type="checkbox" name="datasets" value="'
+              + id
+              + '">'
+              + datasets[id].name
+              + '</label></a>'
+      ;
+    }
+    $('#dataset-list').append(html);
+    wb.store.dataset = datasets;
+  });
+});
 
 // add or remove datasets
 $.subscribe('/dataset/update', function() {

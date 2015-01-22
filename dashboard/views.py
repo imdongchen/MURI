@@ -1,22 +1,32 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 import json
-import networkx as nx
-from networkx.readwrite import json_graph
-from itertools import combinations
-from django.template import Context
 from django.db.models import Q
-from itertools import chain
 import copy
 from dateutil import parser
 from django.contrib.auth.decorators import login_required
+from django.template import Context
 import csv
 
 import settings
-from models import *
+from django.contrib.auth.models import Group, User
+from models import Attribute, Entity, Case, Dataset, DataEntry, Location, Person, Organization, Event, Resource, Relationship
 
 import sync
 
+
+def get_cases(request):
+    res = []
+
+    groups = request.user.group_set.all()
+    cases  = Cases.objects.filter(groups__in=groups)
+
+    for case in cases:
+        res.append({
+            'name': case.name,
+            'description': case.description
+        })
+    return HttpResponse(json.dumps(res), content_type='application/json')
 
 @login_required
 def upload_data(request):
@@ -45,45 +55,35 @@ def upload_data(request):
             error = 'Data file format unaccepted!'
             return HttpResponseBadRequest(error)
     res[dataset.id] = dataset.get_attr()
-    return HttpResponse(json.dumps(res), mimetype='application/json')
+    return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 
 def index(request):
-    bbox    = request.REQUEST.getlist('map')
-    time    = request.REQUEST.getlist('time')
-    message_ids   = request.REQUEST.getlist('messages')
-    dialogs = []
-    if (len(bbox) != 0):
-        dialogs.append("map")
-    if (len(time) != 0):
-        dialogs.append("timeline")
-    if (len(message_ids) != 0):
-        dialogs.append("message_table")
-
     if hasattr(settings, 'FORCE_SCRIPT_NAME'):
         PREFIX_URL = settings.FORCE_SCRIPT_NAME;
     else:
         PREFIX_URL = ''
 
-    datasets = Dataset.objects.all()
-    dataset_dict = {}
-    for ds in datasets:
-        dataset_dict[ds.id] = ds.get_attr()
-    #
-    return render(request, 'dashboard/index.html', Context({
-        "dialogs": dialogs,
+    groups = request.user.groups.all()
+    cases  = Case.objects.filter(groups__in=groups)
+
+    return render(request, 'dashboard/index.html', {
         "PREFIX_URL": PREFIX_URL,
-        "datasets": dataset_dict
-    }))
+        "cases": cases,
+    })
 
 
 def dataset(request):
-    datasets = Dataset.objects.all()
+    id = request.GET.get('case')
+    if not id:
+        return HttpResponseBadRequest()
+    case = Case.objects.get(id=id)
+    datasets = case.dataset_set.all()
     dataset_dict = {}
     for ds in datasets:
         dataset_dict[ds.id] = ds.get_attr()
-    return HttpResponse(json.dumps(dataset_dict), mimetype='application/json')
+    return HttpResponse(json.dumps(dataset_dict), content_type='application/json')
 
 
 def data(request):
@@ -136,7 +136,7 @@ def data(request):
             ele.append({
                 'dataentry': de.id,
                 'person': 0, 'location': 0, 'event': 0, 'organization': 0, 'resource': 0, 'relationship': -1,
-                'date': de.date.strftime('%m/%d/%Y')
+                'date': dataentry_dict[de.id]['date']
             })
 
             # step 3.1: get annotations in those data entries
@@ -205,7 +205,7 @@ def data(request):
                 fact2[target_type] = rel.target.id
                 ele.append(fact2)
 
-    return HttpResponse(json.dumps(res), mimetype='application/json')
+    return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 
@@ -247,7 +247,7 @@ def relationship(request):
         else:
             sync.views.relationship_update(res, request.user)
 
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
     elif request.method == 'DELETE':
         data = json.loads(request.body)
         id     = data.get('id')
@@ -262,7 +262,7 @@ def relationship(request):
 
         sync.views.relationship_delete(res, request.user)
 
-        return HttpResponse(json.dumps(res), mimetype='application/json')
+        return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 

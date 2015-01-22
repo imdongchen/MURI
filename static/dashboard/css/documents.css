@@ -1,0 +1,52 @@
+.doc-overview {
+  width: 100%;
+  height: 200px;
+  position: absolute;
+  overflow: auto;
+}
+
+.doc-list {
+  list-style: none;
+  padding: 0;
+}
+
+.doc-item {
+  padding: 5px 15px;
+  cursor: pointer;
+}
+
+.doc-item:hover {
+  background: #c5ceff;
+}
+.doc-item.active {
+  background: #4D6CBB;
+}
+
+
+.doc-item .doc-dataset {
+  float: left;
+  text-align: left;
+}
+
+.doc-item .doc-name {
+  margin-left: 15px;
+}
+
+.doc-item .doc-time {
+  float: right;
+  text-align: right;
+}
+.dragbar {
+  background-color: #ccc;
+  width: 100%;
+  height: 3px;
+  cursor: row-resize;
+  bottom:0;
+  position: absolute;
+}
+
+.doc-view-container {
+  top: 200px;
+  position: absolute;
+  padding: 15px 15px;
+}
