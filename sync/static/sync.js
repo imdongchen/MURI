@@ -43,7 +43,7 @@ ishout.on('annotation.create', function(data) {
   var entity = data.entity;
 
   // if the annotation is created by the user itself, do nothing
-  if (data.user === wb.USER)  return ;
+  if (data.user === wb.profile.user)  return ;
 
   // render annotation--add annotation to annotator
   for (var i = 0; i < wb.vartifacts.length; i++) {
@@ -67,7 +67,7 @@ ishout.on('annotation.create', function(data) {
 
 ishout.on('annotation.update', function(data) {
   // if the annotation is created by the user itself, do nothing
-  if (data.user === wb.USER)  return ;
+  if (data.user === wb.profile.user)  return ;
 
   if (data.annotation) {
     var annotations = [data.annotation];
@@ -105,7 +105,7 @@ ishout.on('annotation.update', function(data) {
 
 
 ishout.on('annotation.delete', function(data) {
-  if (data.user == wb.USER) return;
+  if (data.user == wb.profile.user) return;
   if (data.relationship) {
     var relationships = [data.relationship];
   } else {
@@ -136,7 +136,7 @@ ishout.on('annotation.delete', function(data) {
 
 
 ishout.on('relationship.create', function(data) {
-  if (data.user == wb.USER) return;
+  if (data.user == wb.profile.user) return;
 
   var rel = data.relationship;
   $.publish('/relationship/add', [[rel]]);
@@ -160,7 +160,7 @@ ishout.on('relationship.create', function(data) {
 
 
 ishout.on('relationship.update', function(data) {
-  if (data.user == wb.USER) return;
+  if (data.user == wb.profile.user) return;
 
   var rel = data.relationship;
   $.publish('/relationship/update', [[rel]]);
@@ -185,7 +185,7 @@ ishout.on('relationship.update', function(data) {
 
 
 ishout.on('relationship.delete', function(data) {
-  if (data.user == wb.USER) return;
+  if (data.user == wb.profile.user) return;
 
   var rel = data.relationship;
   $.publish('/relationship/delete', [[rel]]);
@@ -206,6 +206,18 @@ ishout.on('relationship.delete', function(data) {
                     );
 
   }
+});
+
+
+ishout.on('activitylog', function(data) {
+  for (var i = 0; i < wb.vartifacts.length; i++) {
+    var viz = wb.vartifacts[i];
+    if (viz.data('viz') === 'vizVizhistory') {
+      // look for history window
+      viz.data('vizVizhistory').add(data);
+    }
+  }
+
 });
 
 

@@ -98,7 +98,7 @@ $(function() {
 
 
     // change case
-    $('#case-list input[type=radio]').change(function() {
+    $('.case-list input[type=radio]').change(function() {
       var id = this.value;
       $.publish('/case/change', id);
     });
@@ -116,14 +116,14 @@ $(function() {
             if (viz_name === 'dataentry') {
                 viz = $('<div>').vizdataentrytable({
                     title: 'Data Entry',
-                    dimension: wb.dim.dataentry,
-                    group: wb.group.dataentry
+                    dimension: wb.cf.dim.dataentry,
+                    group: wb.cf.group.dataentry
                 });
             } else {
                 viz = $('<div>').vizentitytable({
                     title: viz_name,
-                    dimension: wb.dim[viz_name],
-                    group: wb.group[viz_name]
+                    dimension: wb.cf.dim[viz_name],
+                    group: wb.cf.group[viz_name]
                 });
             }
         } else if (viz_name === 'timeline') {
@@ -131,20 +131,20 @@ $(function() {
                 title: 'Timeline',
                 width: 800,
                 height: 200,
-                dimension: wb.dim.date,
-                group: wb.group.date
+                dimension: wb.cf.dim.date,
+                group: wb.cf.group.date
             });
         } else if (viz_name === 'map') {
             viz = $('<div>').vizmap({
                 title: 'Map',
-                dimension: wb.dim.location,
-                group: wb.group.location
+                dimension: wb.cf.dim.location,
+                group: wb.cf.group.location
             });
         } else if (viz_name === 'network') {
             viz = $('<div>').viznetwork({
                 title: 'Network',
-                dimension: wb.dim.relationship,
-                group: wb.group.relationship
+                dimension: wb.cf.dim.relationship,
+                group: wb.cf.group.relationship
             });
         } else if (viz_name === 'notepad') {
             viz = $('<div>').viznotepad({
@@ -154,15 +154,28 @@ $(function() {
           viz = $('<div>').vizmessage({
             title: 'Message'
           });
-        } else if (viz_name === 'documents') {
-          viz = $('<div>').vizdocuments({
-            title: 'Documents',
+        } else if (viz_name === 'history') {
+          viz = $('<div>').vizHistory({
+            title: 'History',
           });
         }
 
         if (viz) {
             wb.vartifacts.push(viz);
         }
+    });
+
+    // select first case and all datasets as default
+    // manually select the first case and emit 'change' event
+    // upon which datasets will be requested
+    $('.case-list input[type=radio]:first').prop('checked', true).change();
+
+    // after datasets are loaded
+    // manually select all datasets, and emit 'mouseleave' event
+    // upon which data entry, entity, and relationship data will be requested
+    $.subscribe('/dataset/loaded', function() {
+      $('nav .dataset-list input[type=checkbox]').prop('checked', true);
+      $('nav ul li.dataset').mouseleave();
     });
 
 });

@@ -18,6 +18,7 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
 
     _destroy: function() {
       this._destroyAnnotator();
+      this._super('_destroy');
     },
 
     updateData: function() {
@@ -25,11 +26,12 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         this.options.group.all().forEach(function(d) {
             if (d.key) {
                 var dataentry = wb.store.dataentry[d.key];
+                var date = dataentry.date ? wb.utility.formatDate(dataentry.date) : '';
                 data.push([
                     d.key,                                    // data entry id
                     wb.store.dataset[dataentry.dataset].name,    // dataset name
                     dataentry.content,                       // data entry content
-                    wb.utility.formatDate(dataentry.date)   // data entry date
+                    date   // data entry date
                 ]);
             }
         });
@@ -42,6 +44,7 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
             .data(data)
             .dimension(this.options.dimension)
             .group(this.options.group)
+            .title('document table')
             .on('filter', function() {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
@@ -62,6 +65,10 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         ele.annotator();
         ele.annotator('addPlugin', 'Store', {
             prefix: 'annotation',
+            annotationData: {
+              'case': wb.profile.case,
+              'group': wb.profile.group.id
+            },
         });
         ele.annotator('addPlugin', 'Tags');
     },
@@ -201,6 +208,7 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
             .data(data)
             .dimension(this.options.dimension)
             .group(this.options.group)
+            .title(this.options.title + ' table')
             .on('filter', function() {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
@@ -231,6 +239,7 @@ wb.viz.table = function() {
         height = 300
     ;
     var dimension, group, data, columns;
+    var title;
     var table;
     var editable = false;
     var dispatch = d3.dispatch('filter', 'edit');
@@ -259,33 +268,34 @@ wb.viz.table = function() {
 
                 // save data entry into DOM TODO: maybe this is not necessary?
                 var self = this;
-                table.$('tr').each(function(i, row) {
+                var rows = $(table.fnGetNodes());
+                rows.each(function(i, row) {
                     var pos = table.fnGetPosition(this);
                     var data = table.fnGetData(pos);
                     $(row).data("id", data[0]);
                 });
 
-                table.$('tr').find("td:first").click(function(e) {
+                rows.find("td:first").click(function(e) {
                     if ( $(this.parentNode).hasClass('row_selected') ) {
                         $(this.parentNode).removeClass('row_selected');
                     } else {
                         if (! e.shiftKey) {
-                            table.$('tr.row_selected').removeClass('row_selected');
+                            $('tr.row_selected', table).removeClass('row_selected');
                         }
                         document.getSelection().removeAllRanges(); // disable text selection when shift+clik
                         $(this.parentNode).addClass('row_selected');
                     }
-                    var selected_rows = table.$('tr.row_selected');
+                    var selected_rows = $('tr.row_selected', table);
                     if (selected_rows.length == 0) {
                         dimension.filterAll();
 
                         activitylog({
-                            operation: 'defilter',
-                            data: JSON.stringify({'window_type': 'table'})
+                            operation: 'removed filter in',
+                            item: title,
                         });
                     } else {
                         records_id = [];
-                        table.$('tr.row_selected').each(function(idx, $row) {
+                        $('tr.row_selected', table).each(function(idx, $row) {
                             row = table.fnGetData($row);
                             records_id.push(row[0]);
                         });
@@ -295,9 +305,19 @@ wb.viz.table = function() {
                             }
                             return false;
                         });
+                        var selected_names = [];
+                        if (title !== 'document table') {
+                          selected_names = records_id.map(function(id) {
+                            return wb.store.entity[id];
+                          });
+                        }
                         activitylog({
-                            operation: 'filter',
-                            data: JSON.stringify({'window_type': 'table', 'filter_by': records_id})
+                            operation: 'filtered in',
+                            item: title,
+                            data: {
+                              'id': records_id.join(','),
+                              'name': selected_names.join(',')
+                            }
                         });
 
                     }
@@ -391,6 +411,12 @@ wb.viz.table = function() {
     exports.data = function(_) {
         if (!arguments.length) return data;
         data = _;
+        return exports;
+    };
+
+    exports.title = function(_) {
+        if (!arguments.length) return title;
+        title = _;
         return exports;
     };
 

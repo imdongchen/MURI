@@ -355,11 +355,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
 
           $('.network-editor').data('link', null);
           this.selected_link = null;
-
-          activitylog({
-              operation: 'create relationship',
-              data: JSON.stringify({'window_type': 'network', 'id': d.id})
-          });
       });
 
     },
@@ -525,19 +520,29 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 $.publish('/data/filter', _this.element.attr("id"))
 
                 activitylog({
-                    operation: 'defilter',
-                    data: JSON.stringify({'window_type': 'network'})
-                })
+                    operation: 'removed filter in',
+                    item: 'network',
+                });
             }
             else {
                 var nodes_id = [];
                 d3.selectAll('.node.selected').each(function(d) {
                     nodes_id.push(d.id)
                 })
+                var selected_name = nodes_id.map(function(id) {
+                  id = id.split('-');
+                  if (id[0] === 'entity') {
+                    return wb.store.entity[id[1]];
+                  }
+                });
                 activitylog({
-                    operation: 'filter',
-                    data: JSON.stringify({'window_type': 'network', 'filter_by': nodes_id})
-                })
+                    operation: 'filtered in',
+                    item: 'network',
+                    data: {
+                      'id': nodes_id.join(','),
+                      'name': selected_name.join(',')
+                    }
+                });
             }
 
 //            vis.selectAll("circle").attr("fill", function(d) {
@@ -565,11 +570,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         function dragstarted(d) {
             d3.event.sourceEvent.stopPropagation();
             d3.select(this).classed("dragging", true);
-
-            activitylog({
-                operation: 'relayout network',
-                data: JSON.stringify({'window_type': 'network'})
-            })
         }
 
         function dragged(d) {

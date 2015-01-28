@@ -249,9 +249,9 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         if (selectedFeas.length == 0) {
             this.options.dimension.filterAll();
             activitylog({
-                operation: 'defilter',
-                data: JSON.stringify({'window_type': 'map'})
-            })
+                operation: 'removed filter in',
+                item: 'map',
+            });
         } else {
             this.options.dimension.filter(function(d) {
                 if (d) {
@@ -259,10 +259,18 @@ $.widget("viz.vizmap", $.viz.vizbase, {
                 }
                 return false;
             });
-            activitylog({
-                operation: 'filter',
-                data: JSON.stringify({'window_type': 'map', 'filter_by': selectedFeas})
+            var selected_names = selectedFeas.map(function(id) {
+              return wb.store.entity[id].primary.name;
             })
+
+            activitylog({
+                operation: 'filtered in',
+                item: 'map',
+                data: {
+                  'id': selectedFeas.join(','),
+                  'name': selected_names.join(',')
+                }
+            });
         }
         $.publish('/data/filter', this.element.attr("id"))
     },

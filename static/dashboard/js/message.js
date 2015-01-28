@@ -74,7 +74,7 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
       .text(msg.content);
 
     if (msg.sender === wb.USER) {
-      row.css('background-color', '#ccc');
+      row.css('background-color', '#eee');
     }
   }
 })

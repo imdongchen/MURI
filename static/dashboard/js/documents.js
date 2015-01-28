@@ -97,6 +97,10 @@ $.widget('viz.vizdocuments', $.viz.vizbase, {
   update: function() {
   },
 
+  reload: function() {
+
+  },
+
   _setupAnnotator: function() {
     var ele = this.element.find(".doc-view-container");
     ele.annotator();

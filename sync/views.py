@@ -1,5 +1,5 @@
 # Create your views here.
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.contrib.auth.models import User
 
 from django.contrib.auth.decorators import login_required
@@ -13,17 +13,24 @@ from models import Message
 ishout_client = iShoutClient()
 
 
-def annotation_create(data, user):
+def live_group(case, group):
+    """return the live group"""
+    return case.name + '-' + group.name
+
+def annotation_create(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('annotation.create', data)
 
 
-def annotation_update(data, user):
+def annotation_update(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('annotation.update', data)
 
 
-def annotation_delete(data, user):
+def annotation_delete(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('annotation.delete', data)
 
@@ -48,17 +55,20 @@ def entity_delete(request):
     return HttpResponse(res)
 
 
-def relationship_create(data, user):
+def relationship_create(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('relationship.create', data)
 
 
-def relationship_update(data, user):
+def relationship_update(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('relationship.update', data)
 
 
-def relationship_delete(data, user):
+def relationship_delete(data, case, group, user):
+    group_name = live_group(case, group)
     data['user']= user.id
     ishout_client.broadcast('relationship.delete', data)
 
@@ -97,9 +107,13 @@ def get_userlist(request):
 
 def send_userlist():
     room_status = ishout_client.get_room_status('main') # todo: avoid hardcoded room name
-    print room_status
     users = User.objects.filter(id__in=room_status['members'])
     user_info = [user.id for user in users]
 
     ishout_client.broadcast('userlist', user_info)
+
+
+def broadcast_activity(data, case, group, user):
+    group_name = live_group(case, group)
+    ishsout_client.broadcast_group(group, 'activitylog', data)
 

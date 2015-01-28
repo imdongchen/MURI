@@ -4,9 +4,15 @@
  */
 function activitylog(oper) {
     var log = {
-        operation: oper.operation,
-        data: oper.data
-    }
+      group: wb.profile.group.id,
+      'case': wb.profile.case,
+      operation: '',
+      item: '',
+      data: null,
+      'public': true
+    };
+    $.extend(log, oper);
+
     $.post('logs/activitylog', log, function(error, result) {
 
     })

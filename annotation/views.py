@@ -1,16 +1,17 @@
 # Create your views here.
-from dashboard.models import *
-from models import Annotation
 import json
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.contrib.gis.geos import fromstr
 from django.http import QueryDict
-from activitylog.views import serverlog
 
+from activitylog.views import serverlog
+from dashboard.models import *
+from models import Annotation
 import sync
 
-def get_or_create_entity(json):
+def get_or_create_entity(json, case, group, user):
     created = False
     id = json.get('id', 0)
     entity_type = json.get('entity_type', '')
@@ -21,10 +22,10 @@ def get_or_create_entity(json):
         if len(entity) > 0:
             obj = entity[0]
         else:
-            obj = create_entity(json)
+            obj = create_entity(json, user, case, group)
             created = True
     else:
-        obj = create_entity(json)
+        obj = create_entity(json, user, case, group)
         created = True
 
     fields = obj._meta.get_all_field_names()
@@ -34,6 +35,7 @@ def get_or_create_entity(json):
         obj.attributes.clear()
 
     obj.name = json['name']
+    obj.last_edited_by = user
     for attr in attrs:
         if attr in fields:
             # set field value
@@ -51,24 +53,39 @@ def get_or_create_entity(json):
             obj.attributes.add(attribute)
 
     obj.save()
+
+    operation = 'created' if created else 'updated'
+    serverlog({
+        'user': user,
+        'operation': operation,
+        'item': 'entity',
+        'data': {
+            'id': obj.id,
+            'name': obj.name
+        },
+        'public': True,
+        'case': case,
+        'group': group
+    })
+
     return obj, created
 
 
-def create_entity(json):
+def create_entity(json, user, case, group):
     name = json['name']
 
     if name:
         entity_type = json['entity_type']
         if entity_type == 'person':
-            obj, created = Person.objects.get_or_create(name=name)
+            obj, created = Person.objects.get_or_create(name=name, created_by=user, case=case, group=group)
         if entity_type == 'location':
-            obj, created = Location.objects.get_or_create(name=name)
+            obj, created = Location.objects.get_or_create(name=name, created_by=user, case=case, group=group)
         if entity_type == 'event':
-            obj, created = Event.objects.get_or_create(name=name)
+            obj, created = Event.objects.get_or_create(name=name, created_by=user, case=case, group=group)
         if entity_type == 'resource':
-            obj, created = Resource.objects.get_or_create(name=name)
+            obj, created = Resource.objects.get_or_create(name=name, created_by=user, case=case, group=group)
         if entity_type == 'organization':
-            obj, created = Organization.objects.get_or_create(name=name)
+            obj, created = Organization.objects.get_or_create(name=name, created_by=user, case=case, group=group)
 
         return obj
 
@@ -76,44 +93,64 @@ def create_entity(json):
         return None
 
 
+@login_required
 def annotation(request, id=0):
     res = {}
     if request.method == 'POST':
         # create new annotation
         data = json.loads(request.body)
-        entity, created = get_or_create_entity(data['tag'])
         ranges = data.get('ranges', '')
-        if not ranges:
+        quote  = data.get('quote', '')
+        case   = data.get('case', '')
+        group   = data.get('group', '')
+        if not ranges or not case or not group:
             return HttpResponseBadRequest()
         try:
             entry = DataEntry.objects.get(id=data['anchor'])
+            group = Group.objects.get(id=group)
+            case = Case.objects.get(id=case)
         except DataEntry.DoesNotExist:
             return HttpResponseNotFound()
         else:
-            user = None
-            if request.user.is_authenticated():
-                user = request.user
+            entity, created = get_or_create_entity(data['tag'], case, group, request.user)
             annotation = Annotation.objects.create(startOffset=ranges[0]['startOffset'],
                 endOffset=ranges[0]['endOffset'],
+                quote=quote,
                 dataentry=entry,
                 entity = entity,
                 start=ranges[0]['start'],
                 end=ranges[0]['end'],
-                created_by=user
+                created_by=request.user,
+                group=group,
+                case=case
             )
-            relationship = Relationship.objects.create(
+            relationship, created = Relationship.objects.get_or_create(
                 target=entity,
                 dataentry=entry,
                 date=entry.date,
                 relation='contain',
-                created_by=user
+                created_by=request.user,
+                group=group,
+                case=case
             )
             res['annotation'] = annotation.serialize()
             res['relationship'] = relationship.get_attr()
             res['entity'] = entity.get_attr()
 
+            # save to activity log
+            serverlog({
+                'user': request.user,
+                'operation': 'created',
+                'item': 'annotation',
+                'data': {
+                    'id': annotation.id,
+                    'name': annotation.quote
+                },
+                'group': group,
+                'case': case
+            })
             # sync annotation
-            sync.views.annotation_create(res, request.user)
+            sync.views.annotation_create(res, case, group, request.user)
 
             return HttpResponse(json.dumps(res), content_type='application/json')
 
@@ -127,10 +164,12 @@ def annotation(request, id=0):
                 return HttpResponseNotFound()
             else:
                 data = json.loads(request.body)
-                tag = data['tag']
-                entity, created = get_or_create_entity(data['tag'])
                 entry = annotation.dataentry
                 old_entity = annotation.entity
+                case = Case.objects.get(id=data['case'])
+                group = Group.objects.get(id=data['group'])
+
+                entity, created = get_or_create_entity(data['tag'], case, group, request.user)
 
                 if old_entity.id != entity.id:
                     # entity changed
@@ -138,6 +177,8 @@ def annotation(request, id=0):
                         target=annotation.entity,
                         dataentry=annotation.dataentry,
                         relation='contain',
+                        case=case,
+                        group=group
                     )
                     relationship.target = entity
                     annotation.entity = entity
@@ -148,7 +189,19 @@ def annotation(request, id=0):
                 res['annotation'] = annotation.serialize()
                 res['entity'] = entity.get_attr()
 
-                sync.views.annotation_update(res, request.user)
+                serverlog({
+                    'user': request.user,
+                    'operation': 'updated',
+                    'item': 'annotation',
+                    'data': {
+                        'id': annotation.id,
+                        'name': annotation.quote
+                    },
+                    'group': group,
+                    'case': case
+                })
+                sync.views.annotation_update(res, case, group, request.user)
+
                 return HttpResponse(json.dumps(res), content_type='application/json')
         else:
             print 'Error: no annotation id received'
@@ -162,14 +215,29 @@ def annotation(request, id=0):
                 print 'Error: annotation not found: ', id
                 return HttpResponseNotFound()
             else:
-                relationship = Relationship.objects.get(target=annotation.entity, dataentry=annotation.dataentry, relation='contain')
+                group = annotation.group
+                case = annotation.case
+                relationship = Relationship.objects.filter(target=annotation.entity, dataentry=annotation.dataentry, relation='contain', group=group, case=case)
                 res['entity'] = annotation.entity.get_attr()
-                res['relationship'] = relationship.get_attr()
+                res['relationship'] = relationship[0].get_attr()
                 res['annotation'] = annotation.serialize()
                 relationship.delete()
                 annotation.delete()
 
-                sync.views.annotation_delete(res, request.user)
+                serverlog({
+                    'user': request.user,
+                    'operation': 'deleted',
+                    'item': 'annotation',
+                    'data': {
+                        'id': annotation.id,
+                        'name': annotation.quote
+                    },
+                    'case': case,
+                    'group': group
+                })
+
+                sync.views.annotation_delete(res, case, group, request.user)
+
                 return HttpResponse(json.dumps(res), content_type='application/json')
         else:
             return HttpResponseBadRequest()
@@ -180,23 +248,31 @@ def annotation(request, id=0):
 
 def annotations(request):
     if request.method == 'GET':
+        case = request.GET.get('case')
+        group = request.GET.get('group')
         annotations = []
         # if request.user.is_authenticated():
         #     anns = Annotation.objects.filter(created_by=request.user)
         # else:
-        anns = Annotation.objects.all() # TODO: limit annotations to corresponding datasets
+        anns = Annotation.objects.filter(case__id=case, group__id=group)
 
         for ann in anns:
             annotations.append(ann.serialize())
         return HttpResponse(json.dumps(annotations), content_type='application/json')
+
     elif request.method == 'POST':
         res = {'annotations': [], 'entity': {}, 'relationships': []};
         data = json.loads(request.body)
 
+        case = Case.objects.get(id=data['case'])
+        group = Group.objects.get(id=data['group'])
         # all annotations are with the same entity
-        entity, created = get_or_create_entity(data[0]['tag'])
-        for ann in data:
+        print data['annotations']
+        entity, created = get_or_create_entity(data['annotations'][0]['tag'], case, group, request.user)
+        quote = ''
+        for ann in data['annotations']:
             ranges = ann.get('ranges', '')
+            quote = ann.get('quote', '')
             if not ranges:
                 return HttpResponseBadRequest()
             try:
@@ -204,30 +280,44 @@ def annotations(request):
             except DataEntry.DoesNotExist:
                 return HttpResponseNotFound()
             else:
-                user = None
-                if request.user.is_authenticated():
-                    user = request.user
-                annotation = Annotation.objects.create(startOffset=ranges[0]['startOffset'],
+                annotation = Annotation.objects.create(
+                    startOffset=ranges[0]['startOffset'],
                     endOffset=ranges[0]['endOffset'],
+                    quote=quote,
                     dataentry=entry,
                     entity = entity,
                     start=ranges[0]['start'],
                     end=ranges[0]['end'],
-                    created_by=user
+                    created_by=request.user,
+                    case=case,
+                    group=group
                 )
-                relationship = Relationship.objects.create(
+                relationship, created = Relationship.objects.get_or_create(
                     target=entity,
                     dataentry=entry,
                     date=entry.date,
                     relation='contain',
-                    created_by=user
+                    created_by=request.user,
+                    case=case,
+                    group=group
                 )
                 res['annotations'].append(annotation.serialize())
                 res['relationships'].append(relationship.get_attr())
         res['entity'] = entity.get_attr()
 
+        serverlog({
+            'user': request.user,
+            'operation': 'created',
+            'item': str(len(data)) + 'annotations',
+            'data': {
+                'id': ','.join([str(ann['id']) for ann in res['annotations']]),
+                'name': quote
+            },
+            'case': case,
+            'group': group
+        })
         # sync annotation
-        sync.views.annotation_create(res, request.user)
+        sync.views.annotation_create(res, case, group, request.user)
 
         return HttpResponse(json.dumps(res), content_type='application/json')
 
@@ -235,16 +325,18 @@ def annotations(request):
         # update annotations
         res = {'annotations': [], 'entity': {}, 'relationships': []};
         data = json.loads(request.body)
+        case = Case.objects.get(id=data['case'])
+        group = Group.objects.get(id=data['group'])
         entity = None
-        for ann in data:
+        for ann in data['annotations']:
             try:
-                annotation = Annotation.objects.get(id=ann['id'])
+                annotation = Annotation.objects.get(id=ann['id'], case=case, group=group)
             except Annotation.DoesNotExist:
                 print 'Error: annotation not found: ', ann
                 return HttpResponseNotFound()
             else:
                 tag = ann['tag']
-                entity, created = get_or_create_entity(tag)
+                entity, created = get_or_create_entity(tag, case, group, request.user)
                 entry = annotation.dataentry
                 old_entity = annotation.entity
 
@@ -254,6 +346,8 @@ def annotations(request):
                         target=annotation.entity,
                         dataentry=annotation.dataentry,
                         relation='contain',
+                        case=case,
+                        group=group
                     )
                     for relationship in relationships:
                         relationship.target = entity
@@ -265,29 +359,61 @@ def annotations(request):
                     res['annotations'].append(annotation.serialize())
 
         res['entity'] = entity.get_attr()
-        sync.views.annotation_update(res, request.user)
+
+        serverlog({
+            'user': request.user,
+            'operation': 'updated',
+            'item': str(len(data)) + 'annotations',
+            'data': {
+                'id': ','.join([str(ann['id']) for ann in res['annotations']]),
+                'name': data['annotations'][0]['quote']
+            },
+            'group': group,
+            'case': case
+        })
+
+        sync.views.annotation_update(res, case, group, request.user)
+
         return HttpResponse(json.dumps(res), content_type='application/json')
 
     elif request.method == 'DELETE':
         res = {'annotations': [], 'entity': {}, 'relationships': []};
         data = json.loads(request.body)
-        for ann in data:
+        print data
+        case = Case.objects.get(id=data['case'])
+        group = Group.objects.get(id=data['group'])
+        for ann in data['annotations']:
             try:
-                annotation = Annotation.objects.get(id=ann['id'])
+                annotation = Annotation.objects.get(id=ann['id'], case=case, group=group)
             except Annotation.DoesNotExist:
                 print 'Error: annotation not found: ', ann
             else:
                 res['entity'] = annotation.entity.get_attr()
-                relationships = Relationship.objects.filter(target=annotation.entity, dataentry=annotation.dataentry, relation='contain')
+                relationships = Relationship.objects.filter(target=annotation.entity, dataentry=annotation.dataentry, relation='contain', case=case, group=group)
                 for rel in relationships:
                     res['relationships'].append(rel.get_attr())
                     rel.delete()
                 res['annotations'].append(annotation.serialize())
                 annotation.delete()
-        sync.views.annotation_delete(res, request.user)
+
+        serverlog({
+            'user': request.user,
+            'operation': 'deleted',
+            'item': str(len(data)) + 'annotations',
+            'data': {
+                'id': ','.join([str(ann['id']) for ann in res['annotations']]),
+                'name': data['annotations'][0]['quote']
+            },
+            'case': case,
+            'group': group
+        })
+
+        sync.views.annotation_delete(res, case, group, request.user)
+
         return HttpResponse(json.dumps(res), content_type='application/json')
 
 
+# deprecated
 def get_or_create_annotation(request):
     if request.method == 'GET':
         annotations = []
@@ -344,7 +470,7 @@ def get_or_create_annotation(request):
         return HttpResponse(json.dumps(res), content_type='application/json')
 
 
-
+# deprecated
 def create_annotation(request, data):
     ranges = data.get('ranges', [])
     anchor = data.get('anchor', '0')
@@ -374,6 +500,8 @@ def create_annotation(request, data):
         )
         return annotation
 
+
+# deprecated
 def save_annotation(request, annotation, data):
     res = {'annotation': {}, 'entity': {}, 'relationship': {}}
     tag  = data['tag']
@@ -415,7 +543,7 @@ def save_annotation(request, annotation, data):
         annotation.entity = obj
         res['entity'] = obj.get_attr()
         # add to relationship
-        rel, created = Relationship.objects.get_or_create(source=None, target=obj, dataentry=annotation.dataentry)
+        rel, created = Relationship.objects.get_or_create(source=None, target=obj, dataentry=annotation.dataentry, case=case, group=group)
         if created:
             rel.relation = 'contain'
             rel.date = annotation.dataentry.date
@@ -430,6 +558,7 @@ def save_annotation(request, annotation, data):
     return res
 
 
+# deprecated
 def process_annotation(request, id):
     res = {}
     if request.method == 'DELETE':
@@ -456,6 +585,7 @@ def process_annotation(request, id):
         return HttpResponse(json.dumps(res), content_type='application/json')
 
 
+# deprecated
 def tag(request):
     res = {}
     # Edit tag semantics

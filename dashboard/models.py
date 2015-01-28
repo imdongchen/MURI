@@ -40,6 +40,16 @@ def get_model_attr(instance):
     return attr
 
 
+class Case(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    groups = models.ManyToManyField(Group, null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+
 class Attribute(models.Model):
     attr = models.CharField(max_length=255)
     val  = models.CharField(max_length=255)
@@ -51,12 +61,16 @@ class Attribute(models.Model):
         return self.attr + ' : ' + self.val
 
 
+
 class Entity(models.Model):
     name          = models.CharField(max_length=1000, null=True, blank=True)
     entity_type    = models.CharField(max_length=50, null=True, blank=True)
     attributes	  = models.ManyToManyField(Attribute, blank=True, null=True)
-    created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
+    created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_entities')
     created_at     = models.DateTimeField(default=datetime.now, null=True, blank=True, verbose_name='created at')
+    last_edited_by = models.ForeignKey(User, null=True, blank=True, related_name='edited_entities')
+    group         = models.ForeignKey(Group)
+    case          = models.ForeignKey(Case)
 
     objects = InheritanceManager()
 
@@ -81,15 +95,6 @@ class Entity(models.Model):
         return get_model_attr(self)
 
 
-class Case(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.TextField(null=True, blank=True)
-    groups = models.ManyToManyField(Group, null=True, blank=True)
-
-    def __unicode__(self):
-        return self.name
-
-
 class Dataset(models.Model):
     name = models.CharField(max_length=500)
     case = models.ForeignKey(Case)
@@ -107,6 +112,8 @@ class Dataset(models.Model):
 
     def __unicode__(self):
         return self.name
+
+
 
 class DataEntry(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
@@ -172,7 +179,6 @@ class Organization(Entity):
 
 class Event(Entity):
     category     = models.CharField(max_length=100, null=True, blank=True, verbose_name='type')
-    nationality  = models.CharField(max_length=50, null=True, blank=True)
     date         = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -207,10 +213,14 @@ class Relationship(models.Model):
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
     attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
     created_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
-    created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
+    created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_relationships')
+    last_edited_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='edited by', related_name='edited_relationships')
+    group      = models.ForeignKey(Group)
+    case        = models.ForeignKey(Case)
 
     def __unicode__(self):
         return self.source.name + '-' + self.target.name
 
     def get_attr(self):
         return get_model_attr(self)
+

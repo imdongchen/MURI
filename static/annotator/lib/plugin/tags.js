@@ -139,11 +139,13 @@ Annotator.Plugin.Tags = (function(_super) {
             load: this.updateAttrField,
             submit: this.setTagAttributes
         });
-        this.applyAllField = this.annotator.editor.addField({
-            type: 'checkbox',
-            label: Annotator._t('Apply to all data'),
-            submit: this.applyToAll
-        });
+        // there is problem with apply to all function
+        // do not add it for the moment
+        // this.applyAllField = this.annotator.editor.addField({
+        //     type: 'checkbox',
+        //     label: Annotator._t('Apply to all data'),
+        //     submit: this.applyToAll
+        // });
 
         this.subscribe('/tag/type/change', function(value) {
             if (value === 'location') {
@@ -216,7 +218,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 value: entity.primary.name
             });
         }
-        optgroups = wb.ENTITY_ENUM.map(function(entity) {
+        optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
             return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
         });
         this.tagnameselect = $(field).find('.tag_name')
@@ -241,7 +243,7 @@ Annotator.Plugin.Tags = (function(_super) {
                     value: entity.primary.name
                 });
             }
-            $(field).find('.tag_name').autocomplete('option', 'source', opts);
+            // $(field).find('.tag_name').autocomplete('option', 'source', opts);
         });
     };
 
@@ -306,7 +308,7 @@ Annotator.Plugin.Tags = (function(_super) {
         if (annotation.tag && annotation.tag.id) {
             var entity = wb.store.entity[annotation.tag.id];
             for (var attr in entity.primary) {
-                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'created_at' && attr !== 'created_by') { // skip these two attributes
+                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'created_at' && attr !== 'created_by' && attr !== 'case' && attr !== 'group' && attr !== 'last_edited_by') { // skip these two attributes
                     this.attribute_widget.add(attr, entity.primary[attr], 'primary');
                 }
             }
@@ -362,7 +364,7 @@ Annotator.Plugin.Tags = (function(_super) {
             var primary = entity.primary;
             table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
             for (var attr in primary) {
-                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && attr !== 'created_at' && primary[attr]) {
+                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && attr !== 'created_at' && attr !== 'case' && attr !== 'group' && attr !== 'created_by' && attr !== 'last_edited_by' && primary[attr]) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
                 }
             }
@@ -373,7 +375,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 }
             }
             if (annotation.created_by) {
-              table += '<tr><th>Created by: </th><td>' + wb.users[annotation.created_by].name + '</td></tr>';
+              table += '<tr><th>Created by: </th><td>' + wb.profile.users[annotation.created_by].name + '</td></tr>';
             }
             if (annotation.created_at) {
               table += '<tr><th>Created at: </th><td>' + annotation.created_at + '</td></tr>';

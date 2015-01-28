@@ -257,7 +257,7 @@ table.display tr.even.gradeU {
 
 
 tr.odd {
-	background-color: #E2E4FF;
+	background-color: #eee;
 }
 
 tr.even {
@@ -509,4 +509,5 @@ tr.odd td:first:hover {
 
 .dataTable td:first-child {
     cursor: pointer;
+    vertical-align: top;
 }

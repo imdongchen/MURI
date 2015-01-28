@@ -24,7 +24,7 @@
       <ul class="nav navbar-nav viz">
         <li class="case dropdown">
             <a id="case_btn" href="#" class="dropdown-toggle" data-toggle="dropdown">Cases<span class="caret"></span></a>
-            <ul id="case-list" class="dropdown-menu">
+            <ul class="case-list dropdown-menu">
                 {% for case in cases %}
                 <li>
                   <label>
@@ -36,16 +36,13 @@
         </li>
         <li class='dataset dropdown'>
             <a id="datasource_btn" href="#" class="dropdown-toggle" data-toggle="dropdown">Dataset<span class="caret"></span></a>
-            <ul id="dataset-list" class="dropdown-menu">
+            <ul class="dataset-list dropdown-menu">
             </ul>
         </li>
+        <li><a class="viz-opts" id="dataentry_table-btn" href="#">Data Entry</a></li>
         <li>
-          <a href="#" class="viz-opts" id="documents-btn">Documents</a>
-        </li>
-        <li>
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Table<span class="caret"></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Table<span class="caret"></a>
             <ul class="dropdown-menu">
-                <li><a class="viz-opts" id="dataentry_table-btn" href="#">Data Entry</a></li>
                 <li><a class="viz-opts" id="person_table-btn" href="#">People</a></li>
                 <li><a class="viz-opts" id="organization_table-btn" href="#">Organizations</a></li>
                 <li><a class="viz-opts" id="resource_table-btn" href="#">Resources</a></li>
@@ -58,6 +55,7 @@
         <li><a class="viz-opts" id="network-btn" href="#">Network</a></li>
         <li><a class="viz-opts" id="notepad-btn" href="#">Notepad</a></li>
         <li><a class="viz-opts" id="message-btn" href="#">Message</a></li>
+        <li><a class="viz-opts" id="history-btn" href="#">History</a></li>
       </ul>
       <form class="navbar-form navbar-left" role="search">
         <div class="form-group">

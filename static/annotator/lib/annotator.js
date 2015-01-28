@@ -240,16 +240,21 @@ Annotator = (function(_super) {
         annotation.quote = [];
         annotation.ranges = [];
         annotation.highlights = [];
-        // Originally the code catches the xpath start and end; now I change it to anchor to message id.
+        // Originally the code catches the xpath start and end; now I change it to anchor to dataentry id.
         // Therefore I now record message id and startOffset and endOffset
+        // the id is in each table row
         if (this.selectedRanges && this.selectedRanges.length > 0) {
-            annotation.anchor = annotation.anchor || $(this.selectedRanges[0].commonAncestor).parent().data("id");
         }
 
         for (_j = 0, _len1 = normedRanges.length; _j < _len1; _j++) {
             normed = normedRanges[_j];
             annotation.quote.push($.trim(normed.text()));
-            annotation.ranges.push(normed.serialize(this.wrapper[0], '.annotator-hl'));
+
+            var relativeRoot = $(normed.commonAncestor).parents('tr.odd, tr.even');
+            annotation.anchor = annotation.anchor || relativeRoot.data("id");
+            // Calculate xpath from each table row
+            // annotation.ranges.push(normed.serialize(this.wrapper[0], '.annotator-hl'));
+            annotation.ranges.push(normed.serialize(relativeRoot[0], '.annotator-hl'));
             var cssClass = 'annotator-hl ';
             if (annotation.tag) {
                 cssClass += 'annotator-hl-' + annotation.tag.entity_type;

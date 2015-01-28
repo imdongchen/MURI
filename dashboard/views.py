@@ -13,6 +13,7 @@ from django.contrib.auth.models import Group, User
 from models import Attribute, Entity, Case, Dataset, DataEntry, Location, Person, Organization, Event, Resource, Relationship
 
 import sync
+from activitylog.views import serverlog
 
 
 def get_cases(request):
@@ -27,6 +28,42 @@ def get_cases(request):
             'description': case.description
         })
     return HttpResponse(json.dumps(res), content_type='application/json')
+
+
+
+def get_case_info(request):
+    res = {}
+    id = request.GET.get('case')
+    if not id:
+        return HttpResponseBadRequest()
+
+    case = Case.objects.get(id=int(id))
+    datasets = case.dataset_set.all()
+    dataset_dict = {}
+    for ds in datasets:
+        dataset_dict[ds.id] = ds.get_attr()
+
+    # identify the group the user is in
+    group = case.groups.all() & request.user.groups.all()
+    group = group[0] # there is actually only one group per case per user
+
+    group_dict = {'id': group.id, 'name': group.name}
+
+    # get users in the group
+    users = group.user_set.all()
+    user_dict = {}
+    for u in users:
+        user_dict[u.id] = {
+            'id': u.id,
+            'name': u.username
+        }
+
+
+    res = {'case': case.id, 'datasets': dataset_dict, 'group': group_dict, 'users': user_dict}
+
+    return HttpResponse(json.dumps(res), content_type='application/json')
+
+
 
 @login_required
 def upload_data(request):
@@ -74,17 +111,6 @@ def index(request):
     })
 
 
-def dataset(request):
-    id = request.GET.get('case')
-    if not id:
-        return HttpResponseBadRequest()
-    case = Case.objects.get(id=id)
-    datasets = case.dataset_set.all()
-    dataset_dict = {}
-    for ds in datasets:
-        dataset_dict[ds.id] = ds.get_attr()
-    return HttpResponse(json.dumps(dataset_dict), content_type='application/json')
-
 
 def data(request):
     """
@@ -121,7 +147,10 @@ def data(request):
     ele = res['ele']; dataset_dict = res['dataset_dict']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
     ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource']
 
+    print request.POST
     dataset_id = request.POST.getlist('datasets[]')
+    group = Group.objects.get(id=int(request.POST['group']))
+    case = Case.objects.get(id=int(request.POST['case']))
 
     if dataset_id and len(dataset_id):
         # step 1: get requested datasets
@@ -139,76 +168,54 @@ def data(request):
                 'date': dataentry_dict[de.id]['date']
             })
 
-            # step 3.1: get annotations in those data entries
-            annotations = []
-            if request.user.is_authenticated():
-                # if the user is logged in, get only his annotations; TODO: get annotations of the group the user belongs to
-                # annotations = de.annotation_set.filter(created_by=request.user)
-                annotations = de.annotation_set.all()
-            else:
-                # if the user is not logged, get all annotations
-                annotations = de.annotation_set.all()
-            # step 3.2: get entities created in those annotations
-            for ann in annotations:
-                if not ann.entity: continue
-                entities = Entity.objects.filter(id=ann.entity.id).select_subclasses()
-                # step 4: for each entry-entity pair, create an 'ele' data record
-                for entity in entities:
-                    # Add to entity list
-                    if entity.id not in entity_dict:
-                        entity_dict[entity.id] = entity.get_attr()
-                    # 2nd type of ele, consisting of data entry and one entity
-                    # indicating that the entity is created within that entry.
-                    # search relationship table for relationship id
-                    # TODO: the search strategy is quite redundant, could be optimized
-                    dataentry_entity_rels = Relationship.objects.filter(source=None, target=entity, dataentry=de)
-                    for d_e_r in dataentry_entity_rels:
-                        relationship_dict[d_e_r.id] = d_e_r.get_attr()
-                        fact = {}
-                        fact['dataentry'] = de.id
-                        fact['relationship'] = d_e_r.id
-                        fact['date'] = de.date.strftime('%m/%d/%Y')
-                        for ENTITY_TYPE in ENTITY_ENUM:
-                            if ENTITY_TYPE == entity.entity_type:
-                                fact[ENTITY_TYPE] = entity.id
-                            else:
-                                fact[ENTITY_TYPE] = 0
-                        ele.append(fact)
-        # step 5: create the 3rd type of ele
-        # step 5.1: get all requested entity ids
-        entities = entity_dict.keys()
-        # step 5.2: get all relationships involving those entities
-        relationships = Relationship.objects.filter(Q(source__id__in=entities) & Q(target__id__in=entities))
-        for rel in relationships:
-            # add to relationship list
-            relationship_dict[rel.id] = rel.get_attr()
+        # step 3: get entities
+        entities = Entity.objects.filter(case=case, group=group)
+        for entity in entities:
+            entity_dict[entity.id] = entity.get_attr()
 
-            source_type = rel.source.entity_type
-            target_type = rel.target.entity_type
-            fact = {}
-            fact['relationship'] = rel.id
-            fact['date'] = rel.date.strftime('%m/%d/%Y') if rel.date else ''
-            fact['dataentry'] = rel.dataentry.id if rel.dataentry else 0
-            for ENTITY_TYPE in ENTITY_ENUM:
-                if source_type == ENTITY_TYPE:
-                    fact[ENTITY_TYPE] = rel.source.id
-                elif target_type == ENTITY_TYPE:
-                    fact[ENTITY_TYPE] = rel.target.id
-                else:
-                    fact[ENTITY_TYPE] = 0
-            ele.append(fact)
-            if source_type == target_type:
-                # if the source and target refers to the same entity type
-                # the algorithm above overwrites source entity
-                # hence we need to add another fact about the source entity, with other information identical to the target entity
-                fact2 = copy.deepcopy(fact)
-                fact2[target_type] = rel.target.id
-                ele.append(fact2)
+        # step 4: get relationships
+        relationships = Relationship.objects.filter(case=case, group=group)
+        for rel in relationships:
+            rel_info = rel.get_attr()
+            relationship_dict[rel.id] = rel_info
+
+            # step 5: construct another two types of entity-relationship-entity
+            if rel.source:
+                # 2nd type of ele, consisting of entity and entity
+                ele.append({
+                    'dataentry': rel_info[primary].get('dataentry', None),
+                    rel.source.entity_type: rel_info['primary']['source'],
+                    rel.target.entity_type: rel_info['primary']['target'],
+                    'relationship': rel_info['primary']['id'],
+                    'date': rel_info['primary'].get('date', None)
+                })
+                if rel.source.entity_type == rel.target.entity_type:
+                    # if the two entities are of the same type
+                    # then in the previous statement,
+                    # target entity overwrites source entity
+                    # add it back here
+                    # thus, a relationship between two entities of the same entity type
+                    # will generate two ele
+                    ele.append({
+                        'dataentry': rel_info[primary].get('dataentry', None),
+                        rel.source.entity_type: rel_info['primary']['source'],
+                        'relationship': rel_info['primary']['id'],
+                        'date': rel_info['primary'].get('date', None)
+                    })
+            else:
+                # 3rd type of ele, consisting of datanetry and entity
+                ele.append({
+                    'dataentry': rel_info['primary']['dataentry'],
+                    rel.target.entity_type: rel_info['primary']['target'],
+                    'relationship': rel_info['primary']['id'],
+                    'date': rel_info['primary'].get('date', None)
+                })
 
     return HttpResponse(json.dumps(res), content_type='application/json')
 
 
 
+@login_required
 def relationship(request):
     """
     Process post request for creating new relationships
@@ -220,6 +227,8 @@ def relationship(request):
         target = request.POST.get('target', '')
         rel    = request.POST.get('rel', '')
         desc   = request.POST.get('desc', '')
+        case   = request.POST.get('case', '')
+        group  = request.POST.get('group', '')
 
         if source == '' or target == '':
             return
@@ -234,19 +243,36 @@ def relationship(request):
         elif target[0] == 'entity':
             target = Entity.objects.get(id=int(target[1]))
 
-        user = None
-        if request.user.is_authenticated():
-            user = request.user
-        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel, created_by=user, description=desc)
+        case = Case.objects.get(id=case)
+        group = Case.objects.get(id=group)
+
+        rel, created = Relationship.objects.get_or_create(source=source, target=target, relation=rel, created_by=user, description=desc, case=case, group=group)
         rel.save()
         res['relationship'] = rel.get_attr()
         res['created'] = created;
 
+        operation = ''
         if created:
-            sync.views.relationship_create(res, request.user)
+            operation = 'created'
+            sync.views.relationship_create(res, case, group, request.user)
         else:
-            sync.views.relationship_update(res, request.user)
+            operation = 'updated'
+            sync.views.relationship_update(res, case, gorup, request.user)
 
+        serverlog({
+            'user': request.user,
+            'operation': operation,
+            'item': 'relationship',
+            'data': {
+                'id': rel.id,
+                'name': rel.relation,
+                'target': target.name,
+                'source': source.name
+            },
+            'case': case,
+            'group': group,
+            'public': True
+        })
         return HttpResponse(json.dumps(res), content_type='application/json')
     elif request.method == 'DELETE':
         data = json.loads(request.body)
@@ -258,6 +284,22 @@ def relationship(request):
         # leave it for later
         rel = Relationship.objects.get(id=int(id))
         res['relationship'] = rel.get_attr()
+
+        serverlog({
+            'user': request.user,
+            'operation': 'delete',
+            'item': 'relationship',
+            'data': {
+                'id': rel.id,
+                'name': rel.relation,
+                'target': target.name,
+                'source': source.name
+            },
+            'case': case,
+            'group': group,
+            'public': True
+        })
+
         rel.delete()
 
         sync.views.relationship_delete(res, request.user)

@@ -278,18 +278,20 @@ Range.SerializedRange = (function() {
         var contains, e, length, node, p, range, targetOffset, tn, _i, _j, _len, _len1, _ref, _ref1;
         range = {};
         _ref = ['start', 'end'];
+        var relativeRoot;
+        // find relative root, which is the row of the dataentry
+        $(root).find("tr.even, tr.odd").each(function(i, tr) {
+            if ($(tr).data("id") === anchor) { // the id column
+                relativeRoot = tr;
+                return false;
+            }
+        });
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             p = _ref[_i];
             try {
-                // Find it! "this[p]"(==this.start) is the xpath
-                // I should replace it with jquery to get the element
-//                node = Range.nodeFromXPath(this[p], root);
-                $.makeArray($(root).find("tr")).some(function(tr) {
-                    if ($(tr).data("id") === anchor) { // the id column
-                        node = $(tr).children()[1]; //the content column
-                        return true;
-                    }
-                })
+               // node = Range.nodeFromXPath(this[p], root);
+              // xpath is caculated from relativeRoot
+               node = Range.nodeFromXPath(this[p], relativeRoot);
             } catch (_error) {
                 e = _error;
                 throw new Range.RangeError(p, ("Error while finding " + p + " node: " + this[p] + ": ") + e, e);

@@ -1,20 +1,23 @@
 from django.db import models
 from dashboard.models import DataEntry, Entity
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 import datetime
+from dashboard.models import Case
+
 
 # Create your models here.
 class Annotation(models.Model):
-    # temporary, for annotator library
-    start	= models.CharField(max_length=200)
-    end 	= models.CharField(max_length=200)
-    # end temporary
+    start   = models.CharField(max_length=200)
+    end     = models.CharField(max_length=200)
     startOffset = models.IntegerField()
     endOffset   = models.IntegerField()
+    quote   = models.TextField()
     dataentry   = models.ForeignKey(DataEntry)
-    entity  	= models.ForeignKey(Entity, blank=True, null=True)
+    entity      = models.ForeignKey(Entity, blank=True, null=True)
     created_by  = models.ForeignKey(User, blank=True, null=True)
     created_at  = models.DateTimeField(default=datetime.datetime.now)
+    case    = models.ForeignKey(Case)
+    group   = models.ForeignKey(Group)
 
     def serialize(self):
         ann = {}
@@ -26,6 +29,7 @@ class Annotation(models.Model):
             'endOffset'  : self.endOffset
         }]
         ann['anchor']   = self.dataentry.id
+        ann['quote']   = self.quote
         ann['tag'] = {'id': self.entity.id, 'entity_type': self.entity.entity_type}
         ann['created_at'] = self.created_at.strftime('%m/%d/%Y-%H:%M:%S')
         if self.created_by:

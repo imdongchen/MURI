@@ -31,7 +31,7 @@ Annotator.Plugin.Store = (function(_super) {
             destroy: '/annotation/:id',
             destroyAll: '/annotations',
             search: '/search'
-        }
+        },
     };
 
     function Store(element, options) {
@@ -232,7 +232,7 @@ Annotator.Plugin.Store = (function(_super) {
     };
 
     Store.prototype.loadAnnotations = function() {
-        return this._apiRequest('read', null, this._onLoadAnnotations);
+        return this._apiRequest('read', this.options.annotationData, this._onLoadAnnotations);
     };
 
     Store.prototype._onLoadAnnotations = function(data) {
@@ -309,7 +309,7 @@ Annotator.Plugin.Store = (function(_super) {
             });
             opts.type = 'POST';
         }
-        if (action === "search") {
+        if (action === "search" || action === "read") {
             opts = $.extend(opts, {
                 data: obj
             });
@@ -372,7 +372,8 @@ Annotator.Plugin.Store = (function(_super) {
                 highlights.push(annotation[i].highlights);
                 delete annotation[i].highlights;
             }
-            data = JSON.stringify(annotation);
+            var d = $.extend({annotations: annotation}, this.options.annotationData);
+            data = JSON.stringify(d);
             if (highlights) {
                 for (var i = 0, len = annotation.length; i < len; i++) {
                     annotation[i].highlights = highlights[i];

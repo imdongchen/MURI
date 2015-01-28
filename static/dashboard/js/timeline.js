@@ -230,13 +230,16 @@ wb.viz.timeline = function() {
             div.select("#clip rect").attr("x", null).attr("width", "100%");
             dimension.filterAll();
             activitylog({
-                operation: 'defilter',
-                data: JSON.stringify({'window_type': 'table'})
+                operation: 'removed filter in',
+                item: 'timeline',
             });
         } else {
             activitylog({
-                operation: 'filter',
-                data: JSON.stringify({'window_type': 'table', 'filter_by': brush.extent()})
+                operation: 'filtered in',
+                item: 'timeline',
+                data: {
+                  'name': brush.extent().join(',')  // be consistent with other filter, although it is not name, but time here
+                }
             });
         }
     });
