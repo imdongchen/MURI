@@ -208,7 +208,7 @@ $.subscribe('/user/update', function(e, users) {
   //
   // render current user list on page header
   $('#userlist').empty();
-  for (var i = 0; i < wb.online_users.length; i++) {
+  for (var i = 0; i < wb.profile.online_users.length; i++) {
     var id = wb.profile.online_users[i];
     // do not show current user
     if (id == wb.profile.user) continue;

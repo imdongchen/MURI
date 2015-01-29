@@ -18,7 +18,7 @@ ishout.on('userlist', function(data) {
   // get all users online
   // data structure:
   // {user_id: {'id': user_id, name: username}}
-  $.publish('/userlist', [data])
+  $.publish('/user/update', [data])
 });
 
 ishout.on('entity.create', function(entity) {
@@ -58,7 +58,7 @@ ishout.on('annotation.create', function(data) {
   $.publish('/entity/change', entity);
   $.publish('/relationship/add', [relationships]);
 
-  wb.utility.notify(wb.users[data.user].name + ' creates '
+  wb.utility.notify(wb.profile.users[data.user].name + ' created '
                     + entity.primary.entity_type + ' '
                     + entity.primary.name);
 
@@ -98,7 +98,7 @@ ishout.on('annotation.update', function(data) {
     $.publish('/relationship/change', [relationships]);
   }
 
-  wb.utility.notify(wb.users[data.user].name + ' updates '
+  wb.utility.notify(wb.profile.users[data.user].name + ' updated '
                     + entity.primary.entity_type + ' '
                     + entity.primary.name);
 });
@@ -129,7 +129,7 @@ ishout.on('annotation.delete', function(data) {
 
   $.publish('/relationship/delete', [relationships]);
 
-  wb.utility.notify(wb.users[data.user].name + ' deletes '
+  wb.utility.notify(wb.profile.users[data.user].name + ' deleted '
                     + entity.primary.entity_type + ' '
                     + entity.primary.name);
 });
@@ -143,14 +143,14 @@ ishout.on('relationship.create', function(data) {
 
   if (rel.primary.source) {
     // relationship between two entities
-    wb.utility.notify(wb.users[data.user].name + ' creates relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' created relationship '
                       + rel.primary.relation + ' between '
                       + wb.store.entity[rel.primary.source].primary.name + ' and '
                       + wb.store.entity[rel.primary.target].primary.name                    );
 
   } else {
     // relationship between entity and dataentry
-    wb.utility.notify(wb.users[data.user].name + ' creates relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' created relationship '
                       + rel.primary.relation + ' between dataentry and '
                       + wb.store.entity[rel.primary.target]
                     );
@@ -167,7 +167,7 @@ ishout.on('relationship.update', function(data) {
 
   if (rel.primary.source) {
     // relationship between two entities
-    wb.utility.notify(wb.users[data.user].name + ' updates relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' updated relationship '
                       + rel.primary.relation + ' between '
                       + wb.store.entity[rel.primary.source].primary.name + ' and '
                       + wb.store.entity[rel.primary.target].primary.name
@@ -175,7 +175,7 @@ ishout.on('relationship.update', function(data) {
 
   } else {
     // relationship between entity and dataentry
-    wb.utility.notify(wb.users[data.user].name + ' updates relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' updated relationship '
                       + rel.primary.relation + ' between dataentry and '
                       + wb.store.entity[rel.primary.target]
                     );
@@ -192,7 +192,7 @@ ishout.on('relationship.delete', function(data) {
 
   if (rel.primary.source) {
     // relationship between two entities
-    wb.utility.notify(wb.users[data.user].name + ' deletes relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' deleted relationship '
                       + rel.primary.relation + ' between '
                       + wb.store.entity[rel.primary.source].primary.name + ' and '
                       + wb.store.entity[rel.primary.target].primary.name
@@ -200,7 +200,7 @@ ishout.on('relationship.delete', function(data) {
 
   } else {
     // relationship between entity and dataentry
-    wb.utility.notify(wb.users[data.user].name + ' deletes relationship '
+    wb.utility.notify(wb.profile.users[data.user].name + ' deleted relationship '
                       + rel.primary.relation + ' between dataentry and '
                       + wb.store.entity[rel.primary.target].primary.name
                     );
@@ -221,15 +221,22 @@ ishout.on('activitylog', function(data) {
 });
 
 
-ishout.init(function() {
+if (wb.profile.user) {
+  ishout.init(function() {
 
-});
+  });
 
-// join room
-// todo: what should be the room name?
-ishout.joinRoom('main', function(data) {
-  // after joining room, server will return a list of users in the room:
-  // {users: [user_id]}
-  $.publish('/userlist', [data.users]);
-});
-
+  // join room
+  // todo: what should be the room name?
+  var room = wb.profile.case + '-' + wb.profile.group;
+  room = room.replace(/\s/g, '');
+  ishout.joinRoom(room, function(data) {
+    // after joining room, server will return a list of users in the room:
+    // {users: [user_id]}
+    $.publish('/user/update', [data.users]);
+    $.post('sync/joingroup', {
+      'case': wb.profile.case,
+      'group': wb.profile.group.id
+    })
+  });
+}

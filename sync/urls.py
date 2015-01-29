@@ -15,6 +15,7 @@ urlpatterns = patterns('',
     url(r'message/broadcast', message_broadcast),
     url(r'message/togroup', message_togroup),
     url(r'message/to', message_to),
-    url(r'message/all', message_all),
+    url(r'message/all', get_messages),
     url(r'userlist', get_userlist),
+    url(r'joingroup', join_group),
 )

@@ -31,6 +31,7 @@ def get_cases(request):
 
 
 
+@login_required
 def get_case_info(request):
     res = {}
     id = request.GET.get('case')
@@ -147,7 +148,6 @@ def data(request):
     ele = res['ele']; dataset_dict = res['dataset_dict']; entity_dict = res['entity_dict']; dataentry_dict = res['dataentry_dict']; relationship_dict = res['relationship_dict']
     ENTITY_ENUM = ['person', 'location', 'organization', 'event', 'resource']
 
-    print request.POST
     dataset_id = request.POST.getlist('datasets[]')
     group = Group.objects.get(id=int(request.POST['group']))
     case = Case.objects.get(id=int(request.POST['case']))

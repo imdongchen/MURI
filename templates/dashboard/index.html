@@ -23,10 +23,6 @@
 <!-- scroll jquery plugin -->
 <script src="{%static 'dashboard/lib/jquery-scrollto/lib/jquery-scrollto.js'%}"></script>
 
-<!-- for sync -->
-{% ishout_js %}
-<script src="{% static 'sync/static/sync.js' %}"></script>
-
 <!-- for annotation -->
 <script src="{% static 'annotator/lib/util.js' %}"></script>
 <script src="{% static 'annotator/lib/console.js' %}"></script>
@@ -100,4 +96,9 @@
     </div>
 
     <div id="progressbar" style="display:none;"><div class="progress-label">Updating Data...</div></div>
+
+    <!-- for sync -->
+    {% ishout_js %}
+    <script src="{% static 'sync/static/sync.js' %}"></script>
+
 {% endblock %}
