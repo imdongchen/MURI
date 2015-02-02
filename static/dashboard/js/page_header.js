@@ -155,8 +155,9 @@ $(function() {
             title: 'Message'
           });
         } else if (viz_name === 'history') {
-          viz = $('<div>').vizHistory({
+          viz = $('<div>').vizhistory({
             title: 'History',
+            url: 'logs'
           });
         }
 

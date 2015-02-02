@@ -182,6 +182,11 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
                             columns.push(attr);
                         }
                     }
+                    // for (var attr in entity.meta) {
+                    //   if (attr !== 'id') {
+                    //     columns.push(attr);
+                    //   }
+                    // }
                 }
                 return true;
             }
@@ -198,6 +203,12 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
                         row.push(primary[attr]); // assume the order is as the columns
                     }
                 }
+                // var meta = entity.meta;
+                // for (var attr in meta) {
+                //     if (attr !== 'id') {
+                //       row.push(meta[attr]);
+                //     }
+                // }
                 data.push(row);
             }
         });

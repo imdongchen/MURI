@@ -6,8 +6,8 @@ from datetime import datetime
 
 class Note(models.Model):
     created_by = models.ForeignKey(User, null=True, blank=True)
-    title  = models.CharField(max_length=500, null=True, blank=True)
-    content   = models.TextField(null=True, blank=True)
+    title  = models.CharField(max_length=500, blank=True)
+    content   = models.TextField(blank=True)
     created_at = models.DateTimeField(default=datetime.now)
     last_modified_at = models.DateTimeField(auto_now=True)
 

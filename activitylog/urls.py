@@ -4,6 +4,6 @@ from views import *
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^&', get_logs),
+    url(r'^$', get_logs),
     url(r'^activitylog$', activitylog),
 )

@@ -141,5 +141,5 @@ def send_userlist(case, group):
 
 def broadcast_activity(data, case, group, user):
     group_name = live_group(case, group)
-    ishsout_client.broadcast_group(group, 'activitylog', data)
+    ishout_client.broadcast_group(group, 'activitylog', data)
 

@@ -132,3 +132,22 @@ html, body {
 .nav input[type=checkbox] {
   margin: 4px 4px;
 }
+
+span.entity {
+  font-style: italic;
+}
+
+span.entity:hover {
+  cursor: pointer;
+}
+span.entity:hover:after {
+  content: ' ';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-top: 4px solid;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}

@@ -1,0 +1,23 @@
+ul.history-list {
+  /* overflow-y: scroll; */
+  margin: 0;
+  padding: 10px 20px 10px 20px;
+  list-style: none;
+}
+
+li.history-item {
+  line-height: 20px;
+}
+
+li.history-item .timestamp {
+  float: left;
+  padding-right: 15px;
+  text-align: right;
+  /* font-size: 60%; */
+}
+li.history-item .username {
+  float: left;
+  padding-right: 15px;
+  text-align: right;
+}
+

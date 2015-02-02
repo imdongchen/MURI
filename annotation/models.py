@@ -1,5 +1,5 @@
 from django.db import models
-from dashboard.models import DataEntry, Entity
+from dashboard.models import DataEntry, Entity, Relationship
 from django.contrib.auth.models import User, Group
 import datetime
 from dashboard.models import Case
@@ -14,7 +14,9 @@ class Annotation(models.Model):
     quote   = models.TextField()
     dataentry   = models.ForeignKey(DataEntry)
     entity      = models.ForeignKey(Entity, blank=True, null=True)
-    created_by  = models.ForeignKey(User, blank=True, null=True)
+    relationship = models.ForeignKey(Relationship, blank=True, null=True)
+    created_by  = models.ForeignKey(User, blank=True, null=True, related_name='created_annotations')
+    last_edited_by  = models.ForeignKey(User, blank=True, null=True, related_name='edited_annotations')
     created_at  = models.DateTimeField(default=datetime.datetime.now)
     case    = models.ForeignKey(Case)
     group   = models.ForeignKey(Group)
@@ -32,23 +34,10 @@ class Annotation(models.Model):
         ann['quote']   = self.quote
         ann['tag'] = {'id': self.entity.id, 'entity_type': self.entity.entity_type}
         ann['created_at'] = self.created_at.strftime('%m/%d/%Y-%H:%M:%S')
-        if self.created_by:
-            ann['created_by'] = self.created_by.id
+        ann['created_by'] = self.created_by.id
+        ann['last_edited_by'] = self.last_edited_by.id
 
         return ann
 
     def __unicode__(self):
-        return 'entry-'+ str(self.dataentry.id) + '-' + self.entity.name
-
-    # def save(self, *args, **kwargs):
-    #     """
-    #     create relationship between data entry and entity automatically
-    #     """
-    #     for entity in self.entities:
-    #         rel, created = Relationship.objects.get_or_create(source=None, target=entity, dataentry=self.dataentry)
-    #         if created:
-    #             rel.relation = 'contain'
-    #             rel.date = self.dataentry.date
-    #             rel.created_by = self.created_by
-    #             rel.save()
-    #     super(Annotation, self).save(*args, **kwargs)
+        return self.quote

@@ -1,6 +1,6 @@
-$.widget('viz.vizmessage', $.viz.vizbase, {
+$.widget('viz.vizhistory', $.viz.vizbase, {
   options: {
-
+    url: 'logs'
   },
 
   _create: function() {
@@ -11,7 +11,7 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
     this.loadData();
   },
 
-  _setupUI(): function() {
+  _setupUI: function() {
     var html = '\
       <ul class="history-list"></ul> \
     ';
@@ -19,9 +19,11 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
   },
 
   loadData: function() {
-    $.get('activitylog', {
-      case: wb.CASE,
-      group: wb.GROUP
+    var _this = this;
+
+    $.get(this.options.url, {
+      'case': wb.profile.case,
+      group: wb.profile.group.id
     }, function(data) {
       for (var i = 0, len = data.length; i < len; i++) {
         _this.add(data[i]);
@@ -33,24 +35,34 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
   add: function(item) {
     // item structure:
     // {'user': user_id, 'operation': '', 'time': '', 'data': ''}
-    var row = $('<li class="history-item">').appendTo(this.element).find('ul.history-list');
-    var user = wb.users[item.user];
-    var action = item.operation + ' ' + item.item;
+    var row = $('<li class="history-item">').prependTo(this.element.find('ul.history-list'));
+    var user = wb.profile.users[item.user];
     $('<span class="timestamp">').appendTo(row)
-      .text(user.name);
+      .text(item.time);
     $('<span class="username">').appendTo(row)
-      .text(item.time)
+      .text(user.name)
       .css('color', user.color);
-    $('<span class="content"').appendTo(row)
-      .text(action)
+
+    var action = item.operation + ' ' + item.item;
+    if (item.data) {
+      if (item.data.name) {
+        action += ' <span class="entity">' + item.data.name + '</span>';
+      }
+    }
+    $('<span class="content">').appendTo(row)
+      .html(action)
     ;
 
-    if (item.user === wb.USER) {
+    if (item.user === wb.profile.user) {
       row.css('background-color', '#eee')
     }
   },
 
   jumpToContext: function() {
+
+  },
+
+  reload: function() {
 
   }
 });

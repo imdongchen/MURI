@@ -12,14 +12,14 @@ def get_logs(request):
     case_id = request.GET.get('case')
     group_id = request.GET.get('group')
     case = Case.objects.get(id=case_id)
-    activities = Activity.objects.filter(case__id=case_id, group__id=group_id, user=request.user, public=True)
+    activities = Activity.objects.filter(case__id=case_id, group__id=group_id, public=True).order_by('time')
     for act in activities:
         res.append({
             'user': act.user.id,
             'operation': act.operation,
             'item': act.item,
             'time': act.time.strftime('%m/%d/%Y-%H:%M:%S'),
-            'data': act.data
+            'data': json.loads(act.data)
         })
 
     return HttpResponse(json.dumps(res), content_type='application/json')
@@ -55,4 +55,3 @@ def serverlog(log):
         case = log['case'],
         public = log['public']
     )
-    activity.save()

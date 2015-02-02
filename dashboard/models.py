@@ -11,11 +11,12 @@ add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.Geometr
 
 # Create your models here.
 def get_model_attr(instance):
-    attr = {'primary': {}, 'other': {}}
+    attr = {'primary': {}, 'meta': {}, 'other': {}}
+    # these fields are special
+    excludes = ['attributes', 'entity_ptr', 'created_by', 'created_at', 'last_edited_by', 'last_edited_at', 'case', 'group']
     primary = attr['primary']
     for field_name in instance._meta.get_all_field_names():
-        # these fields are 'outliers' and skipped
-        if field_name == 'attributes' or field_name == 'entity_ptr':
+        if field_name in excludes:
             continue
         try:
             field = instance._meta.get_field(field_name)
@@ -33,7 +34,15 @@ def get_model_attr(instance):
         except FieldDoesNotExist:
             pass
 
+    meta = attr['meta']
+    meta['id'] = instance.id
+    meta['created_by'] = instance.created_by.id if instance.created_by else None
+    meta['created_at'] = instance.created_at.strftime('%m/%d/%Y-%H:%M:%S') if instance.created_at else None
+    meta['last_edited_by'] = instance.last_edited_by.id if instance.last_edited_by else None
+    meta['last_edited_at'] = instance.last_edited_at.strftime('%m/%d/%Y-%H:%M:%S') if instance.last_edited_at else None
+
     other = attr['other']
+
     for a in instance.attributes.all():
         other[a.attr] = a.val
 
@@ -63,12 +72,14 @@ class Attribute(models.Model):
 
 
 class Entity(models.Model):
-    name          = models.CharField(max_length=1000, null=True, blank=True)
-    entity_type    = models.CharField(max_length=50, null=True, blank=True)
-    attributes	  = models.ManyToManyField(Attribute, blank=True, null=True)
+    name          = models.CharField(max_length=1000, blank=True)
+    priority      = models.FloatField(default=5, blank=True)  # ranging from 0-9
+    entity_type    = models.CharField(max_length=50, blank=True)
+    attributes    = models.ManyToManyField(Attribute, blank=True, null=True)
     created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_entities')
-    created_at     = models.DateTimeField(default=datetime.now, null=True, blank=True, verbose_name='created at')
+    created_at     = models.DateTimeField(auto_now_add=True, verbose_name='created at')
     last_edited_by = models.ForeignKey(User, null=True, blank=True, related_name='edited_entities')
+    last_edited_at = models.DateTimeField(auto_now=True)
     group         = models.ForeignKey(Group)
     case          = models.ForeignKey(Case)
 
@@ -99,7 +110,7 @@ class Dataset(models.Model):
     name = models.CharField(max_length=500)
     case = models.ForeignKey(Case)
     created_by = models.ForeignKey(User, null=True, blank=True, verbose_name='created by')
-    created_at  = models.DateTimeField(default=datetime.now, verbose_name='created at')
+    created_at  = models.DateTimeField(auto_now_add=True, verbose_name='created at')
 
     def get_attr(self):
         attr = {}
@@ -128,13 +139,13 @@ class DataEntry(models.Model):
         attr['dataset'] = self.dataset.id
         attr['date']    = ''
         if self.date != None:
-            attr['date']  = self.date.strftime('%m/%d/%Y')
+            attr['date']  = self.date.strftime('%m/%d/%Y-%H:%M:%S')
         return attr
 
 
 class Location(Entity):
     geometry = models.GeometryField(null=True, blank=True)
-    imprecision = models.CharField(max_length=50, null=True, blank=True)
+    imprecision = models.FloatField(null=True, blank=True, help_text='in meter')
 
     objects = models.GeoManager()
 
@@ -154,7 +165,6 @@ class Person(Entity):
     alias        = models.ForeignKey('self', null=True, blank=True)  # TODO: the person could be an alias to another person
     ethnicity    = models.CharField(max_length=50, null=True, blank=True)
     race         = models.CharField(max_length=10, null=True, blank=True)
-    mariried     = models.CharField(max_length=10, null=True, blank=True)
     religion     = models.CharField(max_length=50, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -187,8 +197,6 @@ class Event(Entity):
         super(Event, self).save(*args, **kwargs)
 
 
-
-
 class Resource(Entity):
     condition    = models.CharField(max_length=100, null=True, blank=True)
     availability = models.CharField(max_length=50, null=True, blank=True)
@@ -209,12 +217,13 @@ class Relationship(models.Model):
     description   = models.TextField(null=True, blank=True)
     relation  = models.CharField(max_length=500, null=True, blank=True)
     confidence  = models.FloatField(null=True, blank=True)
-    date        = models.DateTimeField(null=True, blank=True)
+    priority    = models.FloatField(default=5, blank=True)  # priority defaults to 5, ranging from 0-9
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
     attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
     created_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
     created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_relationships')
     last_edited_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='edited by', related_name='edited_relationships')
+    last_edited_at  = models.DateTimeField(auto_now=True)
     group      = models.ForeignKey(Group)
     case        = models.ForeignKey(Case)
 

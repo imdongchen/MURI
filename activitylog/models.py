@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 from datetime import datetime
+import json
 
 from dashboard.models import Case
+import sync
 
 
 # Create your models here.
@@ -19,9 +21,21 @@ class Activity(models.Model):
     case = models.ForeignKey(Case)
     group = models.ForeignKey(Group)
 
-    class Meta:
-        ordering = ['-time']
+    # class Meta:
+    #     ordering = ['-time']
 
     def __unicode__(self):
         return self.user.username + ' ' + self.operation
 
+    def save(self, *args, **kwargs):
+        # automatically send activity logs that are public to all users in the group
+        data = {
+            'user': self.user.id,
+            'operation': self.operation,
+            'item': self.item,
+            'data': json.loads(self.data),
+            'time': self.time.strftime('%m/%d/%Y-%H:%M:%S'),
+        }
+        sync.views.broadcast_activity(data, self.case, self.group, self.user)
+
+        super(Activity, self).save(*args, **kwargs)

@@ -21,7 +21,7 @@
 }
 
 ul.messages {
-  overflow-y: scroll;
+  /* overflow-y: scroll; */
   margin: 0;
   padding: 10px 20px 10px 20px;
   list-style: none;
