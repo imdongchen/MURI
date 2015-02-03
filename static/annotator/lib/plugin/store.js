@@ -105,7 +105,7 @@ Annotator.Plugin.Store = (function(_super) {
                 _this.updateAnnotation(annotation, ann);
 
                 $.publish('/entity/change', entity);
-                $.publish("/relationship/add", [[relationship]]);
+                $.publish("/relationship/add", [relationship]);
                 wb.utility.notify('1 annotation added!', 'success');
             });
         } else {

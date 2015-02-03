@@ -19,7 +19,6 @@ $.widget('custom.attribute_widget', {
         var row = '<li><ul class="annotator-attribute annotator-attribute-' + primary + '">';
         row += '<li><input class="annotator-attribute-input" placeholder="Attribute..." value="' + attr + '"/></li>';
         row += '<li><input class="annotator-attribute-value" placeholder="Unknown" value="' + value + '"/></li>';
-
         var lastrow = this.content.find('.annotator-attribute:last');
         if (lastrow.length) { // if there is already an attribute row
             row += '<li><button type="button" class="btn btn-default attribute-remove-btn"><span class="glyphicon glyphicon-minus"></span></button></li></ul></li>';
@@ -37,13 +36,20 @@ $.widget('custom.attribute_widget', {
             var $row = $(row).appendTo(this.content);
             $row.find('.attribute-add-btn').click(_.bind(function(){
                 var lastrow = this.content.find(".annotator-attribute:last");
-                lastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
-                    .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
-                this.add();
+                // lastrow.find('button').removeClass('attribute-add-btn').addClass('attribute-remove-btn').off('click')
+                    // .find("span").removeClass('glyphicon-plus').addClass('glyphicon-minus');
+
+                var attr = lastrow.find('.annotator-attribute-input');
+                var value = lastrow.find('.annotator-attribute-value');
+                this.add(attr.val(), value.val());
+                attr.val('');
+                value.val('');
             }, this));
         }
 
-        this.sort();
+        this.styleInput(attr, value, $row.find('.annotator-attribute-value'));
+
+        // this.sort();
     },
     reset: function() {
         this.element.empty();
@@ -68,6 +74,16 @@ $.widget('custom.attribute_widget', {
             }
         });
         return res;
+    },
+    styleInput: function(attr, value, input) {
+      if (attr === 'date') {
+        input.datetimepicker();
+      } else if (attr === 'location') {
+        // initialize as google place search
+      } else if (attr === 'priority') {
+        // initialize as select drop down
+        input.val(5)
+      }
     }
 });
 
@@ -139,6 +155,13 @@ Annotator.Plugin.Tags = (function(_super) {
             load: this.updateAttrField,
             submit: this.setTagAttributes
         });
+        this.relatedField = this.annotator.editor.addField({
+          type: 'custom',
+          html_content: '<div><p class="annotator-title">Related entities: </p><select class="selectize-related" multiple></select></div>',
+          init: this.initRelatedField,
+          load: this.updateRelatedField,
+          submit: this.setRelatedField
+        });
         // there is problem with apply to all function
         // do not add it for the moment
         // this.applyAllField = this.annotator.editor.addField({
@@ -148,28 +171,37 @@ Annotator.Plugin.Tags = (function(_super) {
         // });
 
         this.subscribe('/tag/type/change', function(value) {
-            if (value === 'location') {
-                if (self.annotation) {
-                    // search for mgrs string and update attribute
-                    var node = self.annotation.highlights[0].parentNode;
-                    if (!node) {
-                        console.warn(annotation);
-                    }
-                    var latlon = [];
-                    if (!$(node).data('location')) {
-                        var text = node.innerText;
-                        var mgrs = text.match(/\/\/MGRSCOORD:([0-9A-Za-z ]+)\/\//)
-                        if (mgrs) {
-                            USNGtoLL(mgrs[1], latlon); // function from usng.js
-                            $(node).data("location", latlon);
-                        }
-                    }
-                    latlon = $(node).data('location');
-                    if (latlon && latlon.length === 2) {
-                        self.attribute_widget.add('geometry', 'POINT(' + latlon[1] + ' ' + latlon[0] +')');
-                    }
-                }
+          // do when the entity type is changed
+          // put entity attributes in the list
+          var attributes = wb.static[value];
+          if (attributes) {
+            for (var i = 0, len = attributes.length; i < len; i++) {
+              var attr = attributes[i];
+              self.attribute_widget.add(attr, null, 'primary');
             }
+          }
+            // if (value === 'location') {
+            //     if (self.annotation) {
+            //         // search for mgrs string and update attribute
+            //         var node = self.annotation.highlights[0].parentNode;
+            //         if (!node) {
+            //             console.warn(annotation);
+            //         }
+            //         var latlon = [];
+            //         if (!$(node).data('location')) {
+            //             var text = node.innerText;
+            //             var mgrs = text.match(/\/\/MGRSCOORD:([0-9A-Za-z ]+)\/\//)
+            //             if (mgrs) {
+            //                 USNGtoLL(mgrs[1], latlon); // function from usng.js
+            //                 $(node).data("location", latlon);
+            //             }
+            //         }
+            //         latlon = $(node).data('location');
+            //         if (latlon && latlon.length === 2) {
+            //             self.attribute_widget.add('geometry', 'POINT(' + latlon[1] + ' ' + latlon[0] +')');
+            //         }
+            //     }
+            // }
         });
 
         $.subscribe('/tag/name/change', function(e, value) {
@@ -226,7 +258,7 @@ Annotator.Plugin.Tags = (function(_super) {
                 source: opts,
                 select: function(e, ui) {
                     if (ui.item.id) {
-                        //TODO: update the attribute list to the attribute of the entity
+                        // update the attribute list to the attribute of the entity
                         $.publish('/tag/name/change', ui.item.id);
                     }
                 }
@@ -245,6 +277,50 @@ Annotator.Plugin.Tags = (function(_super) {
             }
             // $(field).find('.tag_name').autocomplete('option', 'source', opts);
         });
+    };
+
+
+    Tags.prototype.initRelatedField = function(field) {
+      var options = [];
+      for (var key in wb.store.entity) {
+        var entity = wb.store.entity[key];
+        options.push({
+          entity_type: entity.primary.entity_type,
+          id: entity.meta.id,
+          name: entity.primary.name
+        });
+      }
+      optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
+        return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
+      });
+      $(field).find('.selectize-related')
+        .selectize({
+          options: options,
+          optgroups: optgroups,
+          optgroupField: 'entity_type',
+          labelField: 'name',
+          valueField: 'id',
+          searchField: 'name',
+          create: false
+        });
+    };
+
+
+    Tags.prototype.updateRelatedField = function(field, annotation) {
+      var selectize = $(field).find('select').data('selectize')
+      selectize.clear();
+      if (annotation.related_entities) {
+        for (var i = 0, len = annotation.related_entities.length; i < len; i++) {
+          entity = wb.store.entity[annotation.related_entities[i]];
+          selectize.addItem(entity.meta.id);
+        }
+      }
+    };
+
+
+    Tags.prototype.setRelatedField = function(field, annotation) {
+      var value = $(field).find('select').val();
+      annotation.related_entities = value;
     };
 
     Tags.prototype.updateTitleField = function(field, annotation) {
@@ -308,7 +384,7 @@ Annotator.Plugin.Tags = (function(_super) {
         if (annotation.tag && annotation.tag.id) {
             var entity = wb.store.entity[annotation.tag.id];
             for (var attr in entity.primary) {
-                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'created_at' && attr !== 'created_by' && attr !== 'case' && attr !== 'group' && attr !== 'last_edited_by') { // skip these two attributes
+                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name') { // skip these two attributes
                     this.attribute_widget.add(attr, entity.primary[attr], 'primary');
                 }
             }
@@ -364,7 +440,7 @@ Annotator.Plugin.Tags = (function(_super) {
             var primary = entity.primary;
             table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
             for (var attr in primary) {
-                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && attr !== 'created_at' && attr !== 'case' && attr !== 'group' && attr !== 'created_by' && attr !== 'last_edited_by' && primary[attr]) {
+                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
                 }
             }
@@ -379,6 +455,14 @@ Annotator.Plugin.Tags = (function(_super) {
             }
             if (annotation.created_at) {
               table += '<tr><th>Created at: </th><td>' + annotation.created_at + '</td></tr>';
+            }
+            if (annotation.related_entities && annotation.related_entities.length) {
+              table += '<tr><th>Related entities: </th><td>'
+              for (var i = 0, len = annotation.related_entities.length; i < len; i++) {
+                var ent = wb.store.entity[annotation.related_entities[i]]
+                table += '<span class="entity">' + ent.primary.name + '</span>';
+              }
+              table += '</td></tr>';
             }
             table += '</table>';
             $(field).append($(table));

@@ -6,6 +6,8 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 from django.contrib.gis.geos import fromstr
 from django.http import QueryDict
 
+from dateutil.parser import parse as parse_date
+
 from activitylog.views import serverlog
 from dashboard.models import *
 from models import Annotation
@@ -47,6 +49,15 @@ def get_or_create_entity(json, case, group, user):
                 except:
                     print 'Warning: geometry format unrecognized, ', wkt
             else: # normal field such as char and int
+                if attrs[attr] == '': attrs[attr] = None
+                else:
+                    try:
+                        if attr == 'date':
+                            attrs[attr] = parse_date(attrs[attr])
+                        attrs[attr] = float(attrs[attr])
+                    except:
+                        pass
+
                 setattr(obj, attr, attrs[attr])
         else:
             attribute, created = Attribute.objects.get_or_create(attr=attr, val=attrs[attr])
@@ -112,22 +123,42 @@ def annotation(request, id=0):
         except DataEntry.DoesNotExist:
             return HttpResponseNotFound()
         else:
+            relationships = []
             entity, created = get_or_create_entity(data['tag'], case, group, request.user)
-            relationship, created = Relationship.objects.get_or_create(
+            rel, created = Relationship.objects.get_or_create(
                 target=entity,
                 dataentry=entry,
                 relation='contain',
                 created_by=request.user,
+                last_edited_by=request.user,
                 group=group,
                 case=case
             )
+            relationships.append(rel.get_attr())
+            related_entities = []
+            related_entities_id = data.get('related_entities', [])
+            for ent in related_entities_id:
+                ent = Entity.objects.get(id=ent)
+                r, created = Relationship.objects.get_or_create(
+                    source=entity,
+                    target=ent,
+                    dataentry=entry,
+                    relation='involve',
+                    created_by=request.user,
+                    last_edited_by=request.user,
+                    group=group,
+                    case=case
+                )
+                relationships.append(r.get_attr())
+                related_entities.append(ent)
+
             annotation = Annotation.objects.create(
                 startOffset=ranges[0]['startOffset'],
                 endOffset=ranges[0]['endOffset'],
                 quote=quote,
                 dataentry=entry,
                 entity = entity,
-                relationship=relationship,
+                relationship=rel,
                 start=ranges[0]['start'],
                 end=ranges[0]['end'],
                 created_by=request.user,
@@ -135,8 +166,10 @@ def annotation(request, id=0):
                 group=group,
                 case=case
             )
+            annotation.related_entities = related_entities
+            annotation.save()
             res['annotation'] = annotation.serialize()
-            res['relationship'] = relationship.get_attr()
+            res['relationship'] = relationships
             res['entity'] = entity.get_attr()
 
             # save to activity log

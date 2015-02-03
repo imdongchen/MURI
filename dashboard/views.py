@@ -169,7 +169,7 @@ def data(request):
             })
 
         # step 3: get entities
-        entities = Entity.objects.filter(case=case, group=group)
+        entities = Entity.objects.filter(case=case, group=group).select_subclasses()
         for entity in entities:
             entity_dict[entity.id] = entity.get_attr()
 
@@ -183,7 +183,7 @@ def data(request):
             if rel.source:
                 # 2nd type of ele, consisting of entity and entity
                 ele.append({
-                    'dataentry': rel_info[primary].get('dataentry', None),
+                    'dataentry': rel_info['primary'].get('dataentry', None),
                     rel.source.entity_type: rel_info['primary']['source'],
                     rel.target.entity_type: rel_info['primary']['target'],
                     'relationship': rel_info['primary']['id'],
@@ -197,7 +197,7 @@ def data(request):
                     # thus, a relationship between two entities of the same entity type
                     # will generate two ele
                     ele.append({
-                        'dataentry': rel_info[primary].get('dataentry', None),
+                        'dataentry': rel_info['primary'].get('dataentry', None),
                         rel.source.entity_type: rel_info['primary']['source'],
                         'relationship': rel_info['primary']['id'],
                         'date': rel_info['primary'].get('date', None)

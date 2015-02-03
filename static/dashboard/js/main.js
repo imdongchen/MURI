@@ -21,6 +21,15 @@ wb.profile = {
   user: 0,  // the current user id
   online_users: [],  // all online users id in the current group
 };
+// attributes for entities, temporarily hard coded here
+wb.static = {
+  event: ['category', 'date', 'priority'],
+  location: ['location', 'precision', 'priority'],
+  person: ['gender', 'nationality', 'ethnicity', 'race', 'religion', 'priority'],
+  organization: ['category', 'nationality', 'ethnicity', 'religion', 'priority'],
+  resource: ['condition', 'availability', 'category', 'priority'],
+  relationship: ['relation', 'description', 'priority']
+};
 wb.vartifacts = [];
 
 

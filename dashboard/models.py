@@ -27,8 +27,7 @@ def get_model_attr(instance):
             elif field_type == 'GeometryField':
                 primary[field_name] = value.wkt if value else None
             elif field_type == 'ForeignKey':
-                if value:
-                    primary[field_name] = value.id
+                primary[field_name] = value.id if value else None
             else:
                 primary[field_name] = value
         except FieldDoesNotExist:
@@ -73,7 +72,7 @@ class Attribute(models.Model):
 
 class Entity(models.Model):
     name          = models.CharField(max_length=1000, blank=True)
-    priority      = models.FloatField(default=5, blank=True)  # ranging from 0-9
+    priority      = models.FloatField(default=5, null=True, blank=True)  # ranging from 0-9
     entity_type    = models.CharField(max_length=50, blank=True)
     attributes    = models.ManyToManyField(Attribute, blank=True, null=True)
     created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_entities')
@@ -145,7 +144,7 @@ class DataEntry(models.Model):
 
 class Location(Entity):
     geometry = models.GeometryField(null=True, blank=True)
-    imprecision = models.FloatField(null=True, blank=True, help_text='in meter')
+    precision = models.FloatField(null=True, blank=True, help_text='in meter')
 
     objects = models.GeoManager()
 
@@ -217,7 +216,7 @@ class Relationship(models.Model):
     description   = models.TextField(null=True, blank=True)
     relation  = models.CharField(max_length=500, null=True, blank=True)
     confidence  = models.FloatField(null=True, blank=True)
-    priority    = models.FloatField(default=5, blank=True)  # priority defaults to 5, ranging from 0-9
+    priority    = models.FloatField(default=5, null=True, blank=True)  # priority defaults to 5, ranging from 0-9
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
     attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
     created_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')

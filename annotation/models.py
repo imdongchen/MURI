@@ -14,6 +14,7 @@ class Annotation(models.Model):
     quote   = models.TextField()
     dataentry   = models.ForeignKey(DataEntry)
     entity      = models.ForeignKey(Entity, blank=True, null=True)
+    related_entities = models.ManyToManyField(Entity, blank=True, null=True, related_name='related_annotations')
     relationship = models.ForeignKey(Relationship, blank=True, null=True)
     created_by  = models.ForeignKey(User, blank=True, null=True, related_name='created_annotations')
     last_edited_by  = models.ForeignKey(User, blank=True, null=True, related_name='edited_annotations')
@@ -36,6 +37,11 @@ class Annotation(models.Model):
         ann['created_at'] = self.created_at.strftime('%m/%d/%Y-%H:%M:%S')
         ann['created_by'] = self.created_by.id
         ann['last_edited_by'] = self.last_edited_by.id
+
+        related = []
+        for e in self.related_entities.all():
+            related.append(e.id)
+        ann['related_entities'] = related
 
         return ann
 

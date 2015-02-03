@@ -135,6 +135,8 @@ html, body {
 
 span.entity {
   font-style: italic;
+  margin-left: 3px;
+  margin-right: 3px;
 }
 
 span.entity:hover {
