@@ -320,7 +320,7 @@ Annotator.Plugin.Tags = (function(_super) {
 
     Tags.prototype.setRelatedField = function(field, annotation) {
       var value = $(field).find('select').val();
-      annotation.related_entities = value;
+      annotation.related_entities = value || [];
     };
 
     Tags.prototype.updateTitleField = function(field, annotation) {

@@ -136,6 +136,7 @@ def annotation(request, id=0):
             )
             relationships.append(rel.get_attr())
             related_entities = []
+            related_relationships = []
             related_entities_id = data.get('related_entities', [])
             for ent in related_entities_id:
                 ent = Entity.objects.get(id=ent)
@@ -149,6 +150,7 @@ def annotation(request, id=0):
                     group=group,
                     case=case
                 )
+                related_relationships.append(r)
                 relationships.append(r.get_attr())
                 related_entities.append(ent)
 
@@ -167,6 +169,7 @@ def annotation(request, id=0):
                 case=case
             )
             annotation.related_entities = related_entities
+            annotation.related_relationships = related_relationships
             annotation.save()
             res['annotation'] = annotation.serialize()
             res['relationship'] = relationships
@@ -203,6 +206,7 @@ def annotation(request, id=0):
                 old_entity = annotation.entity
                 case = Case.objects.get(id=data['case'])
                 group = Group.objects.get(id=data['group'])
+                relationships = []
 
                 entity, created = get_or_create_entity(data['tag'], case, group, request.user)
 
@@ -221,7 +225,34 @@ def annotation(request, id=0):
                     annotation.last_edited_by = request.user
                     relationship.save()
                     annotation.save()
-                    res['relationship'] = relationship.get_attr()
+                    relationships.append(relationship.get_attr())
+
+                # update related entities and related relationships
+                # first delete entities and relationships not in the post data
+                related_entities_id = data.get('related_entities', [])
+                to_remove_entities = annotation.related_entities.exclude(id__in=related_entities_id)
+                for e in to_remove_entities:
+                    annotation.related_entities.remove(e)
+                annotation.related_relationships.filter(target__in=to_remove_entities).delete()
+                # then add entities and relationships new in the post data
+                old_related_entities_id = annotation.related_entities.all().values('id')
+                to_add = [id for id in related_entities_id if id not in old_related_entities_id]
+                to_add_entities = Entity.objects.filter(id__in=to_add)
+                for e in to_add_entities:
+                    annotation.related_entities.add(e)
+                for e in to_add_entities:
+                    r, created = Relationship.objects.get_or_create(
+                        source=entity,
+                        target=e,
+                        dataentry=entry,
+                        relation='involve',
+                        created_by=request.user,
+                        last_edited_by=request.user,
+                        group=group,
+                        case=case
+                    )
+                    relationships.append(r.get_attr())
+                    annotation.related_relationships.add(r)
 
                 res['annotation'] = annotation.serialize()
                 res['entity'] = entity.get_attr()
@@ -258,6 +289,7 @@ def annotation(request, id=0):
                 res['entity'] = annotation.entity.get_attr()
                 res['relationship'] = relationship.get_attr()
                 res['annotation'] = annotation.serialize()
+                annotation.realted_relationships.all().delete()
                 annotation.delete()
                 relationship.delete()
 
