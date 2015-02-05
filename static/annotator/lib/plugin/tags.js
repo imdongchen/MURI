@@ -68,9 +68,16 @@ $.widget('custom.attribute_widget', {
             var attr = $(row).find('.annotator-attribute-input').val();
             var value = $(row).find('.annotator-attribute-value').val();
             if (attr) {
+              if (attr === 'location') {
+                var autocomplete = $(row).find('.annotator-attribute-value').data('autocomplete');
+                var place = autocomplete.getPlace();
+                res['geometry'] = [place.geometry.location.lng(), place.geometry.location.lat()];
+                res['address'] = place.formatted_address;
+              } else {
                 attr = Annotator.Util.escape(attr);
                 value = Annotator.Util.escape(value);
                 res[attr] = value;
+              }
             }
         });
         return res;
@@ -80,6 +87,8 @@ $.widget('custom.attribute_widget', {
         input.datetimepicker();
       } else if (attr === 'location') {
         // initialize as google place search
+        var autocomplete = new google.maps.places.Autocomplete(input[0], {location: 'New York'});
+        input.data('autocomplete', autocomplete);
       } else if (attr === 'priority') {
         // initialize as select drop down
         input.val(5)
@@ -104,6 +113,7 @@ Annotator.Plugin.Tags = (function(_super) {
         this.initAttrField = __bind(this.initAttrField, this);
         this.updateAttrField = __bind(this.updateAttrField, this);
         this.setTagAttributes = __bind(this.setTagAttributes, this);
+        this.initRelatedField = __bind(this.initRelatedField, this);
         this.applyToAll = __bind(this.applyToAll, this);
         _ref = Tags.__super__.constructor.apply(this, arguments);
         return _ref;
@@ -136,7 +146,7 @@ Annotator.Plugin.Tags = (function(_super) {
         }
         this.titleField = this.annotator.editor.addField({
             type: 'custom',
-            html_content: '<label style="font-weight:bold;">Name: </label><input class="tag_name"></input>',
+            html_content: '<input class="tag_name" ></input>',
             init: this.initTagNameField,
             load: this.updateTitleField,
             submit: this.setTagName
@@ -216,6 +226,12 @@ Annotator.Plugin.Tags = (function(_super) {
             self.updateAttrField('', self.annotation);
         });
 
+        $.subscribe('/entity/change', function(e, entity) {
+          var opts = self.prepareSelectOptions(entity);
+          $('select', self.relatedField).data('selectize').addOption(opts.opts);
+          self.initTagNameField(self.titleField);
+        });
+
         this.annotator.viewer.addField({
             load: this.updateViewer
         });
@@ -241,67 +257,60 @@ Annotator.Plugin.Tags = (function(_super) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     };
 
-    Tags.prototype.initTagNameField = function(field) {
-        var opts = [];
+
+    Tags.prototype.prepareSelectOptions = function(entity) {
+      var opts = [], optgroups = [];
+      if (entity) {
+        opts.push({
+          entity_type: entity.primary.entity_type,
+          value: entity.meta.id,
+          label: entity.primary.name
+        });
+      } else {
         for (var key in wb.store.entity) {
-            var entity = wb.store.entity[key];
-            opts.push({
-                id: key,
-                value: entity.primary.name
-            });
+          var entity = wb.store.entity[key];
+          opts.push({
+            entity_type: entity.primary.entity_type,
+            value: entity.meta.id,
+            label: entity.primary.name
+          });
         }
         optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
-            return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
+          return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
         });
+      }
+      return {opts: opts, optgroups: optgroups};
+    };
+
+    Tags.prototype.initTagNameField = function(field) {
+        var opts = this.prepareSelectOptions();
         this.tagnameselect = $(field).find('.tag_name')
             .autocomplete({
-                source: opts,
+                source: opts.opts,
+                placeholder: "Entity name or your annotation...",
                 select: function(e, ui) {
-                    if (ui.item.id) {
+                    if (ui.item.value) {
                         // update the attribute list to the attribute of the entity
-                        $.publish('/tag/name/change', ui.item.id);
+                        $.publish('/tag/name/change', ui.item.value);
                     }
                 }
             })
         ;
-
-        // update autocomplete when new entity is added
-        $.subscribe('/entity/change', function() {
-            var opts = [];
-            for (var key in wb.store.entity) {
-                var entity = wb.store.entity[key];
-                opts.push({
-                    id: key,
-                    value: entity.primary.name
-                });
-            }
-            // $(field).find('.tag_name').autocomplete('option', 'source', opts);
-        });
     };
 
 
     Tags.prototype.initRelatedField = function(field) {
-      var options = [];
-      for (var key in wb.store.entity) {
-        var entity = wb.store.entity[key];
-        options.push({
-          entity_type: entity.primary.entity_type,
-          id: entity.meta.id,
-          name: entity.primary.name
-        });
-      }
-      optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
-        return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
-      });
+      var opts = this.prepareSelectOptions();
       $(field).find('.selectize-related')
         .selectize({
-          options: options,
-          optgroups: optgroups,
+          options: opts.opts,
+          optgroups: opts.optgroups,
           optgroupField: 'entity_type',
-          labelField: 'name',
-          valueField: 'id',
-          searchField: 'name',
-          create: false
+          labelField: 'label',
+          valueField: 'value',
+          searchField: 'label',
+          create: false,
+          closeAfterSelect: true
         });
     };
 

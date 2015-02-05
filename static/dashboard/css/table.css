@@ -69,7 +69,7 @@
 	padding-top: 3px;
 }
 
-table thead th {
+table.dataTables > thead > th {
 	padding: 3px 0px 3px 10px;
 	cursor: pointer;
 	* cursor: hand;
@@ -507,7 +507,7 @@ tr.odd td:first:hover {
 }
 
 
-.dataTable td:first-child {
+.dataTable > tbody > tr > td:first-child {
     cursor: pointer;
     vertical-align: top;
 }

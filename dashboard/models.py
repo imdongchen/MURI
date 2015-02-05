@@ -144,6 +144,7 @@ class DataEntry(models.Model):
 
 class Location(Entity):
     geometry = models.GeometryField(null=True, blank=True)
+    location = models.CharField(max_length=500, blank=True)
     precision = models.FloatField(null=True, blank=True, help_text='in meter')
 
     objects = models.GeoManager()

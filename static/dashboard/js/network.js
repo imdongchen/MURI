@@ -182,7 +182,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         .on("keydown", this._onSetMode.bind(this))
         .on("keyup", this._onExitMode.bind(this));
 
-      $('.filterbar :checkbox').change(this._onSetFilter.bind(this));
+      $('.network-filterbar :checkbox').change(this._onSetFilter.bind(this));
 
       $('.network-editor .save').click(this._onEditorSave.bind(this));
       $('.network-editor .cancel').click(this._onEditorCancel.bind(this));
@@ -202,7 +202,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
       var display = '';
       var value = e.target.value;
 
-      if (! this.checked) {
+      if (! e.target.checked) {
           // hide node and associated links
           display = 'none';
       }
@@ -634,12 +634,13 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         var str = "<table class='attr-list'>";
         for (var attr in l) {
           if (attr !== 'source' && attr !== 'target' && attr !== 'id'
-              && attr !== 'created_by' && l[attr]) {
+              && attr !== 'created_by' && attr !== 'last_edited_by' && l[attr]) {
             str += "<tr><th>" + wb.utility.capitalizeFirstLetter(attr)
                   + ": </th><td>" + l[attr] + "</td></tr>";
           }
         }
-        str += "<tr><th>Created by: </th><td>" + wb.users[l.created_by].name + "</td></tr>";
+        str += "<tr><th>Created by: </th><td>" + wb.profile.users[l.created_by].name + "</td></tr>";
+        str += "<tr><th>Last edited by: </th><td>" + wb.profile.users[l.last_edited_by].name + "</td></tr>";
         str += "</table>";
         $(str).appendTo($('.network-viewer'));
 
@@ -756,8 +757,10 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             description: relationship.primary.description,
             date: relationship.primary.date,
             id: relationship.primary.id,
-            created_by: relationship.primary.created_by,
-            created_at: relationship.primary.created_at
+            created_by: relationship.meta.created_by,
+            created_at: relationship.meta.created_at,
+            last_edited_by: relationship.meta.last_edited_by,
+            last_edited_at: relationship.meta.last_edited_at
         };
         var i = this.findLink(link);
         if (i < 0) {

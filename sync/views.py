@@ -94,7 +94,7 @@ def relationship_delete(data, case, group, user):
 def get_messages(request):
     msgs = Message.objects.all().order_by('sent_at')
     res = [msg.tojson() for msg in msgs]
-    return HttpResponse(json.dumps(res), mimetype='application/json')
+    return HttpResponse(json.dumps(res), content_type='application/json')
 
 @login_required
 def message_broadcast(request):

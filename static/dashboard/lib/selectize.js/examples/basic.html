@@ -28,15 +28,9 @@
 				</div>
 				<script>
 				$('#input-tags').selectize({
-					delimiter: ',',
 					persist: false,
 					createOnBlur: true,
-					create: function(input) {
-						return {
-							value: input,
-							text: input
-						}
-					}
+					create: true
 				});
 				</script>
 			</div>
@@ -61,6 +55,26 @@
 						direction: 'asc'
 					},
 					dropdownParent: 'body'
+				});
+				</script>
+			</div>
+
+			<div class="demo">
+				<h2>&lt;select&gt; (allow empty)</h2>
+				<div class="control-group">
+					<label for="select-beast-empty">Beast:</label>
+					<select id="select-beast-empty" class="demo-default" data-placeholder="Select a person...">
+						<option value="">None</option>
+						<option value="4">Thomas Edison</option>
+						<option value="1">Nikola</option>
+						<option value="3">Nikola Tesla</option>
+						<option value="5">Arnold Schwarzenegger</option>
+					</select>
+				</div>
+				<script>
+				$('#select-beast-empty').selectize({
+					allowEmptyOption: true,
+					create: true
 				});
 				</script>
 			</div>

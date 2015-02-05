@@ -1,6 +1,6 @@
 /**
  * selectize.js (v@@version)
- * Copyright (c) 2013 Brian Reavis & contributors
+ * Copyright (c) 2013–2015 Brian Reavis & contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at:
@@ -20,6 +20,8 @@
 (function(root, factory) {
 	if (typeof define === 'function' && define.amd) {
 		define(['jquery','sifter','microplugin'], factory);
+	} else if (typeof exports === 'object') {
+		module.exports = factory(require('jquery'), require('sifter'), require('microplugin'));
 	} else {
 		root.Selectize = factory(root.jQuery, root.Sifter, root.MicroPlugin);
 	}

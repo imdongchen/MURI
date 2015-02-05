@@ -1,11 +1,12 @@
 .PHONY: compile release test
 plugins=*
+GRUNT=node_modules/.bin/grunt
 
 all: compile
 test:
-	testem
+	npm test
 compile:
-	grunt --plugins=$(plugins)
+	$(GRUNT) --plugins=$(plugins)
 release:
 ifeq ($(strip $(version)),)
 	@echo "\033[31mERROR:\033[0;39m No version provided."
@@ -16,12 +17,14 @@ else
 	sed -i.bak 's/"version": "[^"]*"/"version": "$(version)"/' package.json
 	rm *.bak
 	make compile
+	npm test || exit 1
 	cp dist/js/standalone/selectize.js ../.selectize.js
 	git add .
 	git commit -a -m "Released $(version)."
 	git tag v$(version)
 	git push origin master
 	git push origin --tags
+	npm publish
 	git checkout gh-pages
 	mv -f ../.selectize.js js/selectize.js
 	git commit -a -m "Updated selectize.js to latest version."

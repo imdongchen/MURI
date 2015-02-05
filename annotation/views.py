@@ -38,13 +38,14 @@ def get_or_create_entity(json, case, group, user):
 
     obj.name = json['name']
     obj.last_edited_by = user
+    print attrs
     for attr in attrs:
         if attr in fields:
             # set field value
             if entity_type == 'location' and attr == 'geometry': # special field
-                wkt = attrs[attr]
+                location = attrs[attr]
                 try:
-                    geometry = fromstr(wkt)
+                    geometry = fromstr('POINT(%s %s)' %(location[0], location[1]))  # longitude comes first
                     obj.geometry = geometry
                 except:
                     print 'Warning: geometry format unrecognized, ', wkt
@@ -134,6 +135,10 @@ def annotation(request, id=0):
                 group=group,
                 case=case
             )
+            # set relationship date to event date
+            if entity.entity_type == 'event':
+                rel.date = entity.date
+                rel.save()
             relationships.append(rel.get_attr())
             related_entities = []
             related_relationships = []
@@ -150,6 +155,9 @@ def annotation(request, id=0):
                     group=group,
                     case=case
                 )
+                if entity.entity_type == 'event':
+                    r.date = entity.date
+                    r.save()
                 related_relationships.append(r)
                 relationships.append(r.get_attr())
                 related_entities.append(ent)
@@ -220,10 +228,12 @@ def annotation(request, id=0):
                         group=group
                     )
                     relationship.target = entity
+                    if entity.entity_type == 'event':
+                        relationship.date = entity.date
+                    relationship.save()
                     annotation.entity = entity
                     annotation.relationship = relationship
                     annotation.last_edited_by = request.user
-                    relationship.save()
                     annotation.save()
                     relationships.append(relationship.get_attr())
 
@@ -251,6 +261,9 @@ def annotation(request, id=0):
                         group=group,
                         case=case
                     )
+                    if entity.entity_type == 'event':
+                        r.date = entity.date
+                        r.save()
                     relationships.append(r.get_attr())
                     annotation.related_relationships.add(r)
 
@@ -289,7 +302,7 @@ def annotation(request, id=0):
                 res['entity'] = annotation.entity.get_attr()
                 res['relationship'] = relationship.get_attr()
                 res['annotation'] = annotation.serialize()
-                annotation.realted_relationships.all().delete()
+                annotation.related_relationships.all().delete()
                 annotation.delete()
                 relationship.delete()
 

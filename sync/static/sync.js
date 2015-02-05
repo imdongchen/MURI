@@ -36,7 +36,7 @@ ishout.on('annotation.create', function(data) {
     var annotations = data.annotations;
   }
   if (data.relationship) {
-    var relationships = [data.relationship];
+    var relationships = data.relationship;
   } else {
     var relationships = data.relationships;
   }
@@ -75,7 +75,7 @@ ishout.on('annotation.update', function(data) {
     var annotations = data.annotations;
   }
   if (data.relationship) {
-    var relationships = [data.relationship];
+    var relationships = data.relationship;
   } else if (data.relationships){
     var relationships = data.relationships;
   } else {

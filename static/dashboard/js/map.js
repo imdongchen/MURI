@@ -40,7 +40,7 @@ $.widget("viz.vizmap", $.viz.vizbase, {
             {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
         );
 
-        map.addLayers([ghyb, gphy, gmap, gsat]);
+        map.addLayers([gmap, ghyb, gphy, gsat]);
 
         this.pointlayer = new OpenLayers.Layer.Vector("Points", {
             styleMap: new OpenLayers.StyleMap({
@@ -72,10 +72,10 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         this.layers.push(this.pointlayer, this.linelayer);
         map.addLayers([this.pointlayer, this.linelayer]);
 
-        map.setCenter(new OpenLayers.LonLat(44.42200, 33.32500).transform(
+        map.setCenter(new OpenLayers.LonLat(-77.86000, 40.79339).transform(
             new OpenLayers.Projection("EPSG:4326"),
             map.getProjectionObject()
-        ), 12); // zoom level
+        ), 15); // zoom level
 
         var controlPanel = new OpenLayers.Control.Panel();
         map.addControl(new OpenLayers.Control.LayerSwitcher());

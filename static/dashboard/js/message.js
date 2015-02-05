@@ -36,7 +36,9 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
         var content = $(this).text();
         var _this = this;
         $.post('sync/message/broadcast', {
-          content: content
+          content: content,
+          case: wb.profile.case,
+          group: wb.profile.group.id
         }, function(res) {
           if (res === 'success') {
             $(_this).text('');
@@ -64,7 +66,7 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
 
     var row = $('<li class="message"></li>').appendTo(this.element.find('ul.messages'));
 
-    var user = wb.users[msg.sender];
+    var user = wb.profile.users[msg.sender];
     $('<span class="username"></span>').appendTo(row)
       .text(user.name)
       .css('color', user.color);
@@ -73,8 +75,16 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
     $('<span class="messagebody"></span>').appendTo(row)
       .text(msg.content);
 
-    if (msg.sender === wb.USER) {
+    if (msg.sender === wb.profile.user) {
       row.css('background-color', '#eee');
     }
+  },
+
+  reload: function() {
+
+  },
+
+  update: function() {
+
   }
-})
+});
