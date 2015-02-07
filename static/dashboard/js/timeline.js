@@ -232,11 +232,13 @@ wb.viz.timeline = function() {
             activitylog({
                 operation: 'removed filter in',
                 item: 'timeline',
+                tool: 'timeline',
             });
         } else {
             activitylog({
                 operation: 'filtered in',
                 item: 'timeline',
+                tool: 'timeline',
                 data: {
                   'name': brush.extent().join(',')  // be consistent with other filter, although it is not name, but time here
                 }

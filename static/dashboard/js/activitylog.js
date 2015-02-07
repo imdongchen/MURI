@@ -8,7 +8,7 @@ function activitylog(oper) {
       'case': wb.profile.case,
       operation: '',
       item: '',
-      data: null,
+      data: '{}',
       'public': true
     };
     $.extend(log, oper);

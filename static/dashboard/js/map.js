@@ -251,6 +251,7 @@ $.widget("viz.vizmap", $.viz.vizbase, {
             activitylog({
                 operation: 'removed filter in',
                 item: 'map',
+                tool: 'map'
             });
         } else {
             this.options.dimension.filter(function(d) {
@@ -266,10 +267,11 @@ $.widget("viz.vizmap", $.viz.vizbase, {
             activitylog({
                 operation: 'filtered in',
                 item: 'map',
-                data: {
+                tool: 'map',
+                data: JSON.stringify({
                   'id': selectedFeas.join(','),
                   'name': selected_names.join(',')
-                }
+                })
             });
         }
         $.publish('/data/filter', this.element.attr("id"))

@@ -2,7 +2,8 @@ from django.db import models
 
 from datetime import datetime
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from dashboard.models import Case
 
 
 # Create your models here.
@@ -11,6 +12,8 @@ class Message(models.Model):
     receiver = models.ForeignKey(User, null=True, blank=True, related_name="send_to")
     content = models.TextField()
     sent_at = models.DateTimeField(default=datetime.now)
+    case = models.ForeignKey(Case)
+    group = models.ForeignKey(Group)
 
     def tojson(self):
         if self.receiver:

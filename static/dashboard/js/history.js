@@ -16,6 +16,9 @@ $.widget('viz.vizhistory', $.viz.vizbase, {
       <ul class="history-list"></ul> \
     ';
     this.element.append(html);
+
+    // click on timestamp, jump to context
+    this.element.on('click', 'li.history-item .timestamp', this.jumpToContext.bind(this));
   },
 
   loadData: function() {
@@ -56,13 +59,35 @@ $.widget('viz.vizhistory', $.viz.vizbase, {
     if (item.user === wb.profile.user) {
       row.css('background-color', '#eee')
     }
+
+    row.data('context', item)
   },
 
-  jumpToContext: function() {
+  jumpToContext: function(e) {
+    // highlight the selected action
+    var row = $(e.target).parent();
+    if (row.hasClass('active')) {
+      row.removeClass('active');
+      return;
+    }
+    row.parent().children('.history-item').removeClass('active');
+    row.addClass('active');
+
+    // open the tool in which the action is performed
+    var data = row.data('context');
+    if (data) {
+      if (data.tool) {
+        $('#' + data.tool + '-btn').click();
+      }
+    }
 
   },
 
   reload: function() {
+
+  },
+
+  update: function() {
 
   }
 });

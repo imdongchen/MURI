@@ -51,7 +51,10 @@ $.widget('viz.vizmessage', $.viz.vizbase, {
 
   loadMessages: function() {
     var _this = this;
-    $.get('sync/message/all', function(msgs) {
+    $.get('sync/message/all', {
+      case: wb.profile.case,
+      group: wb.profile.group.id
+    }, function(msgs) {
       for (var i = 0, len = msgs.length; i < len; i++) {
         _this.loadMessage(msgs[i]);
       }

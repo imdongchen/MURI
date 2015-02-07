@@ -92,7 +92,9 @@ def relationship_delete(data, case, group, user):
 
 @login_required
 def get_messages(request):
-    msgs = Message.objects.all().order_by('sent_at')
+    group = request.GET['group']
+    case  = request.GET['case']
+    msgs = Message.objects.filter(group=group, case=case).order_by('sent_at')
     res = [msg.tojson() for msg in msgs]
     return HttpResponse(json.dumps(res), content_type='application/json')
 
@@ -106,7 +108,7 @@ def message_broadcast(request):
     group = Group.objects.get(id=int(group))
     group_name = live_group(case, group)
     sender = request.user
-    msg = Message(sender=sender, content=content)
+    msg = Message(sender=sender, content=content, group=gorup, case=case)
     msg.save()
     ishout_client.broadcast_group(group_name, 'message', msg.tojson())
     res = 'success'

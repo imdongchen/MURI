@@ -522,6 +522,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 activitylog({
                     operation: 'removed filter in',
                     item: 'network',
+                    tool: 'network'
                 });
             }
             else {
@@ -538,6 +539,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 activitylog({
                     operation: 'filtered in',
                     item: 'network',
+                    tool: 'network',
                     data: {
                       'id': nodes_id.join(','),
                       'name': selected_name.join(',')

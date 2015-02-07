@@ -13,6 +13,7 @@ li.history-item .timestamp {
   float: left;
   padding-right: 15px;
   text-align: right;
+  cursor: pointer;
   /* font-size: 60%; */
 }
 li.history-item .username {
@@ -21,3 +22,7 @@ li.history-item .username {
   text-align: right;
 }
 
+
+li.history-item.active {
+  background-color: #B0BED9 !important;
+}

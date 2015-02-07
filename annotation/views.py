@@ -70,7 +70,8 @@ def get_or_create_entity(json, case, group, user):
     serverlog({
         'user': user,
         'operation': operation,
-        'item': 'entity',
+        'item': obj.entity_type,
+        'tool': 'dataentry_table',
         'data': {
             'id': obj.id,
             'name': obj.name
@@ -143,6 +144,7 @@ def annotation(request, id=0):
             related_entities = []
             related_relationships = []
             related_entities_id = data.get('related_entities', [])
+
             for ent in related_entities_id:
                 ent = Entity.objects.get(id=ent)
                 r, created = Relationship.objects.get_or_create(
@@ -161,6 +163,21 @@ def annotation(request, id=0):
                 related_relationships.append(r)
                 relationships.append(r.get_attr())
                 related_entities.append(ent)
+
+                serverlog({
+                    'user': request.user,
+                    'operation': 'created',
+                    'item': 'relationship',
+                    'tool': 'dataentry_table',
+                    'data': {
+                        'id': r.id,
+                        'name': r.name,
+                        'source': entity.name,
+                        'target': ent.name
+                    },
+                    'group': group,
+                    'case': case
+                })
 
             annotation = Annotation.objects.create(
                 startOffset=ranges[0]['startOffset'],
@@ -188,6 +205,7 @@ def annotation(request, id=0):
                 'user': request.user,
                 'operation': 'created',
                 'item': 'annotation',
+                'tool': 'dataentry_table',
                 'data': {
                     'id': annotation.id,
                     'name': annotation.quote
@@ -274,6 +292,7 @@ def annotation(request, id=0):
                     'user': request.user,
                     'operation': 'updated',
                     'item': 'annotation',
+                    'tool': 'dataentry_table',
                     'data': {
                         'id': annotation.id,
                         'name': annotation.quote
@@ -310,6 +329,7 @@ def annotation(request, id=0):
                     'user': request.user,
                     'operation': 'deleted',
                     'item': 'annotation',
+                    'tool': 'dataentry_table',
                     'data': {
                         'id': annotation.id,
                         'name': annotation.quote
@@ -392,6 +412,7 @@ def annotations(request):
             'user': request.user,
             'operation': 'created',
             'item': str(len(data)) + 'annotations',
+            'tool': 'dataentry_table',
             'data': {
                 'id': ','.join([str(ann['id']) for ann in res['annotations']]),
                 'name': quote
@@ -442,6 +463,7 @@ def annotations(request):
             'user': request.user,
             'operation': 'updated',
             'item': str(len(data)) + 'annotations',
+            'tool': 'dataentry_table',
             'data': {
                 'id': ','.join([str(ann['id']) for ann in res['annotations']]),
                 'name': data['annotations'][0]['quote']
@@ -476,6 +498,7 @@ def annotations(request):
             'user': request.user,
             'operation': 'deleted',
             'item': str(len(data)) + 'annotations',
+            'tool': 'dataentry_table',
             'data': {
                 'id': ','.join([str(ann['id']) for ann in res['annotations']]),
                 'name': data['annotations'][0]['quote']

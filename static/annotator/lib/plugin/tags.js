@@ -68,7 +68,7 @@ $.widget('custom.attribute_widget', {
             var attr = $(row).find('.annotator-attribute-input').val();
             var value = $(row).find('.annotator-attribute-value').val();
             if (attr) {
-              if (attr === 'location') {
+              if (attr === 'address') {
                 var autocomplete = $(row).find('.annotator-attribute-value').data('autocomplete');
                 var place = autocomplete.getPlace();
                 res['geometry'] = [place.geometry.location.lng(), place.geometry.location.lat()];
@@ -85,9 +85,9 @@ $.widget('custom.attribute_widget', {
     styleInput: function(attr, value, input) {
       if (attr === 'date') {
         input.datetimepicker();
-      } else if (attr === 'location') {
+      } else if (attr === 'address') {
         // initialize as google place search
-        var autocomplete = new google.maps.places.Autocomplete(input[0], {location: 'New York'});
+        var autocomplete = new google.maps.places.Autocomplete(input[0]);
         input.data('autocomplete', autocomplete);
       } else if (attr === 'priority') {
         // initialize as select drop down

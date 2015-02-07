@@ -44,7 +44,7 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
             .data(data)
             .dimension(this.options.dimension)
             .group(this.options.group)
-            .title('document table')
+            .title('dataentry_table')
             .on('filter', function() {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
@@ -219,7 +219,7 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
             .data(data)
             .dimension(this.options.dimension)
             .group(this.options.group)
-            .title(this.options.title + ' table')
+            .title(this.options.title + '_table')
             .on('filter', function() {
                 $.publish('/data/filter', this.element.attr("id")); // TODO: move the event listener to outside
             }.bind(this))
@@ -303,6 +303,7 @@ wb.viz.table = function() {
                         activitylog({
                             operation: 'removed filter in',
                             item: title,
+                            tool: title,
                         });
                     } else {
                         records_id = [];
@@ -317,7 +318,7 @@ wb.viz.table = function() {
                             return false;
                         });
                         var selected_names = [];
-                        if (title !== 'document table') {
+                        if (title !== 'dataentry_table') {
                           selected_names = records_id.map(function(id) {
                             return wb.store.entity[id];
                           });
@@ -325,10 +326,11 @@ wb.viz.table = function() {
                         activitylog({
                             operation: 'filtered in',
                             item: title,
-                            data: {
+                            tool: title,
+                            data: JSON.stringify({
                               'id': records_id.join(','),
                               'name': selected_names.join(',')
-                            }
+                            })
                         });
 
                     }
