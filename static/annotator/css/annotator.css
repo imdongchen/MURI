@@ -70,6 +70,9 @@
 .annotator-hl-uncertain {
     background: rgba(255, 255, 115, 0.2)
 }
+.annotator-hl.active {
+    background: #B0BED9;
+}
 
 /* Annotator Wrapper
 -------------------------------------------------------------------- */

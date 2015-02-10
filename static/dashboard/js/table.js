@@ -60,6 +60,31 @@ $.widget('viz.vizdataentrytable', $.viz.vizbase, {
         this._resetAnnotator();
         this.update();
     },
+
+    highlight: function(item) {
+      // highlight annotation
+      var ele = this.element.closest(".ui-dialog");
+      var annotator = ele.data('annotator');
+      if (annotator) {
+        var store = annotator.plugins['Store'];
+        var annotations = store.annotations;
+        if (annotations.length) {
+          for (var i = 0, len = annotations.length; i < len; i++) {
+            if (annotations[i].id == item) {
+              var highlight = annotations[i].highlights[0];
+              $(highlight).addClass('active');
+              wb.utility.scrollTo(highlight, $('.dataTables_scrollBody', ele));
+              break;
+            }
+          }
+        } else {
+          setTimeout(function() {
+            this.highlight(item);
+          }.bind(this), 1000);
+        }
+      }
+    },
+
     _setupAnnotator: function() {
         var ele = this.element.closest(".ui-dialog");
         ele.annotator();
@@ -240,6 +265,15 @@ $.widget('viz.vizentitytable', $.viz.vizbase, {
     resize: function() {
         this._super('resize');
         this.element.find('.dataTables_scrollBody').css('height', (this.element.height() - 80))
+    },
+
+    highlight: function(item) {
+      this.element.find('tr.odd, tr.even').each(function(i, row) {
+        if ($(row).data('id') ==  item) {
+          $(row).addClass('active');
+          wb.utility.scrollTo(row, $(this).parents('.dataTables_scrollBody'));
+        }
+      });
     }
 });
 
@@ -320,7 +354,7 @@ wb.viz.table = function() {
                         var selected_names = [];
                         if (title !== 'dataentry_table') {
                           selected_names = records_id.map(function(id) {
-                            return wb.store.entity[id];
+                            return wb.store.entity[id].primary.name;
                           });
                         }
                         activitylog({

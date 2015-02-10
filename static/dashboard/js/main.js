@@ -24,7 +24,7 @@ wb.profile = {
 // attributes for entities, temporarily hard coded here
 wb.static = {
   event: ['category', 'date', 'priority'],
-  location: ['location', 'precision', 'priority'],
+  location: ['address', 'precision', 'priority'],
   person: ['gender', 'nationality', 'ethnicity', 'race', 'religion', 'priority'],
   organization: ['category', 'nationality', 'ethnicity', 'religion', 'priority'],
   resource: ['condition', 'availability', 'category', 'priority'],
@@ -135,9 +135,11 @@ $.subscribe('/dataset/update', function() {
     });
     var to_add = $(now_selected_ds).not(pre_selected_ds).get(); // to_add = now - pre
     var to_remove = $(pre_selected_ds).not(now_selected_ds).get(); // to_remove = pre - now
-    addDatasets(to_add);
-    removeDatasets(to_remove);
-    $.publish('/data/reload');
+    if (to_add.length || to_remove.length) {
+      addDatasets(to_add);
+      removeDatasets(to_remove);
+      $.publish('/data/reload');
+    }
 });
 
 
@@ -161,8 +163,9 @@ $.subscribe('/data/filter', function() {
     for (var j = 0; j < wb.vartifacts.length; j++) {
         var panel = wb.vartifacts[j];
         if ($.makeArray(arguments).indexOf(panel.attr("id")) < 0) {
-            var viz = panel.data("viz");
-            panel.data(viz).update();
+            if (! panel.hasClass('history')) {
+              panel.data("instance").update();
+            }
         }
     }
 });

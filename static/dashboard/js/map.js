@@ -165,7 +165,18 @@ $.widget("viz.vizmap", $.viz.vizbase, {
         this.updateData();
         this.update();
     },
-    highlight: function (feature) {
+    highlight: function (item) {
+        var feature;
+        if (typeof item === 'object')
+          feature = item;
+        else {
+          for (var i = 0, len = this.features.length; i < len; i++) {
+            if (this.features[i].attributes.id == item) {
+              feature = this.features[i];
+              break;
+            }
+          }
+        }
         var entity = wb.store.entity[feature.attributes.id];
         var primary = entity.primary;
         var popup = '<div id="map-popup" class="entity-tooltip"><table>';

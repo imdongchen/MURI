@@ -173,7 +173,6 @@ def data(request):
         for entity in entities:
             entity_dict[entity.id] = entity.get_attr()
 
-        print 'get all entity'
         # step 4: get relationships
         relationships = Relationship.objects.filter(case=case, group=group)
         for rel in relationships:

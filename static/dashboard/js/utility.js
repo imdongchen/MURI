@@ -103,7 +103,7 @@ wb.utility.mousePosition = function(e, offsetEl) {
 
 // scroll to an element in a container
 wb.utility.scrollTo = function(ele, container) {
-  $(ele).animate({
-    ScrollTop: $(ele).offset().top - $(container).offset().top + $(container).scrollTop()
+  $(container).animate({
+    scrollTop: $(ele).offset().top - $(container).offset().top + $(container).scrollTop()
   });
 };

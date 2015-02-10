@@ -533,7 +533,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                 var selected_name = nodes_id.map(function(id) {
                   id = id.split('-');
                   if (id[0] === 'entity') {
-                    return wb.store.entity[id[1]];
+                    return wb.store.entity[id[1]].primary.name;
                   }
                 });
                 activitylog({
@@ -565,8 +565,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .on("dragend", dragend)
         );
         this.node
-            .on('mouseover', this.showNodeInfo.bind(this))
-            .on('mouseout', this.hideNodeInfo)
+            .on('mouseover', this.onMouseOverNode.bind(this))
+            .on('mouseout', this.onMouseOutNode.bind(this))
         ;
 
         function dragstarted(d) {
@@ -631,7 +631,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
 
     },
 
-    showLinkInfo: function(l, i) {
+    showLinkInfo: function(l, pos) {
         $('.network-viewer .attr-list').remove();
         var str = "<table class='attr-list'>";
         for (var attr in l) {
@@ -648,7 +648,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
 
         $('.network-viewer').data('link', l);
 
-        var pos = wb.utility.mousePosition(d3.event, this.element);
         var width = $('.network-viewer').outerWidth();
         var height = $('.network-viewer').outerHeight();
         $('.network-viewer')
@@ -659,7 +658,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         ;
     },
 
-    showNodeInfo: function(d) {
+    showNodeInfo: function(d, pos) {
         $('.network-viewer .attr-list').remove();
         var tooltip = "<table class='attr-list'>";
         if (d.id) {
@@ -682,7 +681,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             $(tooltip).appendTo('.network-viewer')
             $('.network-viewer').data('node', d);
 
-            var pos = wb.utility.mousePosition(d3.event, this.element);
             var width = $('.network-viewer').outerWidth();
             var height = $('.network-viewer').outerHeight();
             d3.select(".network-viewer")
@@ -853,8 +851,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .attr("class", "link")
             .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
             .style('marker-end', function(d) { return 'url(#end-arrow)'; })
-            .on("mouseover", this.showLinkInfo.bind(this))
-            .on("mouseout", this.hideLinkInfo);
+            .on("mouseover", this.onMouseOverLink.bind(this))
+            .on("mouseout", this.onMouseOutLink.bind(this));
         ;
         // this.selected_link && this.selected_link.style('stroke-dasharray', '10,2');
 
@@ -880,8 +878,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
                     return "url(#img-dataentry)";
                 }
             })
-            .on('mouseover', this.highlight)
-            .on('mouseout', this.unhighlight)
         ;
 
         g.append("text")
@@ -908,10 +904,6 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         //                .gravity(100 * k)
 
         this.force.start();
-
-        function onMouseOverNode(d) {
-            highlight(d);
-        }
     },
 
     resize: function() {
@@ -924,57 +916,88 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.force.start();
     },
 
-    highlight: function(nodeData) {
-        d3.selectAll('.node circle').style('stroke-opacity', function(o) {
-            if (isConnected(nodeData, o)) {
-                d3.select(this).style('fill-opacity', 1);
-                $(this).siblings('text').css('fill-opacity', 1);
-                return 1;
-            } else {
-                d3.select(this).style('fill-opacity', .2);
-                $(this).siblings('text').css('fill-opacity', .2);
-                return .2
-            }
-        });
-        d3.selectAll('.link').style('stroke-opacity', function(o) {
-            if (o.source.id === nodeData.id || o.target.id === nodeData.id) {
-                return 1;
-            } else {
-                return .2;
-            }
-        });
+    onMouseOverNode: function(d) {
+      this.highlightNode(d);
 
-        d3.select(this).attr('transform', 'scale(1.5)');
-
-        function isConnected(a, b) {
-            var connected = false;
-            if (a.id === b.id) connected = true;
-
-            d3.selectAll('.link').data().some(function(link) {
-                if (link) {
-                    if ((link.source.id === a.id && link.target.id === b.id)
-                        || (link.target.id === a.id && link.source.id === b.id)) {
-                            connected = true;
-                            return connected;
-                        };
-                }
-            });
-            return connected;
-        }
+      var pos = wb.utility.mousePosition(d3.event, this.element);
+      setTimeout(function() {
+        this.showNodeInfo(d, pos);
+      }.bind(this), 500);
     },
 
+    onMouseOutNode: function(d) {
+      this.unhighlightNode(d);
+      this.hideNodeInfo(d);
+    },
 
-    unhighlight: function() {
-      d3.selectAll('.node circle')
-        .style('stroke-opacity', 1)
-        .style('fill-opacity', 1);
-      d3.selectAll('.link').style('stroke-opacity', 1);
-      d3.selectAll('.node-text').style('fill-opacity', 1);
-      d3.select(this).attr('transform', '');
+    onMouseOverLink: function(d) {
+      this.highlightLink(d);
+
+      var pos = wb.utility.mousePosition(d3.event, this.element);
+      setTimeout(function() {
+        this.showLinkInfo(d, pos);
+      }.bind(this), 500);
+    },
+
+    onMouseOutLink: function(d) {
+      this.unhighlightLink(d);
+      this.hideLinkInfo(d);
+    },
+
+    highlight: function(item) {
+      // highlight relationship
+      this.highlightLink({id: +item});
+    },
+
+    highlightLink: function(d) {
+      var container = d3.select(this.element[0]);
+      container.selectAll('.link').classed('dim', function(o) {
+        return o.id !== d.id;
+      });
+      container.selectAll('.node').classed('dim', function(o) {
+        return o.relationships.indexOf(d.id) < 0;
+      });
+    },
+
+    unhighlightLink: function() {
+      var container = d3.select(this.element[0]);
+
+      container.selectAll('.node').classed('dim', false);
+      container.selectAll('.link').classed('dim', false);
+    },
+
+    highlightNode: function(nodeData) {
+        var container = d3.select(this.element[0]);
+        var connected_nodes = [nodeData.id];
+
+        container.selectAll('.link').classed('dim', function(o) {
+          if (o.source.id === nodeData.id) {
+            connected_nodes.push(o.target.id);
+            return false;
+          } else if (o.target.id === nodeData.id) {
+            connected_nodes.push(o.source.id);
+            return false;
+          } else {
+            return true;
+          }
+        });
+        container.selectAll('.node').classed('dim', function(o) {
+          return connected_nodes.indexOf(o.id) < 0;
+        });
+
+        // d3.select(this).select('circle').attr('transform', 'scale(1.5)');
+    },
+
+    unhighlightNode: function() {
+      var container = d3.select(this.element[0]);
+
+      container.selectAll('.node').classed('dim', false);
+      container.selectAll('.link').classed('dim', false);
+      // d3.select(this).select('circle').attr('transform', '');
     },
 
     destroy: function() {
-    },
+    }
 });
 
 

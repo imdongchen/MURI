@@ -171,7 +171,7 @@ def annotation(request, id=0):
                     'tool': 'dataentry_table',
                     'data': {
                         'id': r.id,
-                        'name': r.name,
+                        'name': r.relation,
                         'source': entity.name,
                         'target': ent.name
                     },

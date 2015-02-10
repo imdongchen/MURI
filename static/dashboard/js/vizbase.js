@@ -31,6 +31,7 @@ $.widget('viz.vizbase', {
         this.options.base.title = this.options.title;
         this.element.dialog(this.options.base).dialogExtend(this.options.extend);
         this.element.addClass('viz');
+        this.element.data('instance', this);
     },
     resize: function() {
         this.element.css("width", "auto");

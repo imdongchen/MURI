@@ -62,6 +62,7 @@ $.widget('custom.attribute_widget', {
             return a_val < b_val;
         }).appendTo(this.content);
     },
+
     serialize: function() {
         var res = {};
         $('> li', this.content).each(function(i, row) {
@@ -82,6 +83,7 @@ $.widget('custom.attribute_widget', {
         });
         return res;
     },
+
     styleInput: function(attr, value, input) {
       if (attr === 'date') {
         input.datetimepicker();
@@ -393,7 +395,7 @@ Annotator.Plugin.Tags = (function(_super) {
         if (annotation.tag && annotation.tag.id) {
             var entity = wb.store.entity[annotation.tag.id];
             for (var attr in entity.primary) {
-                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name') { // skip these two attributes
+                if (attr !== 'entity_type' && attr !== 'id' && attr !== 'name' && attr !== 'geometry') { // skip these two attributes
                     this.attribute_widget.add(attr, entity.primary[attr], 'primary');
                 }
             }
@@ -449,7 +451,7 @@ Annotator.Plugin.Tags = (function(_super) {
             var primary = entity.primary;
             table += '<tr><th>' + wb.utility.capitalizeFirstLetter(primary.entity_type) + ':</th><td>' + primary.name + '</td></tr>';
             for (var attr in primary) {
-                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && primary[attr]) {
+                if (attr && attr !== 'id' && attr !== 'entity_type' && attr !== 'name' && attr !== 'geometry' && primary[attr]) {
                     table += '<tr><th>' + wb.utility.capitalizeFirstLetter(attr) + ':</th><td>' + primary[attr] + '</td></tr>';
                 }
             }

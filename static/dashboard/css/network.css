@@ -1,3 +1,13 @@
+.node.dim circle {
+  stroke-opacity: .2;
+  fill-opacity: .2;
+}
+.node.dim text {
+  fill-opacity: .2;
+}
+.link.dim {
+  stroke-opacity: .2;
+}
 circle.selected {
     stroke: #3276b1 !important;
     stroke-width: dpx;

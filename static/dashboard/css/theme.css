@@ -1,6 +1,9 @@
 .ui-widget-header {
     background: #c5ceff !important;
 }
+.history .ui-widget-header {
+    background: #ccc !important;
+}
 
 .ui-widget.ui-dialog {
     padding: 0;
@@ -152,4 +155,8 @@ span.entity:hover:after {
   border-top: 4px solid;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
+}
+
+.active {
+  background-color: #B0BED9 !important;
 }
