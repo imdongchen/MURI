@@ -567,6 +567,7 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         this.node
             .on('mouseover', this.onMouseOverNode.bind(this))
             .on('mouseout', this.onMouseOutNode.bind(this))
+            .on('click', this.onClickNode.bind(this))
         ;
 
         function dragstarted(d) {
@@ -852,7 +853,8 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
             .style('marker-start', function(d) { return d.left ? 'url(#start-arrow)' : ''; })
             .style('marker-end', function(d) { return 'url(#end-arrow)'; })
             .on("mouseover", this.onMouseOverLink.bind(this))
-            .on("mouseout", this.onMouseOutLink.bind(this));
+            .on("mouseout", this.onMouseOutLink.bind(this))
+            .on('click', this.onClickLink.bind(this))
         ;
         // this.selected_link && this.selected_link.style('stroke-dasharray', '10,2');
 
@@ -917,31 +919,66 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     },
 
     onMouseOverNode: function(d) {
-      this.highlightNode(d);
+      // this.highlightNode(d);
 
       var pos = wb.utility.mousePosition(d3.event, this.element);
-      setTimeout(function() {
+      this.showNodeInfoTimer = setTimeout(function() {
         this.showNodeInfo(d, pos);
       }.bind(this), 500);
     },
 
     onMouseOutNode: function(d) {
-      this.unhighlightNode(d);
+      // this.unhighlightNode(d);
+      clearTimeout(this.showNodeInfoTimer);
       this.hideNodeInfo(d);
     },
 
+    onClickNode: function(d) {
+      var highlighted;
+      this.node.each(function(o) {
+        if (o.id === d.id) {
+          // whether the svg has class active
+          // jquery hasClass() failed on svg
+          highlighted = /active/.test($(this).attr('class'));
+          return false;
+        }
+      });
+      if (highlighted) {
+        this.unhighlightNode(d);
+      } else {
+        this.highlightNode(d);
+      }
+    },
+
     onMouseOverLink: function(d) {
-      this.highlightLink(d);
+      // this.highlightLink(d);
 
       var pos = wb.utility.mousePosition(d3.event, this.element);
-      setTimeout(function() {
+      this.showLinkInfoTimer = setTimeout(function() {
         this.showLinkInfo(d, pos);
       }.bind(this), 500);
     },
 
     onMouseOutLink: function(d) {
-      this.unhighlightLink(d);
+      // this.unhighlightLink(d);
+      clearTimeout(this.showLinkInfoTimer);
       this.hideLinkInfo(d);
+    },
+
+    onClickLink: function(d) {
+      var highlighted;
+      this.link.each(function(o) {
+        if (o.id === d.id) {
+          highlighted = /active/.test($(this).attr('class'));
+          return false;
+        }
+      });
+      if (highlighted) {
+        this.unhighlightLink(d);
+      } else {
+        this.highlightLink(d);
+      }
+
     },
 
     highlight: function(item) {
@@ -952,18 +989,36 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     highlightLink: function(d) {
       var container = d3.select(this.element[0]);
       container.selectAll('.link').classed('dim', function(o) {
-        return o.id !== d.id;
+        if (o.id !== d.id) {
+          d3.select(this).classed('active', false);
+          return true;
+        } else {
+          d3.select(this).classed('active', true);
+          return false;
+        }
       });
       container.selectAll('.node').classed('dim', function(o) {
-        return o.relationships.indexOf(d.id) < 0;
+        if (o.relationships.indexOf(d.id) < 0) {
+          d3.select(this).classed('active', false);
+          return true;
+        } else {
+          d3.select(this).classed('active', true);
+          return false;
+        }
       });
     },
 
     unhighlightLink: function() {
       var container = d3.select(this.element[0]);
+      container.selectAll('.node').classed({
+        'dim': false,
+        'active': false
+      });
+      container.selectAll('.link').classed({
+        'dim': false,
+        'active': false
+      });
 
-      container.selectAll('.node').classed('dim', false);
-      container.selectAll('.link').classed('dim', false);
     },
 
     highlightNode: function(nodeData) {
@@ -973,17 +1028,37 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
         container.selectAll('.link').classed('dim', function(o) {
           if (o.source.id === nodeData.id) {
             connected_nodes.push(o.target.id);
+            d3.select(this).classed('active', true);
             return false;
           } else if (o.target.id === nodeData.id) {
             connected_nodes.push(o.source.id);
+            d3.select(this).classed('active', true);
             return false;
           } else {
+            d3.select(this).classed('active', false);
             return true;
           }
         });
         container.selectAll('.node').classed('dim', function(o) {
-          return connected_nodes.indexOf(o.id) < 0;
+          if(connected_nodes.indexOf(o.id) < 0) {
+            d3.select(this).classed('active', false);
+            return true;
+          } else {
+            d3.select(this).classed('active', true);
+            return false;
+          }
         });
+        // transverse link again
+        // highlight links if both its source and target are highlighted
+        container.selectAll('.link').classed('dim', function(o) {
+          if (connected_nodes.indexOf(o.source.id) > -1
+              && connected_nodes.indexOf(o.target.id) > -1) {
+            d3.select(this).classed('active', true);
+            return false;
+          }
+          d3.select(this).classed('active', false);
+          return true;
+        })
 
         // d3.select(this).select('circle').attr('transform', 'scale(1.5)');
     },
@@ -991,8 +1066,14 @@ $.widget("viz.viznetwork", $.viz.vizbase, {
     unhighlightNode: function() {
       var container = d3.select(this.element[0]);
 
-      container.selectAll('.node').classed('dim', false);
-      container.selectAll('.link').classed('dim', false);
+      container.selectAll('.node').classed({
+        'dim': false,
+        'active': false
+      });
+      container.selectAll('.link').classed({
+        'dim': false,
+        'active': false
+      });
       // d3.select(this).select('circle').attr('transform', '');
     },
 
