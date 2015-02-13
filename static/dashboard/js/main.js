@@ -23,10 +23,10 @@ wb.profile = {
 };
 // attributes for entities, temporarily hard coded here
 wb.static = {
-  event: ['category', 'date', 'priority'],
+  event: ['people', 'address', 'date', 'priority', 'category'],
   location: ['address', 'precision', 'priority'],
   person: ['gender', 'nationality', 'ethnicity', 'race', 'religion', 'priority'],
-  organization: ['category', 'nationality', 'ethnicity', 'religion', 'priority'],
+  organization: ['people', 'category', 'nationality', 'ethnicity', 'religion', 'priority'],
   resource: ['condition', 'availability', 'category', 'priority'],
   relationship: ['relation', 'description', 'priority']
 };

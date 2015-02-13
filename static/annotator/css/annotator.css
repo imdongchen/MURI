@@ -762,6 +762,14 @@
   padding-left: 2px;
   padding-right: 2px;
 }
+.annotator-attributes .selectize-control {
+  display: inline-flex;
+  width: calc(100% - 120px);
+  border: none !important;
+}
+.annotator-attributes .selectize-input {
+
+}
 .attribute-remove-btn span,
 .attribute-add-btn span {
 	text-align: center !important;

@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from model_utils.managers import InheritanceManager
 from django.template.defaultfilters import slugify
+from django.db.models.signals import m2m_changed
 from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.db.models.fields import FieldDoesNotExist
@@ -10,35 +11,39 @@ add_introspection_rules([], ["^django\.contrib\.gis\.db\.models\.fields\.Geometr
 
 
 # Create your models here.
+
+def get_field_value(instance, field):
+    try:
+        field = instance._meta.get_field(field)
+        field_type = field.get_internal_type()
+        value = getattr(instance, field)
+
+        if field_type == 'DateTimeField':
+            value = value.strftime('%m/%d/%Y-%H:%M:%S') if value else None
+        elif field_type == 'GeometryField':
+            value = value.wkt if value else None
+        elif field_type == 'ForeignKey':
+            value = value.id if value else None
+
+        return value
+    except:
+        print 'Warning: trying to get an unknown field %s from %s' % (field, instance)
+        return None
+
+
 def get_model_attr(instance):
     attr = {'primary': {}, 'meta': {}, 'other': {}}
     # these fields are special
-    excludes = ['attributes', 'entity_ptr', 'created_by', 'created_at', 'last_edited_by', 'last_edited_at', 'case', 'group']
+    meta_attr = ['id', 'created_by', 'created_at', 'last_edited_by', 'last_edited_at']
+    excludes = ['attributes', 'entity_ptr', 'case', 'group'] + meta_attr
     primary = attr['primary']
     for field_name in instance._meta.get_all_field_names():
-        if field_name in excludes:
-            continue
-        try:
-            field = instance._meta.get_field(field_name)
-            field_type = field.get_internal_type()
-            value = getattr(instance, field_name)
-            if field_type == 'DateTimeField':
-                primary[field_name] = value.strftime('%m/%d/%Y-%H:%M:%S') if value else None
-            elif field_type == 'GeometryField':
-                primary[field_name] = value.wkt if value else None
-            elif field_type == 'ForeignKey':
-                primary[field_name] = value.id if value else None
-            else:
-                primary[field_name] = value
-        except FieldDoesNotExist:
-            pass
+        if field_name in excludes: continue
+        primary[field_name] = get_field_value(instance, field_name)
 
     meta = attr['meta']
-    meta['id'] = instance.id
-    meta['created_by'] = instance.created_by.id if instance.created_by else None
-    meta['created_at'] = instance.created_at.strftime('%m/%d/%Y-%H:%M:%S') if instance.created_at else None
-    meta['last_edited_by'] = instance.last_edited_by.id if instance.last_edited_by else None
-    meta['last_edited_at'] = instance.last_edited_at.strftime('%m/%d/%Y-%H:%M:%S') if instance.last_edited_at else None
+    for field in meta_attr:
+        meta[field] = get_field_value(instance, field)
 
     other = attr['other']
 
@@ -52,10 +57,14 @@ class Case(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     groups = models.ManyToManyField(Group, null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    location = models.GeometryField(null=True, blank=True)
+
+    objects = models.GeoManager()
 
     def __unicode__(self):
         return self.name
-
 
 
 class Attribute(models.Model):
@@ -71,9 +80,10 @@ class Attribute(models.Model):
 
 
 class Entity(models.Model):
-    name          = models.CharField(max_length=1000, blank=True)
+    name          = models.CharField(max_length=1000)
     priority      = models.FloatField(default=5, null=True, blank=True)  # ranging from 0-9
     entity_type    = models.CharField(max_length=50, blank=True)
+    note          = models.TextField(blank=True)
     attributes    = models.ManyToManyField(Attribute, blank=True, null=True)
     created_by     = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_entities')
     created_at     = models.DateTimeField(auto_now_add=True, verbose_name='created at')
@@ -175,6 +185,7 @@ class Person(Entity):
 
 
 class Organization(Entity):
+    people      = models.ManyToManyField(Person, null=True, blank=True)
     category    = models.CharField(max_length=100, null=True, blank=True, verbose_name='type')
     nationality = models.CharField(max_length=50, blank=True, null=True)
     ethnicity   = models.CharField(max_length=50, null=True, blank=True)
@@ -188,8 +199,12 @@ class Organization(Entity):
 
 
 class Event(Entity):
+    people       = models.ManyToManyField(Person, null=True, blank=True)
+    location     = models.ForeignKey(Location, null=True, blank=True)
     category     = models.CharField(max_length=100, null=True, blank=True, verbose_name='type')
-    date         = models.DateTimeField(null=True, blank=True)
+    start_date   = models.DateTimeField(null=True, blank=True)
+    end_date     = models.DateTimeField(null=True, blank=True)
+    repeat_days       = models.CommaSeparatedIntegerField(max_length=50, null=True, blank=True)  # 1 -7, stands for Mon - Sun
 
     def save(self, *args, **kwargs):
         """auto fill entity_type"""
@@ -214,12 +229,11 @@ class Resource(Entity):
 class Relationship(models.Model):
     source = models.ForeignKey(Entity, null=True, blank=True, related_name="relates_as_source") # trick here: if source is null, it is a "special" relationship, indicating that a dataentry 'contains' an entity
     target = models.ForeignKey(Entity, related_name="relates_as_target")
-    description   = models.TextField(null=True, blank=True)
-    relation  = models.CharField(max_length=500, null=True, blank=True)
+    note   = models.TextField(null=True, blank=True)
+    relation  = models.CharField(max_length=500, blank=True)
     confidence  = models.FloatField(null=True, blank=True)
     priority    = models.FloatField(default=5, null=True, blank=True)  # priority defaults to 5, ranging from 0-9
     dataentry  = models.ForeignKey(DataEntry, null=True, blank=True)
-    attributes  = models.ManyToManyField(Attribute, null=True, blank=True)
     created_at   = models.DateTimeField(default=datetime.now, verbose_name='created at')
     created_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='created by', related_name='created_relationships')
     last_edited_by  = models.ForeignKey(User, null=True, blank=True, verbose_name='edited by', related_name='edited_relationships')

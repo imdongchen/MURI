@@ -94,9 +94,42 @@ $.widget('custom.attribute_widget', {
       } else if (attr === 'priority') {
         // initialize as select drop down
         input.val(5)
+      } else if (attr === 'people') {
+        var opts = this.prepareSelectOptions('person');
+        $(input).selectize({
+            options: opts.opts,
+            labelField: 'label',
+            valueField: 'value',
+            searchField: 'label',
+            create: true,
+            closeAfterSelect: true
+          });
       }
+    },
+
+    prepareSelectOptions: function(group) {
+      // if group is provided, only get options for that group
+      var opts = [], optgroups = [];
+      for (var key in wb.store.entity) {
+        var entity = wb.store.entity[key];
+        if (group) {
+          if (entity.primary.entity_type !== group) continue;
+        }
+        opts.push({
+          entity_type: entity.primary.entity_type,
+          value: entity.meta.id,
+          label: entity.primary.name
+        });
+      }
+      optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
+        return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
+      });
+
+      return {opts: opts, optgroups: optgroups};
     }
 });
+
+
 
 var _ref,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
@@ -185,6 +218,7 @@ Annotator.Plugin.Tags = (function(_super) {
         this.subscribe('/tag/type/change', function(value) {
           // do when the entity type is changed
           // put entity attributes in the list
+          self.attribute_widget.reset();
           var attributes = wb.static[value];
           if (attributes) {
             for (var i = 0, len = attributes.length; i < len; i++) {
@@ -229,8 +263,12 @@ Annotator.Plugin.Tags = (function(_super) {
         });
 
         $.subscribe('/entity/change', function(e, entity) {
-          var opts = self.prepareSelectOptions(entity);
-          $('select', self.relatedField).data('selectize').addOption(opts.opts);
+          var opt = {
+            entity_type: entity.primary.entity_type,
+            value: entity.meta.id,
+            label: entity.primary.name
+          }
+          $('select', self.relatedField).data('selectize').addOption(opt);
           self.initTagNameField(self.titleField);
         });
 
@@ -260,27 +298,24 @@ Annotator.Plugin.Tags = (function(_super) {
     };
 
 
-    Tags.prototype.prepareSelectOptions = function(entity) {
+    Tags.prototype.prepareSelectOptions = function(group) {
+      // if group is provided, only get options for that group
       var opts = [], optgroups = [];
-      if (entity) {
+      for (var key in wb.store.entity) {
+        var entity = wb.store.entity[key];
+        if (group) {
+          if (entity.primary.entity_type !== group) continue;
+        }
         opts.push({
           entity_type: entity.primary.entity_type,
           value: entity.meta.id,
           label: entity.primary.name
         });
-      } else {
-        for (var key in wb.store.entity) {
-          var entity = wb.store.entity[key];
-          opts.push({
-            entity_type: entity.primary.entity_type,
-            value: entity.meta.id,
-            label: entity.primary.name
-          });
-        }
-        optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
-          return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
-        });
       }
+      optgroups = wb.store.ENTITY_ENUM.map(function(entity) {
+        return {value: entity, label: wb.utility.capitalizeFirstLetter(entity)};
+      });
+
       return {opts: opts, optgroups: optgroups};
     };
 
